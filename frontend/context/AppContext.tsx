@@ -286,18 +286,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, _password: string) => {
     setIsLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    setUser({
-      id: '1',
-      email,
-      phone: '+85512345678',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: 'user',
-      createdAt: new Date().toISOString(),
-      favoriteMovies: [],
-      favoriteCinemas: [],
-      notifications: { email: true, sms: true, push: true },
-    })
+    
+    // Check if admin login
+    if (email === 'admin@cinemahub.com' || email === 'admin') {
+      setUser({
+        id: 'admin-1',
+        email: 'admin@cinemahub.com',
+        phone: '+85512345678',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        favoriteMovies: [],
+        favoriteCinemas: [],
+        notifications: { email: true, sms: true, push: true },
+      })
+    } else {
+      setUser({
+        id: '1',
+        email,
+        phone: '+85512345678',
+        firstName: 'John',
+        lastName: 'Doe',
+        role: 'user',
+        createdAt: new Date().toISOString(),
+        favoriteMovies: [],
+        favoriteCinemas: [],
+        notifications: { email: true, sms: true, push: true },
+      })
+    }
     setIsLoading(false)
   }
 

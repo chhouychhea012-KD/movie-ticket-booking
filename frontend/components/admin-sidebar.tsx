@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
-  Ticket, 
+  Ticket,
   Film, 
   Users, 
   Settings, 
@@ -13,7 +13,8 @@ import {
   Menu,
   Building2,
   Calendar,
-  QrCode
+  QrCode,
+  Bell
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -32,6 +33,7 @@ const sidebarItems: SidebarItem[] = [
   { label: 'Showtimes', href: '/admin/showtimes', icon: <Calendar className="w-5 h-5" /> },
   { label: 'Ticket Validation', href: '/admin/ticket-validation', icon: <QrCode className="w-5 h-5" /> },
   { label: 'Customers', href: '/admin/customers', icon: <Users className="w-5 h-5" /> },
+  { label: 'Notifications', href: '/admin/notifications', icon: <Bell className="w-5 h-5" /> },
   { label: 'Analytics', href: '/admin/analytics', icon: <BarChart3 className="w-5 h-5" /> },
   { label: 'Settings', href: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
 ]
@@ -73,12 +75,15 @@ export default function AdminSidebar() {
         {/* Logo */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
           <Link href="/admin" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-              <Ticket className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-lg">CineAdmin</h1>
-              <p className="text-slate-500 text-xs">Movie Booking</p>
+            <div style={{ width: '200px', height: '60px' }}>
+              <img 
+                src="/logo.png" 
+                alt="CinemaHub Admin" 
+                className="w-full h-full object-contain"
+                style={{ 
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                }}
+              />
             </div>
           </Link>
           <button 
@@ -116,21 +121,6 @@ export default function AdminSidebar() {
             </Link>
           ))}
         </nav>
-
-        {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700/50">
-          <div className="bg-slate-800/50 rounded-xl p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                A
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm">Admin User</p>
-                <p className="text-slate-500 text-xs">Administrator</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </aside>
     </>
   )

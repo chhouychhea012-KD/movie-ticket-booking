@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import MovieCard from '@/components/movie-card'
+import MovieSlideshow from '@/components/movie-slideshow'
 import { useApp } from '@/context/AppContext'
 import { Search, TrendingUp, Calendar, Play } from 'lucide-react'
 import Link from 'next/link'
@@ -22,25 +23,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      {/* Hero Section */}
-      <div className="relative py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 via-transparent to-transparent" />
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-            Experience Cinema in <span className="text-orange-500">{selectedCity}</span>
-          </h1>
-          <p className="text-xl text-slate-400 mb-8">Book your perfect movie experience</p>
-          
-          {/* Search Bar */}
-          <div className="max-w-xl mx-auto relative">
+      {/* Hero Section with Slideshow */}
+      <MovieSlideshow movies={nowShowing.slice(0, 5)} autoPlayInterval={5000} />
+
+      <div className="max-w-7xl mx-auto px-4 pb-16 -mt-8 relative z-30">
+        {/* Search Bar */}
+        <div className="max-w-xl mx-auto mb-12">
+          <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search movies..."
-              className="w-full pl-12 pr-4 py-4 bg-slate-800/80 border border-slate-700/50 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+              className="w-full pl-12 pr-4 py-4 bg-slate-800/90 border border-slate-700/50 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition shadow-xl backdrop-blur-sm"
             />
             
             {/* Search Results Dropdown */}
@@ -68,9 +64,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-16">
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           <Link href="/movies" className="group bg-gradient-to-br from-orange-500/20 to-orange-600/10 border border-orange-500/30 rounded-2xl p-6 hover:border-orange-500/50 transition">
@@ -122,8 +116,8 @@ export default function Home() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {nowShowing.slice(0, 6).map(movie => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {nowShowing.slice(0, 8).map(movie => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
           </div>
@@ -139,8 +133,8 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {comingSoon.slice(0, 3).map(movie => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {comingSoon.slice(0, 4).map(movie => (
                 <MovieCard key={movie.id} movie={movie} />
               ))}
             </div>

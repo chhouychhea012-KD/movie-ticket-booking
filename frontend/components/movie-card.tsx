@@ -57,8 +57,8 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
 
   return (
     <Link href={`/movies/${movie.id}`}>
-      <div className="bg-slate-800 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300 cursor-pointer group">
-        <div className="relative h-72 md:h-80 overflow-hidden bg-slate-700">
+      <div className="bg-slate-800 rounded-xl overflow-hidden hover:transform hover:scale-[1.02] transition duration-300 cursor-pointer group h-full">
+        <div className="relative h-56 md:h-64 lg:h-72 overflow-hidden bg-slate-700">
           <img
             src={movie.poster}
             alt={movie.title}
