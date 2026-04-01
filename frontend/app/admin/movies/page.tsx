@@ -4,108 +4,12 @@ import { useState, useEffect } from 'react'
 import { Search, Plus, Edit2, Trash2, X, Eye, Download, Star, Calendar, Clock, Film, Clapperboard } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { dataStore } from '@/lib/data-store'
+import { Movie } from '@/types'
 
-interface Movie {
-  id: string
-  title: string
-  genre: string
-  rating: number
-  duration: number
-  poster: string
-  releaseDate: string
-  synopsis: string
-  showtimes: string[]
-  status: 'now_showing' | 'coming_soon' | 'ended'
-  director: string
-  cast: string[]
-  language: string
-  ageRating: string
-}
-
-// Generate initial movies
+// Generate initial movies - now uses data store
 const generateInitialMovies = (): Movie[] => {
-  return [
-    {
-      id: '1',
-      title: 'Dune: Part Two',
-      genre: 'Sci-Fi',
-      rating: 8.5,
-      duration: 148,
-      poster: '',
-      releaseDate: '2024-03-15',
-      synopsis: 'Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.',
-      showtimes: ['10:00 AM', '1:30 PM', '4:00 PM', '7:00 PM', '9:30 PM'],
-      status: 'now_showing',
-      director: 'Denis Villeneuve',
-      cast: ['Timothée Chalamet', 'Zendaya', 'Rebecca Ferguson'],
-      language: 'English',
-      ageRating: 'PG-13'
-    },
-    {
-      id: '2',
-      title: 'The Batman',
-      genre: 'Action',
-      rating: 8.2,
-      duration: 176,
-      poster: '',
-      releaseDate: '2024-03-04',
-      synopsis: 'When a sadistic serial killer begins murdering key political figures in Gotham, Batman is forced to investigate the city\'s corruption.',
-      showtimes: ['11:00 AM', '2:30 PM', '6:00 PM', '9:00 PM'],
-      status: 'now_showing',
-      director: 'Matt Reeves',
-      cast: ['Robert Pattinson', 'Zoë Kravitz', 'Paul Dano'],
-      language: 'English',
-      ageRating: 'PG-13'
-    },
-    {
-      id: '3',
-      title: 'Oppenheimer',
-      genre: 'Drama',
-      rating: 8.4,
-      duration: 180,
-      poster: '',
-      releaseDate: '2024-03-01',
-      synopsis: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
-      showtimes: ['10:30 AM', '2:00 PM', '5:30 PM', '8:30 PM'],
-      status: 'now_showing',
-      director: 'Christopher Nolan',
-      cast: ['Cillian Murphy', 'Emily Blunt', 'Matt Damon'],
-      language: 'English',
-      ageRating: 'R'
-    },
-    {
-      id: '4',
-      title: 'Barbie',
-      genre: 'Comedy',
-      rating: 7.8,
-      duration: 114,
-      poster: '',
-      releaseDate: '2024-03-10',
-      synopsis: 'Barbie and Ken are having the time of their lives in the colorful and seemingly perfect world of Barbie Land.',
-      showtimes: ['1:00 PM', '4:00 PM', '7:00 PM'],
-      status: 'now_showing',
-      director: 'Greta Gerwig',
-      cast: ['Margot Robbie', 'Ryan Gosling', 'America Ferrera'],
-      language: 'English',
-      ageRating: 'PG-13'
-    },
-    {
-      id: '5',
-      title: 'Spider-Man: ATSV',
-      genre: 'Animation',
-      rating: 8.6,
-      duration: 140,
-      poster: '',
-      releaseDate: '2024-03-20',
-      synopsis: 'Miles Morales catapults across the Multiverse, where he encounters a team of Spider-People charged with protecting its very existence.',
-      showtimes: ['11:00 AM', '2:00 PM', '5:00 PM', '8:00 PM'],
-      status: 'now_showing',
-      director: 'Joaquim Dos Santos',
-      cast: ['Shameik Moore', 'Hailee Steinfeld', 'Brian Tyree Henry'],
-      language: 'English',
-      ageRating: 'PG'
-    }
-  ]
+  return dataStore.movies.getAll()
 }
 
 const genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'Animation', 'Fantasy']
@@ -113,8 +17,8 @@ const languages = ['English', 'Thai', 'Japanese', 'Korean', 'Chinese', 'Hindi']
 const ageRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17']
 
 export default function AdminMoviesPage() {
-  const [movies, setMovies] = useState<Movie[]>([])
-  const [filteredMovies, setFilteredMovies] = useState<Movie[]>([])
+  const [movies, setMovies] = useState<any[]>([])
+  const [filteredMovies, setFilteredMovies] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [genreFilter, setGenreFilter] = useState('all')
   const [loading, setLoading] = useState(true)
@@ -126,7 +30,7 @@ export default function AdminMoviesPage() {
   // Form state
   const [formData, setFormData] = useState({
     title: '',
-    genre: 'Action',
+    genre: 'Action' as string,
     rating: 7.5,
     duration: 120,
     releaseDate: '',
@@ -140,16 +44,11 @@ export default function AdminMoviesPage() {
   })
 
   useEffect(() => {
-    const storedMovies = localStorage.getItem('movies')
+    dataStore.initialize()
+    const storedMovies = generateInitialMovies()
     if (storedMovies) {
-      const parsed = JSON.parse(storedMovies)
-      setMovies(parsed)
-      setFilteredMovies(parsed)
-    } else {
-      const initial = generateInitialMovies()
-      setMovies(initial)
-      setFilteredMovies(initial)
-      localStorage.setItem('movies', JSON.stringify(initial))
+      setMovies(storedMovies)
+      setFilteredMovies(storedMovies)
     }
     setLoading(false)
   }, [])
@@ -167,11 +66,10 @@ export default function AdminMoviesPage() {
     setFilteredMovies(filtered)
   }, [searchTerm, genreFilter, movies])
 
-  // Save to localStorage
+  // Save to data store and localStorage
   const saveMovies = (updatedMovies: Movie[]) => {
     setMovies(updatedMovies)
     setFilteredMovies(updatedMovies)
-    localStorage.setItem('movies', JSON.stringify(updatedMovies))
   }
 
   // Handle create/update
@@ -208,7 +106,7 @@ export default function AdminMoviesPage() {
       const newMovie: Movie = {
         id: Date.now().toString(),
         title: formData.title,
-        genre: formData.genre,
+        genre: [formData.genre],
         rating: formData.rating,
         duration: formData.duration,
         poster: '',
@@ -219,7 +117,9 @@ export default function AdminMoviesPage() {
         cast: castArray,
         language: formData.language,
         ageRating: formData.ageRating,
-        showtimes: showtimesArray
+        showtimes: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }
       saveMovies([...movies, newMovie])
     }
@@ -260,7 +160,7 @@ export default function AdminMoviesPage() {
     setEditingMovie(movie)
     setFormData({
       title: movie.title,
-      genre: movie.genre,
+      genre: movie.genre[0] || 'Action',
       rating: movie.rating,
       duration: movie.duration,
       releaseDate: movie.releaseDate,
@@ -270,7 +170,7 @@ export default function AdminMoviesPage() {
       cast: movie.cast.join(', '),
       language: movie.language,
       ageRating: movie.ageRating,
-      showtimes: movie.showtimes.join(', ')
+      showtimes: ''
     })
     setShowModal(true)
   }
@@ -470,14 +370,14 @@ export default function AdminMoviesPage() {
 
                 {/* Showtimes */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                  {movie.showtimes.slice(0, 4).map((time, i) => (
+                  {(movie.showtimes as any[] || []).slice(0, 4).map((time: any, i: number) => (
                     <span key={i} className="px-2 py-1 bg-slate-700/50 text-slate-300 rounded text-xs">
-                      {time}
+                      {typeof time === 'string' ? time : time.startTime}
                     </span>
                   ))}
-                  {movie.showtimes.length > 4 && (
+                  {(movie.showtimes as any[] || []).length > 4 && (
                     <span className="px-2 py-1 text-slate-500 text-xs">
-                      +{movie.showtimes.length - 4} more
+                      +{(movie.showtimes as any[] || []).length - 4} more
                     </span>
                   )}
                 </div>
@@ -764,9 +664,9 @@ export default function AdminMoviesPage() {
               <div>
                 <p className="text-slate-400 text-xs mb-2">Showtimes</p>
                 <div className="flex flex-wrap gap-2">
-                  {viewMovie.showtimes.map((time, i) => (
+                  {(viewMovie.showtimes as any[] || []).map((time: any, i: number) => (
                     <span key={i} className="px-3 py-1 bg-slate-700/50 text-slate-300 rounded-lg text-sm">
-                      {time}
+                      {typeof time === 'string' ? time : `${time.startTime} - ${time.endTime}`}
                     </span>
                   ))}
                 </div>

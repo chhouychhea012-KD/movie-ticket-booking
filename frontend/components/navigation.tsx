@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useApp } from '@/context/AppContext'
 import { Search, User, LogOut, Ticket, Heart, MapPin, ChevronDown, Menu, X, Clapperboard, Star, Sparkles } from 'lucide-react'
 import { Movie } from '@/types'
@@ -28,10 +28,19 @@ export default function Navigation() {
   }, [])
 
   // Close menus on outside click
+  const cityDropdownRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  
   useEffect(() => {
-    const handleClickOutside = () => {
-      setCityDropdownOpen(false)
-      setUserMenuOpen(false)
+    const handleClickOutside = (e: MouseEvent) => {
+      // Check if click is outside city dropdown
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node)) {
+        setCityDropdownOpen(false)
+      }
+      // Check if click is outside user menu
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
     }
     document.addEventListener('click', handleClickOutside)
     return () => document.removeEventListener('click', handleClickOutside)
@@ -136,7 +145,7 @@ export default function Navigation() {
           {/* Right Side - Desktop */}
           <div className="hidden md:flex items-center gap-2">
             {/* City Selector */}
-            <div className="relative">
+            <div className="relative" ref={cityDropdownRef}>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -201,7 +210,7 @@ export default function Navigation() {
 
             {/* User Menu */}
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()

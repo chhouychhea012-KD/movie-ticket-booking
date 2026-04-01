@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Edit2, Trash2, X, Eye, Download, Calendar, Clock, DollarSign, Users, CheckCircle, XCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { dataStore } from '@/lib/data-store'
+import { Showtime } from '@/types'
 
-interface Showtime {
+// Extended Showtime type for the UI (includes title info)
+interface ExtendedShowtime {
   id: string
   movieId: string
   movieTitle: string
@@ -20,114 +23,53 @@ interface Showtime {
   status: 'scheduled' | 'selling' | 'sold_out' | 'cancelled'
 }
 
-// Mock data - in real app these would come from context
-const mockMovies = [
-  { id: '1', title: 'Dune: Part Two' },
-  { id: '2', title: 'The Batman' },
-  { id: '3', title: 'Oppenheimer' },
-  { id: '4', title: 'Barbie' },
-  { id: '5', title: 'Spider-Man: ATSV' }
-]
-
-const mockCinemas = [
-  { id: '1', name: 'Cineplex Downtown', screens: ['Screen 1', 'Screen 2', 'VIP Screen'] },
-  { id: '2', name: 'Cineplex Uptown', screens: ['IMAX Screen', 'Screen 2'] },
-  { id: '3', name: 'Cineplex Mall', screens: ['4DX Screen', 'Dolby Screen', 'Screen 3'] }
-]
-
-// Generate initial showtimes
-const generateInitialShowtimes = (): Showtime[] => {
-  return [
-    {
-      id: '1',
-      movieId: '1',
-      movieTitle: 'Dune: Part Two',
-      cinemaId: '1',
-      cinemaName: 'Cineplex Downtown',
-      screenName: 'Screen 1',
-      date: '2024-03-20',
-      startTime: '7:00 PM',
-      endTime: '9:28 PM',
-      price: 15,
-      availableSeats: 45,
-      totalSeats: 150,
-      status: 'selling'
-    },
-    {
-      id: '2',
-      movieId: '2',
-      movieTitle: 'The Batman',
-      cinemaId: '1',
-      cinemaName: 'Cineplex Downtown',
-      screenName: 'Screen 2',
-      date: '2024-03-20',
-      startTime: '9:30 PM',
-      endTime: '12:26 PM',
-      price: 12,
-      availableSeats: 20,
-      totalSeats: 120,
-      status: 'selling'
-    },
-    {
-      id: '3',
-      movieId: '3',
-      movieTitle: 'Oppenheimer',
-      cinemaId: '2',
-      cinemaName: 'Cineplex Uptown',
-      screenName: 'IMAX Screen',
-      date: '2024-03-21',
-      startTime: '6:00 PM',
-      endTime: '9:00 PM',
-      price: 18,
-      availableSeats: 180,
-      totalSeats: 200,
-      status: 'selling'
-    },
-    {
-      id: '4',
-      movieId: '4',
-      movieTitle: 'Barbie',
-      cinemaId: '3',
-      cinemaName: 'Cineplex Mall',
-      screenName: '4DX Screen',
-      date: '2024-03-21',
-      startTime: '8:00 PM',
-      endTime: '9:54 PM',
-      price: 20,
-      availableSeats: 0,
-      totalSeats: 80,
-      status: 'sold_out'
-    },
-    {
-      id: '5',
-      movieId: '5',
-      movieTitle: 'Spider-Man: ATSV',
-      cinemaId: '1',
-      cinemaName: 'Cineplex Downtown',
-      screenName: 'VIP Screen',
-      date: '2024-03-22',
-      startTime: '7:00 PM',
-      endTime: '9:20 PM',
-      price: 25,
-      availableSeats: 35,
-      totalSeats: 50,
-      status: 'scheduled'
+// Get showtimes from data store with movie/cinema info
+const generateInitialShowtimes = (): ExtendedShowtime[] => {
+  const showtimes = dataStore.showtimes.getAll()
+  const movies = dataStore.movies.getAll()
+  const cinemas = dataStore.cinemas.getAll()
+  
+  return showtimes.map(st => {
+    const movie = movies.find(m => m.id === st.movieId)
+    const cinema = cinemas.find(c => c.id === st.cinemaId)
+    const screen = cinema?.screens.find(s => s.id === st.screenId)
+    return {
+      ...st,
+      movieTitle: movie?.title || 'Unknown',
+      cinemaName: cinema?.name || 'Unknown',
+      screenName: screen?.name || 'Unknown'
     }
-  ]
+  })
+}
+
+// Get movies list
+const getMoviesList = (): { id: string; title: string }[] => {
+  return dataStore.movies.getAll().map(m => ({ id: m.id, title: m.title }))
+}
+
+// Get cinemas list
+const getCinemasList = (): { id: string; name: string; screens: string[] }[] => {
+  return dataStore.cinemas.getAll().map(c => ({
+    id: c.id,
+    name: c.name,
+    screens: c.screens?.map((s: any) => s.name) || []
+  }))
 }
 
 export default function AdminShowtimesPage() {
-  const [showtimes, setShowtimes] = useState<Showtime[]>([])
-  const [filteredShowtimes, setFilteredShowtimes] = useState<Showtime[]>([])
+  const [showtimes, setShowtimes] = useState<any[]>([])
+  const [filteredShowtimes, setFilteredShowtimes] = useState<any[]>([])
+  const [mockMovies, setMockMovies] = useState<{ id: string; title: string }[]>([])
+  const [mockCinemas, setMockCinemas] = useState<{ id: string; name: string; screens: string[] }[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedMovie, setSelectedMovie] = useState('')
   const [selectedCinema, setSelectedCinema] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [editingShowtime, setEditingShowtime] = useState<Showtime | null>(null)
+  const [editingShowtime, setEditingShowtime] = useState<ExtendedShowtime | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [viewShowtime, setViewShowtime] = useState<Showtime | null>(null)
+  const [viewShowtime, setViewShowtime] = useState<ExtendedShowtime | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -141,17 +83,12 @@ export default function AdminShowtimesPage() {
   })
 
   useEffect(() => {
-    const storedShowtimes = localStorage.getItem('showtimes')
-    if (storedShowtimes) {
-      const parsed = JSON.parse(storedShowtimes)
-      setShowtimes(parsed)
-      setFilteredShowtimes(parsed)
-    } else {
-      const initial = generateInitialShowtimes()
-      setShowtimes(initial)
-      setFilteredShowtimes(initial)
-      localStorage.setItem('showtimes', JSON.stringify(initial))
-    }
+    dataStore.initialize()
+    const initial = generateInitialShowtimes()
+    setShowtimes(initial as ExtendedShowtime[])
+    setFilteredShowtimes(initial as ExtendedShowtime[])
+    setMockMovies(getMoviesList())
+    setMockCinemas(getCinemasList())
     setLoading(false)
   }, [])
 
@@ -170,7 +107,7 @@ export default function AdminShowtimesPage() {
   }, [searchTerm, selectedMovie, selectedCinema, selectedDate, showtimes])
 
   // Save to localStorage
-  const saveShowtimes = (updatedShowtimes: Showtime[]) => {
+  const saveShowtimes = (updatedShowtimes: ExtendedShowtime[]) => {
     setShowtimes(updatedShowtimes)
     setFilteredShowtimes(updatedShowtimes)
     localStorage.setItem('showtimes', JSON.stringify(updatedShowtimes))
@@ -207,7 +144,7 @@ export default function AdminShowtimesPage() {
       )
       saveShowtimes(updated)
     } else {
-      const newShowtime: Showtime = {
+      const newShowtime: ExtendedShowtime = {
         id: Date.now().toString(),
         movieId: formData.movieId,
         movieTitle: movie?.title || '',
@@ -218,7 +155,7 @@ export default function AdminShowtimesPage() {
         startTime: formData.startTime,
         endTime,
         price: formData.price,
-        availableSeats: 100, // Default
+        availableSeats: 100,
         totalSeats: 100,
         status: formData.status
       }
@@ -230,6 +167,18 @@ export default function AdminShowtimesPage() {
   }
 
   // Helper to calculate end time
+  // Build showtime with movie and cinema info
+  const buildShowtimeInfo = (showtime: Showtime): ExtendedShowtime => {
+    const movie = dataStore.movies.getById(showtime.movieId)
+    const cinema = dataStore.cinemas.getById(showtime.cinemaId)
+    return {
+      ...showtime,
+      movieTitle: movie?.title || 'Unknown',
+      cinemaName: cinema?.name || 'Unknown',
+      screenName: cinema?.screens.find(s => s.id === showtime.screenId)?.name || 'Unknown'
+    }
+  }
+
   const calculateEndTime = (startTime: string, durationMinutes: number): string => {
     const [time, period] = startTime.split(' ')
     const [hours, minutes] = time.split(':').map(Number)
@@ -277,7 +226,7 @@ export default function AdminShowtimesPage() {
   }
 
   // Open edit modal
-  const handleOpenEdit = (showtime: Showtime) => {
+  const handleOpenEdit = (showtime: ExtendedShowtime) => {
     setEditingShowtime(showtime)
     setFormData({
       movieId: showtime.movieId,

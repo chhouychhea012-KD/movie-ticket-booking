@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Movie } from '@/types'
-import { ChevronLeft, ChevronRight, Play, Star, Clock, Calendar, Info, Pause, PlayCircle, Film } from 'lucide-react'
+import { useApp } from '@/context/AppContext'
+import { ChevronLeft, ChevronRight, Play, Star, Clock, Calendar, Info, Pause, PlayCircle, Film, Heart, Share2 } from 'lucide-react'
+import TrailerModal from '@/components/trailer-modal'
 
 interface MovieSlideshowProps {
   movies: Movie[]
@@ -11,9 +13,13 @@ interface MovieSlideshowProps {
 }
 
 export default function MovieSlideshow({ movies, autoPlayInterval = 5000 }: MovieSlideshowProps) {
+  const { user, addFavoriteMovie, removeFavoriteMovie } = useApp()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [progressKey, setProgressKey] = useState(0) // Key to force restart animation
+  const [showTrailerModal, setShowTrailerModal] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const currentMovie = movies[currentIndex]
@@ -97,6 +103,13 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 5000 }: Movi
       }
     }
   }
+
+  // Update favorite status when movie changes
+  useEffect(() => {
+    if (user && currentMovie) {
+      setIsFavorite(user.favoriteMovies.includes(currentMovie.id))
+    }
+  }, [user, currentMovie])
 
   if (!currentMovie || movies.length === 0) {
     return (
@@ -219,6 +232,67 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 5000 }: Movi
                 <Info className="w-5 h-5" />
                 <span>More Info</span>
               </Link>
+              {/* Add to Favorites Button */}
+              <button
+                onClick={() => {
+                  if (!user) {
+                    alert('Please sign in to add favorites')
+                    return
+                  }
+                  if (isFavorite) {
+                    removeFavoriteMovie(currentMovie.id)
+                    setIsFavorite(false)
+                  } else {
+                    addFavoriteMovie(currentMovie.id)
+                    setIsFavorite(true)
+                  }
+                }}
+                className={`flex items-center gap-3 px-6 py-4 rounded-xl border transition-all duration-300 ${
+                  isFavorite 
+                    ? 'bg-red-500/20 border-red-500/30 text-red-400' 
+                    : 'bg-slate-800/80 border-slate-700 text-white hover:border-red-500/50'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                <span>{isFavorite ? 'Favorited' : 'Add to Favorites'}</span>
+              </button>
+              {/* Share Button */}
+              <button
+                onClick={async () => {
+                  const url = `${window.location.origin}/movies/${currentMovie.id}`
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({
+                        title: currentMovie.title,
+                        text: `Check out ${currentMovie.title}`,
+                        url
+                      })
+                    } else {
+                      await navigator.clipboard.writeText(url)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }
+                  } catch (err) {
+                    await navigator.clipboard.writeText(url)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }
+                }}
+                className="flex items-center gap-3 px-6 py-4 bg-slate-800/80 hover:bg-slate-700 text-white font-semibold rounded-xl border border-slate-700 hover:border-slate-600 transition-all duration-300"
+              >
+                <Share2 className="w-5 h-5" />
+                <span>{copied ? 'Copied!' : 'Share'}</span>
+              </button>
+              {/* Watch Trailer Button */}
+              {currentMovie.trailerUrl && (
+                <button
+                  onClick={() => setShowTrailerModal(true)}
+                  className="flex items-center gap-3 px-6 py-4 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 font-semibold rounded-xl border border-orange-500/30 transition-all duration-300"
+                >
+                  <Play className="w-5 h-5" />
+                  <span>Watch Trailer</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -295,6 +369,14 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 5000 }: Movi
           animation-name: progress;
         }
       `}</style>
+      {showTrailerModal && currentMovie?.trailerUrl && (
+        <TrailerModal
+          isOpen={showTrailerModal}
+          onClose={() => setShowTrailerModal(false)}
+          trailerUrl={currentMovie.trailerUrl || ''}
+          title={currentMovie.title}
+        />
+      )}
     </div>
   )
 }

@@ -1,183 +1,14 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { Movie, Cinema, Seat, Showtime, Booking, User, City, Analytics } from '@/types'
+import { Movie, Cinema, Seat, Showtime, Booking, User, UserRole, City, Analytics } from '@/types'
+import { dataStore } from '@/lib/data-store'
 
-// Mock Data Store
+// Mock Data Store - Cities (static)
 const mockCities = [
   { id: '1', name: 'Phnom Penh', country: 'Cambodia', cinemas: ['1', '2', '3'] },
   { id: '2', name: 'Siem Reap', country: 'Cambodia', cinemas: ['4'] },
   { id: '3', name: 'Battambang', country: 'Cambodia', cinemas: ['5'] },
-]
-
-const mockCinemas: Cinema[] = [
-  {
-    id: '1',
-    name: 'Legend Cinema - Phnom Penh',
-    address: 'Russian Blvd, Phnom Penh',
-    city: 'Phnom Penh',
-    phone: '+855 23 888 888',
-    email: 'info@legend.com',
-    image: '/placeholder-cinema.jpg',
-    facilities: ['Parking', 'Food Court', 'VIP Lounge', '3D', 'IMAX'],
-    screens: [],
-    createdAt: '2024-01-01T00:00:00.000Z',
-  },
-  {
-    id: '2',
-    name: 'The Mall Cinema',
-    address: 'Sihanouk Blvd, Phnom Penh',
-    city: 'Phnom Penh',
-    phone: '+855 23 999 999',
-    email: 'contact@themall.com',
-    image: '/placeholder-cinema.jpg',
-    facilities: ['Parking', 'Restaurant', '4DX', 'Dolby Atmos'],
-    screens: [],
-    createdAt: '2024-01-02T00:00:00.000Z',
-  },
-  {
-    id: '3',
-    name: 'Aeon Mall Cinema',
-    city: 'Phnom Penh',
-    address: 'Monivong Blvd, Phnom Penh',
-    phone: '+855 23 777 777',
-    email: 'support@aeon.com',
-    image: '/placeholder-cinema.jpg',
-    facilities: ['Parking', 'Shopping', 'VIP', 'IMAX'],
-    screens: [],
-    createdAt: '2024-01-03T00:00:00.000Z',
-  },
-]
-
-const mockMovies: Movie[] = [
-  {
-    id: '1',
-    title: 'The Quantum Paradox',
-    synopsis: 'A thrilling journey through time and space. When a brilliant physicist discovers a way to manipulate time, she must race against a shadow organization to prevent a catastrophic future.',
-    genre: ['Sci-Fi', 'Action', 'Thriller'],
-    language: 'English',
-    duration: 148,
-    rating: 8.5,
-    ageRating: 'PG-13',
-    releaseDate: '2024-12-15',
-    trailerUrl: 'https://youtube.com/watch?v=example',
-    poster: '/sci-fi-movie-poster.png',
-    director: 'Sarah Chen',
-    cast: ['Emma Watson', 'John Cho', 'Idris Elba'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-01T00:00:00.000Z',
-    updatedAt: '2024-12-01T00:00:00.000Z',
-  },
-  {
-    id: '2',
-    title: 'Love in Paris',
-    synopsis: 'A heartwarming tale of love and discovery. Two strangers meet in the city of lights and find themselves changed forever.',
-    genre: ['Romance', 'Drama'],
-    language: 'English',
-    duration: 125,
-    rating: 7.8,
-    ageRating: 'PG',
-    releaseDate: '2024-12-10',
-    poster: '/romantic-movie-poster.png',
-    director: 'Pierre Martin',
-    cast: ['Sophie Turner', 'Timothée Chalamet'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-05T00:00:00.000Z',
-    updatedAt: '2024-12-02T00:00:00.000Z',
-  },
-  {
-    id: '3',
-    title: 'Dark Shadows',
-    synopsis: 'A suspenseful mystery that will keep you on edge. When a famous actress returns to her childhood home, dark secrets surface.',
-    genre: ['Thriller', 'Mystery', 'Horror'],
-    language: 'English',
-    duration: 135,
-    rating: 8.2,
-    ageRating: 'R',
-    releaseDate: '2024-12-12',
-    poster: '/thriller-movie-poster.png',
-    director: 'Guillermo del Toro',
-    cast: ['Ana de Armas', 'Javier Bardem'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-10T00:00:00.000Z',
-    updatedAt: '2024-12-03T00:00:00.000Z',
-  },
-  {
-    id: '4',
-    title: 'Laugh Out Loud',
-    synopsis: 'Hilarious adventures that will make you laugh. A comedy about a dysfunctional family trying to plan the perfect vacation.',
-    genre: ['Comedy', 'Family'],
-    language: 'English',
-    duration: 110,
-    rating: 7.5,
-    ageRating: 'PG-13',
-    releaseDate: '2024-12-14',
-    poster: '/comedy-movie-poster.png',
-    director: 'Judd Apatow',
-    cast: ['Kristen Wiig', 'Bill Hader'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-15T00:00:00.000Z',
-    updatedAt: '2024-12-04T00:00:00.000Z',
-  },
-  {
-    id: '5',
-    title: 'Dragon Legends',
-    synopsis: 'An epic adventure in a world of magic. A young warrior must unite the kingdom against an ancient evil.',
-    genre: ['Fantasy', 'Action', 'Adventure'],
-    language: 'English',
-    duration: 155,
-    rating: 8.7,
-    ageRating: 'PG-13',
-    releaseDate: '2024-12-16',
-    poster: '/fantasy-movie-poster.png',
-    director: 'James Cameron',
-    cast: ['Henry Cavill', 'Charlize Theron'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-20T00:00:00.000Z',
-    updatedAt: '2024-12-05T00:00:00.000Z',
-  },
-  {
-    id: '6',
-    title: 'Space Force',
-    synopsis: 'Intense action sequences in the final frontier. The first human mission to Mars faces unexpected challenges.',
-    genre: ['Action', 'Sci-Fi'],
-    language: 'English',
-    duration: 140,
-    rating: 8.1,
-    ageRating: 'PG-13',
-    releaseDate: '2024-12-13',
-    poster: '/action-movie-poster.png',
-    director: 'Christopher Nolan',
-    cast: ['Matt Damon', 'Jennifer Lawrence'],
-    status: 'now_showing',
-    showtimes: [],
-    createdAt: '2024-11-25T00:00:00.000Z',
-    updatedAt: '2024-12-06T00:00:00.000Z',
-  },
-]
-
-const mockShowtimes = [
-  { id: '1', movieId: '1', cinemaId: '1', screenId: '1', date: '2024-12-20', startTime: '10:00', endTime: '12:28', price: 8, availableSeats: 100, totalSeats: 120, status: 'selling' as const },
-  { id: '2', movieId: '1', cinemaId: '1', screenId: '1', date: '2024-12-20', startTime: '13:30', endTime: '15:58', price: 10, availableSeats: 80, totalSeats: 120, status: 'selling' as const },
-  { id: '3', movieId: '1', cinemaId: '1', screenId: '1', date: '2024-12-20', startTime: '16:00', endTime: '18:28', price: 12, availableSeats: 50, totalSeats: 120, status: 'selling' as const },
-  { id: '4', movieId: '1', cinemaId: '1', screenId: '1', date: '2024-12-20', startTime: '19:00', endTime: '21:28', price: 14, availableSeats: 20, totalSeats: 120, status: 'selling' as const },
-  { id: '5', movieId: '1', cinemaId: '1', screenId: '1', date: '2024-12-20', startTime: '21:30', endTime: '23:58', price: 14, availableSeats: 0, totalSeats: 120, status: 'sold_out' as const },
-  { id: '6', movieId: '2', cinemaId: '1', screenId: '2', date: '2024-12-20', startTime: '11:00', endTime: '13:05', price: 8, availableSeats: 90, totalSeats: 100, status: 'selling' as const },
-  { id: '7', movieId: '3', cinemaId: '2', screenId: '1', date: '2024-12-20', startTime: '12:00', endTime: '14:15', price: 9, availableSeats: 110, totalSeats: 150, status: 'selling' as const },
-  { id: '8', movieId: '4', cinemaId: '2', screenId: '2', date: '2024-12-20', startTime: '14:00', endTime: '15:50', price: 8, availableSeats: 80, totalSeats: 100, status: 'selling' as const },
-  { id: '9', movieId: '5', cinemaId: '3', screenId: '1', date: '2024-12-21', startTime: '10:30', endTime: '13:05', price: 12, availableSeats: 100, totalSeats: 120, status: 'selling' as const },
-  { id: '10', movieId: '6', cinemaId: '3', screenId: '2', date: '2024-12-21', startTime: '15:00', endTime: '17:20', price: 10, availableSeats: 90, totalSeats: 100, status: 'selling' as const },
-]
-
-const mockCoupons = [
-  { code: 'NEWUSER20', discountType: 'percentage' as const, discountValue: 20, minPurchase: 20, validUntil: '2025-12-31', maxUses: 100, usedCount: 45 },
-  { code: 'MOVIE50', discountType: 'fixed' as const, discountValue: 5, minPurchase: 30, validUntil: '2025-06-30', maxUses: 200, usedCount: 120 },
-  { code: 'WEEKEND30', discountType: 'percentage' as const, discountValue: 30, minPurchase: 25, validUntil: '2025-03-31', maxUses: 50, usedCount: 30 },
 ]
 
 // Generate seat layout
@@ -245,7 +76,7 @@ interface AppContextType {
   getUserBookings: (userId: string) => Booking[]
   getSeats: (showtimeId: string) => Seat[]
   reserveSeats: (showtimeId: string, seats: string[]) => void
-  coupons: typeof mockCoupons
+  coupons: any[]
   validateCoupon: (code: string, amount: number) => { valid: boolean; discount: number; message: string }
   analytics: Analytics
   searchMovies: (query: string, filters?: Partial<Movie>) => Movie[]
@@ -260,35 +91,37 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [movies, setMovies] = useState<Movie[]>(mockMovies)
-  const [cinemas, setCinemas] = useState<Cinema[]>(mockCinemas)
-  const [showtimes, setShowtimes] = useState<Showtime[]>(mockShowtimes)
+  const [movies, setMovies] = useState<Movie[]>([])
+  const [cinemas, setCinemas] = useState<Cinema[]>([])
+  const [showtimes, setShowtimes] = useState<Showtime[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
   const [selectedCity, setSelectedCity] = useState('Phnom Penh')
   const [selectedCinema, setSelectedCinema] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [currentBooking, setCurrentBooking] = useState<Partial<Booking> | null>(null)
 
-  // Load bookings from localStorage on mount
+  // Initialize data store and load data
   useEffect(() => {
-    const storedBookings = localStorage.getItem('bookings')
-    if (storedBookings) {
-      setBookings(JSON.parse(storedBookings))
-    }
+    dataStore.initialize()
+    setMovies(dataStore.movies.getAll())
+    setCinemas(dataStore.cinemas.getAll())
+    setShowtimes(dataStore.showtimes.getAll())
+    setBookings(dataStore.bookings.getAll())
   }, [])
-
-  // Save bookings to localStorage
-  useEffect(() => {
-    localStorage.setItem('bookings', JSON.stringify(bookings))
-  }, [bookings])
 
   // User functions
   const login = async (email: string, _password: string) => {
     setIsLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // Check if admin login
-    if (email === 'admin@cinemahub.com' || email === 'admin') {
+    // Check users from dataStore
+    const users = dataStore.users.getAll()
+    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase())
+    
+    if (foundUser) {
+      setUser(foundUser)
+    } else if (email === 'admin@cinemahub.com' || email === 'admin') {
+      // Default admin login
       setUser({
         id: 'admin-1',
         email: 'admin@cinemahub.com',
@@ -301,13 +134,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
         favoriteCinemas: [],
         notifications: { email: true, sms: true, push: true },
       })
+    } else if (email === 'staff@cinemahub.com' || email === 'staff') {
+      // Staff login
+      setUser({
+        id: 'staff-1',
+        email: 'staff@cinemahub.com',
+        phone: '+85512345679',
+        firstName: 'Staff',
+        lastName: 'Member',
+        role: 'staff',
+        createdAt: new Date().toISOString(),
+        favoriteMovies: [],
+        favoriteCinemas: [],
+        notifications: { email: true, sms: true, push: true },
+      })
+    } else if (email === 'owner@cinemahub.com' || email === 'owner') {
+      // Owner login
+      setUser({
+        id: 'owner-1',
+        email: 'owner@cinemahub.com',
+        phone: '+85512345670',
+        firstName: 'Owner',
+        lastName: 'Manager',
+        role: 'owner',
+        createdAt: new Date().toISOString(),
+        favoriteMovies: [],
+        favoriteCinemas: [],
+        notifications: { email: true, sms: true, push: true },
+      })
     } else {
+      // Default regular user
       setUser({
         id: '1',
         email,
         phone: '+85512345678',
-        firstName: 'John',
-        lastName: 'Doe',
+        firstName: 'User',
+        lastName: 'Customer',
         role: 'user',
         createdAt: new Date().toISOString(),
         favoriteMovies: [],
@@ -362,22 +224,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const nowShowing = movies.filter(m => m.status === 'now_showing')
   const comingSoon = movies.filter(m => m.status === 'coming_soon')
   
-  const getMovieById = (id: string) => movies.find(m => m.id === id)
+  const getMovieById = (id: string) => dataStore.movies.getById(id)
   
   const addMovie = (movie: Movie) => {
-    setMovies([...movies, movie])
+    const newMovie = dataStore.movies.create(movie)
+    setMovies([...movies, newMovie])
   }
   
   const updateMovie = (id: string, data: Partial<Movie>) => {
-    setMovies(movies.map(m => m.id === id ? { ...m, ...data } : m))
+    const updated = dataStore.movies.update(id, data)
+    if (updated) {
+      setMovies(movies.map(m => m.id === id ? updated : m))
+    }
   }
   
   const deleteMovie = (id: string) => {
-    setMovies(movies.filter(m => m.id !== id))
+    const success = dataStore.movies.delete(id)
+    if (success) {
+      setMovies(movies.filter(m => m.id !== id))
+    }
   }
 
   // Cinema functions
-  const getCinemaById = (id: string) => cinemas.find(c => c.id === id)
+  const getCinemaById = (id: string) => dataStore.cinemas.getById(id)
   
   const getCinemasByCity = (city: string) => cinemas.filter(c => c.city === city)
 
@@ -403,10 +272,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Booking functions
   const createBooking = async (booking: Partial<Booking>): Promise<Booking> => {
     setIsLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    const newBooking: Booking = {
-      id: Date.now().toString(),
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    const newBooking = dataStore.bookings.create({
       userId: user?.id || 'guest',
       movieId: booking.movieId || '',
       movieTitle: booking.movieTitle || '',
@@ -422,10 +290,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       couponCode: booking.couponCode,
       paymentMethod: booking.paymentMethod || 'card',
       paymentStatus: 'completed',
-      bookingDate: new Date().toISOString(),
       status: 'confirmed',
-      ticketCode: `TKT${Date.now()}`,
-    }
+    })
     
     setBookings([...bookings, newBooking])
     setIsLoading(false)
@@ -433,13 +299,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const cancelBooking = (id: string) => {
-    setBookings(bookings.map(b => 
-      b.id === id ? { ...b, status: 'cancelled' as const } : b
-    ))
+    const updated = dataStore.bookings.update(id, { status: 'cancelled' })
+    if (updated) {
+      setBookings(bookings.map(b => b.id === id ? updated : b))
+    }
   }
 
   const getUserBookings = (_userId: string) => {
-    return bookings.filter(b => b.userId === 'guest')
+    return bookings.filter(b => b.userId === 'guest' || b.userId === _userId)
   }
 
   // Seat functions
@@ -456,32 +323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Coupon functions
   const validateCoupon = (code: string, amount: number): { valid: boolean; discount: number; message: string } => {
-    const coupon = mockCoupons.find(c => c.code.toUpperCase() === code.toUpperCase())
-    
-    if (!coupon) {
-      return { valid: false, discount: 0, message: 'Invalid coupon code' }
-    }
-    
-    if (new Date(coupon.validUntil) < new Date()) {
-      return { valid: false, discount: 0, message: 'Coupon has expired' }
-    }
-    
-    if (coupon.usedCount >= coupon.maxUses) {
-      return { valid: false, discount: 0, message: 'Coupon usage limit reached' }
-    }
-    
-    if (amount < coupon.minPurchase) {
-      return { valid: false, discount: 0, message: `Minimum purchase of $${coupon.minPurchase} required` }
-    }
-    
-    let discount = 0
-    if (coupon.discountType === 'percentage') {
-      discount = amount * (coupon.discountValue / 100)
-    } else {
-      discount = coupon.discountValue
-    }
-    
-    return { valid: true, discount, message: `${coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '$' + coupon.discountValue} discount applied!` }
+    return dataStore.coupons.validate(code, amount)
   }
 
   // Analytics
@@ -561,7 +403,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       getUserBookings,
       getSeats,
       reserveSeats,
-      coupons: mockCoupons,
+      coupons: dataStore.coupons.getAll(),
       validateCoupon,
       analytics,
       searchMovies,

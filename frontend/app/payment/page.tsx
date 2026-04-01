@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import PaymentSummary from '@/components/payment-summary'
+import { dataStore } from '@/lib/data-store'
 
 // Dynamic import for PaymentForm to avoid SSR issues
 const PaymentForm = dynamic(() => import('@/components/payment-form'), {
@@ -181,6 +182,34 @@ export default function PaymentPage() {
       const bookings = existingBookings ? JSON.parse(existingBookings) : []
       bookings.push(booking)
       localStorage.setItem('bookings', JSON.stringify(bookings))
+
+      // Also save to dataStore for admin panel visibility
+      try {
+        dataStore.initialize()
+        dataStore.bookings.create({
+          userId: 'guest',
+          movieId: '1',
+          movieTitle: bookingData.movieTitle,
+          cinemaId: '1',
+          cinemaName: 'Cinema',
+          screenId: '1',
+          showtimeId: bookingId || '1',
+          showtime: bookingData.showtime,
+          seats: bookingData.seats.map((seat: string) => ({
+            seatId: seat,
+            seatNumber: seat,
+            seatType: 'regular' as const,
+            price: bookingData.ticketPrice
+          })),
+          ticketPrice: bookingData.ticketPrice,
+          totalPrice: bookingData.totalAmount,
+          paymentMethod: booking.paymentMethod as 'card' | 'wallet' | 'cash',
+          paymentStatus: 'completed' as const,
+          status: 'confirmed' as const
+        })
+      } catch (e) {
+        console.warn('Failed to save to dataStore:', e)
+      }
 
       setProcessing(false)
       router.push(`/booking-confirmation?bookingId=${booking.id}`)

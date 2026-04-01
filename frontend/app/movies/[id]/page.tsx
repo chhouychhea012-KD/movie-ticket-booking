@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
-import { Calendar, Clock, Star, MapPin, Ticket, Heart, Share2, Play, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, Star, MapPin, Ticket, Heart, Share2, Play, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { Movie, Showtime } from '@/types'
+import TrailerModal from '@/components/trailer-modal'
 
 export default function MovieDetailPage() {
   const params = useParams()
@@ -17,6 +18,8 @@ export default function MovieDetailPage() {
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [showtimes, setShowtimes] = useState<Showtime[]>([])
   const [selectedCinema, setSelectedCinema] = useState<string>('')
+  const [showTrailerModal, setShowTrailerModal] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     if (movieId) {
@@ -146,20 +149,40 @@ export default function MovieDetailPage() {
                   <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                   {isFavorite ? 'Favorited' : 'Add to Favorites'}
                 </button>
-                <button className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 text-slate-300 hover:bg-slate-700 rounded-xl transition">
+                <button 
+                  onClick={async () => {
+                    const url = `${window.location.origin}/movies/${movie.id}`
+                    try {
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: movie.title,
+                          text: `Check out ${movie.title} - ${movie.synopsis}`,
+                          url
+                        })
+                      } else {
+                        await navigator.clipboard.writeText(url)
+                        setCopied(true)
+                        setTimeout(() => setCopied(false), 2000)
+                      }
+                    } catch (err) {
+                      await navigator.clipboard.writeText(url)
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 text-slate-300 hover:bg-slate-700 rounded-xl transition"
+                >
                   <Share2 className="w-5 h-5" />
-                  Share
+                  {copied ? 'Copied!' : 'Share'}
                 </button>
                 {movie.trailerUrl && (
-                  <a 
-                    href={movie.trailerUrl} 
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button 
+                    onClick={() => setShowTrailerModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 rounded-xl transition"
                   >
                     <Play className="w-5 h-5" />
                     Watch Trailer
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
@@ -281,6 +304,16 @@ export default function MovieDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Trailer Modal */}
+      {showTrailerModal && movie?.trailerUrl && (
+        <TrailerModal
+          isOpen={showTrailerModal}
+          onClose={() => setShowTrailerModal(false)}
+          trailerUrl={movie.trailerUrl}
+          title={movie.title}
+        />
+      )}
     </div>
   )
 }

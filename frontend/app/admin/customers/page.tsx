@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { User } from '@/types/index'
+import { User, UserRole } from '@/types/index'
 
 // Mock initial users data
 const initialUsers: User[] = [
@@ -99,7 +99,7 @@ export default function CustomersPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [filterRole, setFilterRole] = useState<'all' | 'user' | 'admin'>('all')
+  const [filterRole, setFilterRole] = useState<'all' | UserRole>('all')
 
   // Form state
   const [formData, setFormData] = useState({
@@ -107,7 +107,7 @@ export default function CustomersPage() {
     lastName: '',
     email: '',
     phone: '',
-    role: 'user' as 'user' | 'admin'
+    role: 'user' as UserRole
   })
 
   // Load users from localStorage or use initial data
@@ -343,6 +343,20 @@ export default function CustomersPage() {
               >
                 Admins
               </Button>
+              <Button
+                variant={filterRole === 'staff' ? 'default' : 'outline'}
+                onClick={() => setFilterRole('staff')}
+                className={filterRole === 'staff' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
+              >
+                Staff
+              </Button>
+              <Button
+                variant={filterRole === 'owner' ? 'default' : 'outline'}
+                onClick={() => setFilterRole('owner')}
+                className={filterRole === 'owner' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
+              >
+                Owners
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -518,11 +532,13 @@ export default function CustomersPage() {
                   <label className="text-slate-300 text-sm">Role</label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'user' | 'admin' })}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                     className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
+                    <option value="staff">Staff</option>
+                    <option value="owner">Owner</option>
                   </select>
                 </div>
                 

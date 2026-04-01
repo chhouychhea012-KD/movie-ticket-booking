@@ -14,7 +14,8 @@ import {
   Building2,
   Calendar,
   QrCode,
-  Bell
+  Bell,
+  CreditCard
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,7 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   { label: 'Dashboard', href: '/admin', icon: <LayoutDashboard className="w-5 h-5" /> },
   { label: 'Bookings', href: '/admin/bookings', icon: <Ticket className="w-5 h-5" /> },
+  { label: 'Payments', href: '/admin/payments', icon: <CreditCard className="w-5 h-5" /> },
   { label: 'Movies', href: '/admin/movies', icon: <Film className="w-5 h-5" /> },
   { label: 'Cinemas', href: '/admin/cinemas', icon: <Building2 className="w-5 h-5" /> },
   { label: 'Showtimes', href: '/admin/showtimes', icon: <Calendar className="w-5 h-5" /> },

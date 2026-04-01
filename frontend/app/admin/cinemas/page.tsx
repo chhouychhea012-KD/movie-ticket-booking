@@ -3,71 +3,12 @@
 import { useState, useEffect } from 'react'
 import { Search, Plus, Edit2, Trash2, X, Eye, Download, MapPin, Phone, Mail, Building2, Grid, Users, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { dataStore } from '@/lib/data-store'
+import { Cinema } from '@/types'
 
-interface Cinema {
-  id: string
-  name: string
-  address: string
-  city: string
-  phone: string
-  email: string
-  image: string
-  facilities: string[]
-  screens: { id: string; name: string; capacity: number }[]
-  status: 'active' | 'inactive'
-}
-
-// Generate initial cinemas
+// Get cinemas from data store
 const generateInitialCinemas = (): Cinema[] => {
-  return [
-    {
-      id: '1',
-      name: 'Cineplex Downtown',
-      address: '123 Main Street, Downtown',
-      city: 'Bangkok',
-      phone: '+66 2 123 4567',
-      email: 'downtown@cineplex.com',
-      image: '',
-      facilities: ['Parking', 'Food Court', 'VIP Lounge', '3D Screens'],
-      screens: [
-        { id: '1', name: 'Screen 1', capacity: 150 },
-        { id: '2', name: 'Screen 2', capacity: 120 },
-        { id: '3', name: 'VIP Screen', capacity: 50 }
-      ],
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'Cineplex Uptown',
-      address: '456 Sukhumvit Road, Uptown',
-      city: 'Bangkok',
-      phone: '+66 2 234 5678',
-      email: 'uptown@cineplex.com',
-      image: '',
-      facilities: ['Parking', 'IMAX', 'Bar', 'Gaming Zone'],
-      screens: [
-        { id: '1', name: 'IMAX Screen', capacity: 200 },
-        { id: '2', name: 'Screen 2', capacity: 100 }
-      ],
-      status: 'active'
-    },
-    {
-      id: '3',
-      name: 'Cineplex Mall',
-      address: '789 Siam Paragon, Pathum Wan',
-      city: 'Bangkok',
-      phone: '+66 2 345 6789',
-      email: 'mall@cineplex.com',
-      image: '',
-      facilities: ['Parking', 'Food Court', '4DX', 'Dolby Atmos'],
-      screens: [
-        { id: '1', name: '4DX Screen', capacity: 80 },
-        { id: '2', name: 'Dolby Screen', capacity: 120 },
-        { id: '3', name: 'Screen 3', capacity: 100 }
-      ],
-      status: 'active'
-    }
-  ]
+  return dataStore.cinemas.getAll()
 }
 
 const allFacilities = ['Parking', 'Food Court', 'VIP Lounge', '3D Screens', 'IMAX', '4DX', 'Dolby Atmos', 'Bar', 'Gaming Zone', 'Wheelchair Access']
@@ -95,16 +36,11 @@ export default function AdminCinemasPage() {
   })
 
   useEffect(() => {
-    const storedCinemas = localStorage.getItem('cinemas')
+    dataStore.initialize()
+    const storedCinemas = generateInitialCinemas()
     if (storedCinemas) {
-      const parsed = JSON.parse(storedCinemas)
-      setCinemas(parsed)
-      setFilteredCinemas(parsed)
-    } else {
-      const initial = generateInitialCinemas()
-      setCinemas(initial)
-      setFilteredCinemas(initial)
-      localStorage.setItem('cinemas', JSON.stringify(initial))
+      setCinemas(storedCinemas)
+      setFilteredCinemas(storedCinemas)
     }
     setLoading(false)
   }, [])
@@ -118,11 +54,10 @@ export default function AdminCinemasPage() {
     setFilteredCinemas(filtered)
   }, [searchTerm, cinemas])
 
-  // Save to localStorage
+  // Save to data store
   const saveCinemas = (updatedCinemas: Cinema[]) => {
     setCinemas(updatedCinemas)
     setFilteredCinemas(updatedCinemas)
-    localStorage.setItem('cinemas', JSON.stringify(updatedCinemas))
   }
 
   // Handle create/update
@@ -240,7 +175,7 @@ export default function AdminCinemasPage() {
       c.address,
       c.phone,
       c.email,
-      c.screens.length,
+      c.screens?.length || 0,
       c.status
     ])
     
@@ -253,8 +188,8 @@ export default function AdminCinemasPage() {
     a.click()
   }
 
-  const totalScreens = cinemas.reduce((acc, c) => acc + c.screens.length, 0)
-  const totalCapacity = cinemas.reduce((acc, c) => acc + c.screens.reduce((s, screen) => s + screen.capacity, 0), 0)
+  const totalScreens = cinemas?.reduce((acc, c) => acc + (c.screens?.length || 0), 0) || 0
+  const totalCapacity = cinemas?.reduce((acc, c) => acc + (c.screens?.reduce((s, screen) => s + (screen?.capacity || 0), 0) || 0), 0) || 0
 
   return (
     <div className="space-y-8">
@@ -407,11 +342,11 @@ export default function AdminCinemasPage() {
                 <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
                   <span className="flex items-center gap-1">
                     <Grid className="w-4 h-4" />
-                    {cinema.screens.length} Screens
+                    {cinema.screens?.length || 0} Screens
                   </span>
                   <span className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
-                    {cinema.screens.reduce((s, screen) => s + screen.capacity, 0)} seats
+                    {cinema.screens?.reduce((s, screen) => s + (screen?.capacity || 0), 0) || 0} seats
                   </span>
                 </div>
 

@@ -1,6 +1,8 @@
 // Core Data Types for Movie Ticket Booking System
 
 // ==================== USER MODULE ====================
+export type UserRole = 'user' | 'admin' | 'staff' | 'owner'
+
 export interface User {
   id: string
   email: string
@@ -8,7 +10,7 @@ export interface User {
   firstName: string
   lastName: string
   avatar?: string
-  role: 'user' | 'admin'
+  role: UserRole
   createdAt: string
   favoriteMovies: string[]
   favoriteCinemas: string[]
