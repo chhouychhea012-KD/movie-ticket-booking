@@ -81,7 +81,7 @@ export default function BookingPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mt-4">
-                {movie.genre.map((g: string, i: number) => (
+                {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).map((g: string, i: number) => (
                   <span key={i} className="px-2 py-1 bg-slate-700/50 text-slate-300 rounded text-xs">
                     {g}
                   </span>

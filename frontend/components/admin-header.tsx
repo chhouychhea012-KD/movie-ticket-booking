@@ -3,6 +3,7 @@
 import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, X, Ticket, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
+import { useApp } from '@/context/AppContext'
 
 // Mock notifications data
 const mockNotifications = [
@@ -49,6 +50,7 @@ const mockNotifications = [
 ]
 
 export default function AdminHeader() {
+  const { user, logout } = useApp()
   const [searchQuery, setSearchQuery] = useState('')
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -56,6 +58,12 @@ export default function AdminHeader() {
   const notificationRef = useRef<HTMLDivElement>(null)
 
   const unreadCount = mockNotifications.filter(n => !n.read).length
+
+  // Handle logout - clear everything and redirect
+  const handleLogout = () => {
+    logout()
+    setShowProfileDropdown(false)
+  }
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -270,14 +278,13 @@ export default function AdminHeader() {
                 ))}
               </div>
               <div className="border-t border-slate-700 py-2">
-                <Link
-                  href="/auth/login"
-                  onClick={handleMenuItemClick}
-                  className="flex items-center gap-3 px-4 py-2.5 text-red-400 hover:bg-slate-700 transition"
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-3 px-4 py-2.5 w-full text-left text-red-400 hover:bg-slate-700 transition"
                 >
                   <LogOut className="w-4 h-4" />
                   <span className="text-sm">Log Out</span>
-                </Link>
+                </button>
               </div>
             </div>
           )}

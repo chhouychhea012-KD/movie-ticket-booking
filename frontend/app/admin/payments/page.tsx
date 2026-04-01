@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { paymentsAPI } from '@/lib/api'
 import { CreditCard, Search, Filter, Download, DollarSign, CheckCircle, Clock, XCircle, Wallet, Banknote } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -52,16 +53,31 @@ export default function AdminPaymentsPage() {
     setFilteredPayments(filtered)
   }, [searchTerm, selectedStatus, selectedMethod, payments])
 
-  const loadPayments = () => {
-    // Get bookings from localStorage (which includes payment info)
+  const loadPayments = async () => {
+    try {
+      const response = await paymentsAPI.getAll({ limit: 100 })
+      if (response.success && response.data?.payments) {
+        setPayments(response.data.payments)
+        setFilteredPayments(response.data.payments)
+      } else {
+        // Fallback to localStorage
+        loadFromLocalStorage()
+      }
+    } catch (error) {
+      // Fallback to localStorage on error
+      loadFromLocalStorage()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadFromLocalStorage = () => {
     const storedBookings = localStorage.getItem('bookings')
     const bookings = storedBookings ? JSON.parse(storedBookings) : []
     
-    // Also check dataStore bookings
     const dataStoreBookings = localStorage.getItem('cinemahub_bookings')
     const dsBookings = dataStoreBookings ? JSON.parse(dataStoreBookings) : []
 
-    // Combine and normalize both sources
     const allPayments: PaymentRecord[] = [
       ...bookings.map((b: any) => ({
         id: b.id,
@@ -91,7 +107,6 @@ export default function AdminPaymentsPage() {
       }))
     ]
 
-    // Remove duplicates by ID
     const uniquePayments = allPayments.reduce((acc: PaymentRecord[], p) => {
       if (!acc.find(existing => existing.id === p.id)) {
         acc.push(p)
@@ -99,14 +114,12 @@ export default function AdminPaymentsPage() {
       return acc
     }, [])
 
-    // Sort by date (newest first)
     uniquePayments.sort((a, b) => 
       new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime()
     )
 
     setPayments(uniquePayments)
     setFilteredPayments(uniquePayments)
-    setLoading(false)
   }
 
   const getStatusColor = (status: string) => {
@@ -152,8 +165,8 @@ export default function AdminPaymentsPage() {
     const rows = filteredPayments.map(p => [
       p.id,
       p.movieTitle,
-      p.seats.join(', '),
-      p.totalPrice,
+      Array.isArray(p.seats) ? p.seats.join(', ') : '',
+      Number(p.totalPrice),
       p.paymentMethod,
       p.status,
       p.bookingDate
@@ -168,7 +181,7 @@ export default function AdminPaymentsPage() {
     a.click()
   }
 
-  const totalRevenue = payments.reduce((sum, p) => sum + (p.totalPrice || 0), 0)
+  const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.totalPrice) || 0), 0)
   const completedPayments = payments.filter(p => p.status === 'completed' || p.status === 'confirmed')
   const pendingPayments = payments.filter(p => p.status === 'pending')
 
@@ -329,11 +342,11 @@ export default function AdminPaymentsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-slate-300">
-                        {payment.seats?.length > 0 ? payment.seats.join(', ') : 'N/A'}
+{Array.isArray(payment.seats) && payment.seats.length > 0 ? payment.seats.join(', ') : 'N/A'}
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-orange-400 font-semibold">${payment.totalPrice.toFixed(2)}</p>
+${Number(payment.totalPrice).toFixed(2)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">

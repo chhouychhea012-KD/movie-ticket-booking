@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Booking } from '@/types/booking'
+import { bookingsAPI } from '@/lib/api'
 import { Search, Download, Plus, X, Edit2, Trash2, Eye, Check, Ticket, Clock, DollarSign, Calendar } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -83,18 +84,50 @@ export default function AdminBookingsDetailPage() {
   })
 
   useEffect(() => {
-    const storedBookings = localStorage.getItem('bookings')
-    if (storedBookings) {
-      const parsed = JSON.parse(storedBookings)
-      setBookings(parsed)
-      setFilteredBookings(parsed)
-    } else {
-      const initial = generateInitialBookings()
-      setBookings(initial)
-      setFilteredBookings(initial)
-      localStorage.setItem('bookings', JSON.stringify(initial))
+    const loadBookings = async () => {
+      try {
+        // Try to load from API first
+        const response = await bookingsAPI.getAll({ limit: 100 })
+        if (response.success && response.data?.bookings) {
+          // Transform API data to match local Booking type
+          const transformedBookings = response.data.bookings.map((b: any) => ({
+            ...b,
+            seats: Array.isArray(b.seats) ? b.seats.map((s: any) => s.seatNumber || s) : b.seats || [],
+          }))
+          setBookings(transformedBookings)
+          setFilteredBookings(transformedBookings)
+        } else {
+          // Fallback to localStorage
+          const storedBookings = localStorage.getItem('bookings')
+          if (storedBookings) {
+            const parsed = JSON.parse(storedBookings)
+            setBookings(parsed)
+            setFilteredBookings(parsed)
+          } else {
+            const initial = generateInitialBookings()
+            setBookings(initial)
+            setFilteredBookings(initial)
+            localStorage.setItem('bookings', JSON.stringify(initial))
+          }
+        }
+      } catch (error) {
+        // Fallback to localStorage on error
+        const storedBookings = localStorage.getItem('bookings')
+        if (storedBookings) {
+          const parsed = JSON.parse(storedBookings)
+          setBookings(parsed)
+          setFilteredBookings(parsed)
+        } else {
+          const initial = generateInitialBookings()
+          setBookings(initial)
+          setFilteredBookings(initial)
+          localStorage.setItem('bookings', JSON.stringify(initial))
+        }
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+    loadBookings()
   }, [])
 
   useEffect(() => {
@@ -320,7 +353,7 @@ export default function AdminBookingsDetailPage() {
               </div>
               <div>
                 <p className="text-slate-400 text-xs">Total Revenue</p>
-                <p className="text-xl font-bold text-white">${bookings.reduce((s, b) => s + b.totalPrice, 0)}</p>
+${bookings.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0)}
               </div>
             </div>
           </CardContent>

@@ -1,112 +1,41 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { notificationsAPI } from '@/lib/api'
 import { Bell, Ticket, AlertCircle, CheckCircle, Check, Trash2, Filter, Search } from 'lucide-react'
 
-// Mock notifications data
-const allNotifications = [
-  {
-    id: 1,
-    type: 'booking',
-    title: 'New Booking Received',
-    message: 'John Doe booked 3 tickets for Dune: Part Two at Legend Cinema - Screen 1',
-    time: '5 min ago',
-    date: '2024-03-31',
-    read: false,
-    icon: Ticket,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10'
-  },
-  {
-    id: 2,
-    type: 'alert',
-    title: 'Low Seat Availability',
-    message: 'Only 15 seats remaining for Oppenheimer - 7PM show on March 31, 2024',
-    time: '15 min ago',
-    date: '2024-03-31',
-    read: false,
-    icon: AlertCircle,
-    color: 'text-yellow-500',
-    bgColor: 'bg-yellow-500/10'
-  },
-  {
-    id: 3,
-    type: 'success',
-    title: 'Booking Confirmed',
-    message: 'Booking #BK-2847 for "The Batman" has been successfully paid - $45.00',
-    time: '1 hour ago',
-    date: '2024-03-31',
-    read: true,
-    icon: CheckCircle,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10'
-  },
-  {
-    id: 4,
-    type: 'alert',
-    title: 'System Update',
-    message: 'Server maintenance scheduled for tonight at 2:00 AM - Expected downtime 10 minutes',
-    time: '2 hours ago',
-    date: '2024-03-31',
-    read: true,
-    icon: AlertCircle,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10'
-  },
-  {
-    id: 5,
-    type: 'booking',
-    title: 'Booking Cancelled',
-    message: 'Customer Sarah Lee cancelled booking #BK-2845 for "Barbie"',
-    time: '3 hours ago',
-    date: '2024-03-31',
-    read: true,
-    icon: Ticket,
-    color: 'text-red-500',
-    bgColor: 'bg-red-500/10'
-  },
-  {
-    id: 6,
-    type: 'success',
-    title: 'Payment Received',
-    message: 'Payment of $120.00 received for booking #BK-2850',
-    time: '4 hours ago',
-    date: '2024-03-30',
-    read: true,
-    icon: CheckCircle,
-    color: 'text-green-500',
-    bgColor: 'bg-green-500/10'
-  },
-  {
-    id: 7,
-    type: 'alert',
-    title: 'Showtime Starting Soon',
-    message: 'Oppenheimer - 7PM show starting in 30 minutes',
-    time: '5 hours ago',
-    date: '2024-03-30',
-    read: true,
-    icon: AlertCircle,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10'
-  },
-  {
-    id: 8,
-    type: 'booking',
-    title: 'New Booking Received',
-    message: 'Mike Chen booked 2 tickets for "Dune: Part Two" - VIP seats',
-    time: '6 hours ago',
-    date: '2024-03-30',
-    read: true,
-    icon: Ticket,
-    color: 'text-orange-500',
-    bgColor: 'bg-orange-500/10'
-  },
-]
-
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(allNotifications)
+  const [notifications, setNotifications] = useState<any[]>([])
   const [filter, setFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  // Load notifications from API
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const response = await notificationsAPI.getAll({ limit: 100 })
+        if (response.success && response.data?.notifications) {
+          // Transform API data to include icon and colors
+          const transformed = response.data.notifications.map((n: any) => ({
+            ...n,
+            icon: n.type === 'booking' ? Ticket : n.type === 'alert' ? AlertCircle : n.type === 'success' ? CheckCircle : Bell,
+            color: n.type === 'booking' ? 'text-orange-500' : n.type === 'alert' ? 'text-yellow-500' : n.type === 'success' ? 'text-green-500' : 'text-blue-500',
+            bgColor: n.type === 'booking' ? 'bg-orange-500/10' : n.type === 'alert' ? 'bg-yellow-500/10' : n.type === 'success' ? 'bg-green-500/10' : 'bg-blue-500/10'
+          }))
+          setNotifications(transformed)
+        } else {
+          setNotifications([])
+        }
+      } catch (error) {
+        console.error('Failed to load notifications:', error)
+        setNotifications([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadNotifications()
+  }, [])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -123,22 +52,42 @@ export default function NotificationsPage() {
     return matchesFilter && matchesSearch
   })
 
-  const handleMarkAsRead = (id: number) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ))
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationsAPI.markAsRead(id)
+      setNotifications(notifications.map(n => 
+        n.id === id ? { ...n, read: true } : n
+      ))
+    } catch (error) {
+      console.error('Failed to mark as read:', error)
+    }
   }
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })))
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationsAPI.markAllAsRead()
+      setNotifications(notifications.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('Failed to mark all as read:', error)
+    }
   }
 
-  const handleDelete = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id))
+  const handleDelete = async (id: string) => {
+    try {
+      await notificationsAPI.delete(id)
+      setNotifications(notifications.filter(n => n.id !== id))
+    } catch (error) {
+      console.error('Failed to delete notification:', error)
+    }
   }
 
-  const handleDeleteAll = () => {
-    setNotifications([])
+  const handleDeleteAll = async () => {
+    try {
+      await notificationsAPI.deleteAll()
+      setNotifications([])
+    } catch (error) {
+      console.error('Failed to delete all notifications:', error)
+    }
   }
 
   return (

@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useApp } from '@/context/AppContext'
+import { ticketsAPI } from '@/lib/api'
 import { QrCode, Search, Check, X, Clock, AlertTriangle, Camera, RefreshCw, User, Calendar, Ticket } from 'lucide-react'
 
 export default function TicketValidationPage() {
-  const { bookings } = useApp()
   const [scanInput, setScanInput] = useState('')
   const [scannedTickets, setScannedTickets] = useState<any[]>([])
   const [validationResult, setValidationResult] = useState<{
@@ -15,67 +14,39 @@ export default function TicketValidationPage() {
   }>({ status: null, message: '', ticket: null })
 
   // In a real app, this would use a camera-based QR scanner
-  const handleManualScan = () => {
+  const handleManualScan = async () => {
     if (!scanInput.trim()) return
 
     const ticketCode = scanInput.trim().toUpperCase()
     
-    // Find booking by ticket code or ID
-    const booking = bookings.find(b => 
-      b.ticketCode?.toUpperCase() === ticketCode || 
-      b.id === ticketCode ||
-      b.id.toUpperCase() === ticketCode
-    )
-
-    if (!booking) {
+    try {
+      // Call the API to validate the ticket
+      const response = await ticketsAPI.validate(ticketCode)
+      
+      if (response.success && response.data) {
+        setValidationResult({
+          status: response.data.status,
+          message: response.data.message,
+          ticket: response.data.ticket
+        })
+        
+        if (response.data.status === 'success') {
+          setScannedTickets([...scannedTickets, response.data.ticket])
+        }
+      } else {
+        setValidationResult({
+          status: 'error',
+          message: response.message || 'Ticket not found. Please check the ticket code.',
+          ticket: null
+        })
+      }
+    } catch (error) {
       setValidationResult({
         status: 'error',
-        message: 'Ticket not found. Please check the ticket code.',
+        message: 'Failed to validate ticket. Please try again.',
         ticket: null
       })
-      return
     }
-
-    // Check if ticket has already been used
-    if (booking.status === 'used') {
-      setValidationResult({
-        status: 'warning',
-        message: 'This ticket has already been used.',
-        ticket: booking
-      })
-      return
-    }
-
-    // Check if ticket is cancelled
-    if (booking.status === 'cancelled') {
-      setValidationResult({
-        status: 'error',
-        message: 'This ticket has been cancelled.',
-        ticket: booking
-      })
-      return
-    }
-
-    // Check if ticket is expired (showtime has passed)
-    const showtimeDate = new Date(booking.showtime)
-    const now = new Date()
-    if (showtimeDate < now) {
-      setValidationResult({
-        status: 'warning',
-        message: 'This ticket has expired.',
-        ticket: booking
-      })
-      return
-    }
-
-    // Success - mark as used
-    const updatedBooking = { ...booking, status: 'used' as const }
-    setScannedTickets([...scannedTickets, updatedBooking])
-    setValidationResult({
-      status: 'success',
-      message: 'Ticket validated successfully!',
-      ticket: updatedBooking
-    })
     
     setScanInput('')
   }

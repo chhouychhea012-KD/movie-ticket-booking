@@ -60,7 +60,10 @@ export default function AdminMoviesPage() {
     )
 
     if (genreFilter !== 'all') {
-      filtered = filtered.filter(m => m.genre === genreFilter)
+      filtered = filtered.filter(m => {
+        const genreArray = Array.isArray(m.genre) ? m.genre : String(m.genre || '').split(',')
+        return genreArray.some((g: string) => g.toLowerCase() === genreFilter.toLowerCase())
+      })
     }
 
     setFilteredMovies(filtered)
@@ -86,7 +89,7 @@ export default function AdminMoviesPage() {
           ? {
               ...m,
               title: formData.title,
-              genre: formData.genre,
+              genre: [formData.genre],
               rating: formData.rating,
               duration: formData.duration,
               releaseDate: formData.releaseDate,
@@ -160,14 +163,14 @@ export default function AdminMoviesPage() {
     setEditingMovie(movie)
     setFormData({
       title: movie.title,
-      genre: movie.genre[0] || 'Action',
+      genre: Array.isArray(movie.genre) ? movie.genre[0] : String(movie.genre || '').split(',')[0],
       rating: movie.rating,
       duration: movie.duration,
       releaseDate: movie.releaseDate,
       synopsis: movie.synopsis,
       status: movie.status,
       director: movie.director,
-      cast: movie.cast.join(', '),
+      cast: Array.isArray(movie.cast) ? movie.cast.join(', ') : String(movie.cast || ''),
       language: movie.language,
       ageRating: movie.ageRating,
       showtimes: ''
@@ -193,7 +196,7 @@ export default function AdminMoviesPage() {
     const headers = ['Title', 'Genre', 'Rating', 'Duration', 'Release Date', 'Status', 'Director']
     const rows = movies.map(m => [
       m.title,
-      m.genre,
+      Array.isArray(m.genre) ? m.genre.join(', ') : String(m.genre || ''),
       m.rating,
       m.duration,
       m.releaseDate,
@@ -349,7 +352,7 @@ export default function AdminMoviesPage() {
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="text-lg font-bold text-white line-clamp-1">{movie.title}</h3>
                   <span className="shrink-0 px-2 py-1 bg-orange-500/20 text-orange-400 rounded-lg text-xs font-medium">
-                    {movie.genre}
+                    {Array.isArray(movie.genre) ? movie.genre.join(', ') : String(movie.genre || '')}
                   </span>
                 </div>
                 
@@ -619,7 +622,7 @@ export default function AdminMoviesPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4 mb-4">
                 <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-lg text-sm font-medium">
-                  {viewMovie.genre}
+                  {Array.isArray(viewMovie.genre) ? viewMovie.genre.join(', ') : String(viewMovie.genre || '')}
                 </span>
                 <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-sm font-medium flex items-center gap-1">
                   <Star className="w-4 h-4" /> {viewMovie.rating}
@@ -641,7 +644,7 @@ export default function AdminMoviesPage() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Cast</p>
-                  <p className="text-white">{viewMovie.cast.join(', ')}</p>
+                  <p className="text-white">{(Array.isArray(viewMovie.cast) ? viewMovie.cast : String(viewMovie.cast || '').split(',')).join(', ')}</p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Duration</p>

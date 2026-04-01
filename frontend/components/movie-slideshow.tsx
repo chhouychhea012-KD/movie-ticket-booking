@@ -170,7 +170,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 5000 }: Movi
           <div className="max-w-3xl">
             {/* Movie Tags */}
             <div className="flex flex-wrap gap-2 mb-4">
-              {currentMovie.genre.slice(0, 3).map((genre: string, i: number) => (
+              {(Array.isArray(currentMovie.genre) ? currentMovie.genre : String(currentMovie.genre || '').split(',')).slice(0, 3).map((genre: string, i: number) => (
                 <span 
                   key={i}
                   className="px-3 py-1 text-xs font-medium bg-orange-500/20 text-orange-400 rounded-full border border-orange-500/30"

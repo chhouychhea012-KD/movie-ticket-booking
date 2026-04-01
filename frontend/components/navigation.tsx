@@ -124,7 +124,7 @@ export default function Navigation() {
                     </div>
                     <div>
                       <p className="text-white font-medium">{movie.title}</p>
-                      <p className="text-slate-400 text-sm">{movie.genre.join(', ')}</p>
+                      <p className="text-slate-400 text-sm">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).join(', ')}</p>
                     </div>
                   </Link>
                 ))}
@@ -247,7 +247,14 @@ export default function Navigation() {
                     </div>
                     <div className="border-t border-slate-800 py-2">
                       <button
-                        onClick={logout}
+                        onClick={() => {
+                          // Clear all localStorage before logout
+                          localStorage.removeItem('token')
+                          localStorage.removeItem('user')
+                          localStorage.removeItem('bookings')
+                          localStorage.removeItem('cinemahub_bookings')
+                          logout()
+                        }}
                         className="flex items-center gap-3 px-4 py-2.5 w-full text-left hover:bg-red-500/10 text-red-400 transition-all"
                       >
                         <LogOut className="w-4 h-4" />
@@ -274,12 +281,14 @@ export default function Navigation() {
               </div>
             )}
             
-            <Link 
-              href="/admin" 
-              className="px-3 py-2 text-slate-500 hover:text-white text-sm transition-colors"
-            >
-              Admin
-            </Link>
+            {user && (user.role === 'admin' || user.role === 'owner' || user.role === 'staff') && (
+              <Link 
+                href="/admin" 
+                className="px-3 py-2 text-slate-500 hover:text-white text-sm transition-colors"
+              >
+                Admin
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -357,6 +366,11 @@ export default function Navigation() {
                   </Link>
                   <button
                     onClick={() => {
+                      // Clear all localStorage before logout
+                      localStorage.removeItem('token')
+                      localStorage.removeItem('user')
+                      localStorage.removeItem('bookings')
+                      localStorage.removeItem('cinemahub_bookings')
                       logout()
                       setMobileMenuOpen(false)
                     }}
@@ -376,13 +390,15 @@ export default function Navigation() {
                 </Link>
               )}
               
-              <Link 
-                href="/admin" 
-                className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white transition-all"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="font-medium">Admin Dashboard</span>
-              </Link>
+              {user && (user.role === 'admin' || user.role === 'owner' || user.role === 'staff') && (
+                <Link 
+                  href="/admin" 
+                  className="flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-white transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="font-medium">Admin Dashboard</span>
+                </Link>
+              )}
             </div>
           </div>
         )}

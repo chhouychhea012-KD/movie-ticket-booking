@@ -8,7 +8,7 @@ export default function RootContent({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   
   // Hide navigation on admin pages
-  if (pathname?.startsWith('/admin')) {
+if (pathname?.startsWith('/admin') || pathname?.startsWith('/auth')) {
     return <main>{children}</main>
   }
   

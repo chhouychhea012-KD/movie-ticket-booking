@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
-import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || ''
   const { login, isLoading } = useApp()
   
   const [formData, setFormData] = useState({
@@ -28,7 +30,17 @@ export default function LoginPage() {
     
     try {
       await login(formData.email, formData.password)
-      router.push('/')
+      
+      const userStr = localStorage.getItem('user')
+      const user = userStr ? JSON.parse(userStr) : null
+      
+      if (redirect) {
+        router.push(redirect)
+      } else if (user && ['admin', 'owner', 'staff'].includes(user.role)) {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
     } catch (err) {
       setError('Invalid email or password')
     }
@@ -37,7 +49,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-4xl font-bold text-orange-500">
             CinemaHub
@@ -45,7 +56,6 @@ export default function LoginPage() {
           <p className="text-slate-400 mt-2">Welcome back! Please login to continue</p>
         </div>
 
-        {/* Login Form */}
         <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
           <h1 className="text-2xl font-bold text-white mb-6 text-center">Login</h1>
           
@@ -121,14 +131,13 @@ export default function LoginPage() {
 
           <div className="mt-6 text-center">
             <p className="text-slate-400">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/auth/register" className="text-orange-500 hover:text-orange-400 font-medium">
                 Register here
               </Link>
             </p>
           </div>
 
-          {/* Social Login */}
           <div className="mt-8 pt-6 border-t border-slate-700/50">
             <p className="text-slate-400 text-sm text-center mb-4">Or continue with</p>
             <div className="grid grid-cols-2 gap-4">

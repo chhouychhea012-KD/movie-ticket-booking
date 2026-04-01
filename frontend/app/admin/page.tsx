@@ -105,7 +105,7 @@ export default function AdminPage() {
     setLoading(false)
   }, [])
 
-  const totalRevenue = bookings.reduce((sum, b) => sum + b.totalPrice, 0)
+  const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
   const totalBookings = bookings.length
 
   return (

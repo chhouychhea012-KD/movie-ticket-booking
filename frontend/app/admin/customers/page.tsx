@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usersAPI } from '@/lib/api'
 import { 
   Users, 
   Search, 
@@ -110,16 +111,35 @@ export default function CustomersPage() {
     role: 'user' as UserRole
   })
 
-  // Load users from localStorage or use initial data
+  // Load users from API or localStorage
   useEffect(() => {
-    const storedUsers = localStorage.getItem('users')
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers))
-    } else {
-      setUsers(initialUsers)
-      localStorage.setItem('users', JSON.stringify(initialUsers))
+    const loadUsers = async () => {
+      try {
+        const response = await usersAPI.getAll({ limit: 100 })
+        if (response.success && response.data?.users) {
+          setUsers(response.data.users)
+        } else {
+          const storedUsers = localStorage.getItem('users')
+          if (storedUsers) {
+            setUsers(JSON.parse(storedUsers))
+          } else {
+            setUsers(initialUsers)
+            localStorage.setItem('users', JSON.stringify(initialUsers))
+          }
+        }
+      } catch (error) {
+        const storedUsers = localStorage.getItem('users')
+        if (storedUsers) {
+          setUsers(JSON.parse(storedUsers))
+        } else {
+          setUsers(initialUsers)
+          localStorage.setItem('users', JSON.stringify(initialUsers))
+        }
+      } finally {
+        setIsLoading(false)
+      }
     }
-    setIsLoading(false)
+    loadUsers()
   }, [])
 
   // Save users to localStorage whenever they change

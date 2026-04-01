@@ -9,7 +9,7 @@ import BookingCard from '@/components/booking-card'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, logout, movies, bookings, updateProfile, removeFavoriteMovie } = useApp()
+  const { user, movies, bookings, updateProfile, removeFavoriteMovie } = useApp()
   const [activeTab, setActiveTab] = useState('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -42,8 +42,16 @@ export default function ProfilePage() {
   }
 
   const handleLogout = () => {
-    logout()
-    router.push('/')
+    // Clear all authentication-related data
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('bookings')
+    localStorage.removeItem('cinemahub_bookings')
+    
+    // Reset state and reload
+    if (typeof window !== 'undefined') {
+      window.location.replace('/')
+    }
   }
 
   const favoriteMovies = movies.filter(m => user.favoriteMovies.includes(m.id))
@@ -275,7 +283,7 @@ export default function ProfilePage() {
                           <div className="p-4">
                             <h3 className="text-white font-semibold">{movie.title}</h3>
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="text-orange-500 text-sm">{movie.genre.join(', ')}</span>
+                              <span className="text-orange-500 text-sm">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).join(', ')}</span>
                               <span className="text-yellow-400 text-sm flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-current" />
                                 {movie.rating}

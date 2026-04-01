@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
 
   const passwordRequirements = [
-    { met: formData.password.length >= 8, text: 'At least 8 characters' },
+    { met: formData.password.length >= 6, text: 'At least 6 characters' },
     { met: /[A-Z]/.test(formData.password), text: 'One uppercase letter' },
     { met: /[0-9]/.test(formData.password), text: 'One number' },
   ]
@@ -52,17 +52,17 @@ export default function RegisterPage() {
         lastName: formData.lastName,
         email: formData.email,
         phone: formData.phone,
+        password: formData.password,
       })
       router.push('/')
-    } catch (err) {
-      setError('Registration failed. Please try again.')
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Please try again.')
     }
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-4xl font-bold text-orange-500">
             CinemaHub
@@ -70,8 +70,7 @@ export default function RegisterPage() {
           <p className="text-slate-400 mt-2">Create your account to start booking</p>
         </div>
 
-        {/* Register Form */}
-        <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
+        <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8 shadow-2xl hover:shadow-orange-500/25 transition-shadow">
           <h1 className="text-2xl font-bold text-white mb-6 text-center">Register</h1>
           
           {error && (
@@ -89,9 +88,9 @@ export default function RegisterPage() {
                   <input
                     type="text"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value.trim() })}
                     placeholder="John"
-                    className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                     disabled={isLoading}
                   />
                 </div>
@@ -101,9 +100,9 @@ export default function RegisterPage() {
                 <input
                   type="text"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value.trim() })}
                   placeholder="Doe"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                   disabled={isLoading}
                 />
               </div>
@@ -116,9 +115,9 @@ export default function RegisterPage() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value.trim().toLowerCase() })}
                   placeholder="your@email.com"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                   disabled={isLoading}
                 />
               </div>
@@ -131,9 +130,9 @@ export default function RegisterPage() {
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value.trim() })}
                   placeholder="+855 12 345 678"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                   disabled={isLoading}
                 />
               </div>
@@ -148,23 +147,23 @@ export default function RegisterPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  className="w-full pl-11 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-400 p-1 rounded transition-colors"
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               
-              {/* Password Requirements */}
               {formData.password && (
-                <div className="mt-2 space-y-1">
+                <div className="mt-3 space-y-1">
                   {passwordRequirements.map((req, i) => (
-                    <div key={i} className={`flex items-center gap-2 text-xs ${req.met ? 'text-green-400' : 'text-slate-500'}`}>
+                    <div key={i} className={`flex items-center gap-2 text-xs ${req.met ? 'text-emerald-400' : 'text-slate-500'}`}>
                       <Check className={`w-3 h-3 ${req.met ? 'opacity-100' : 'opacity-30'}`} />
                       {req.text}
                     </div>
@@ -182,7 +181,7 @@ export default function RegisterPage() {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 hover:border-slate-500/70"
                   disabled={isLoading}
                 />
               </div>
@@ -192,19 +191,19 @@ export default function RegisterPage() {
             </div>
 
             <div className="flex items-start gap-2 text-sm">
-              <input type="checkbox" className="mt-1 w-4 h-4 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500" />
-              <span className="text-slate-400">
+              <input type="checkbox" className="mt-1 w-4 h-4 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500 hover:bg-slate-600 transition-all" />
+              <span className="text-slate-400 leading-relaxed">
                 I agree to the{' '}
-                <Link href="/terms" className="text-orange-500 hover:underline">Terms of Service</Link>
+                <Link href="/terms" className="text-orange-500 hover:text-orange-400 font-medium">Terms of Service</Link>
                 {' '}and{' '}
-                <Link href="/privacy" className="text-orange-500 hover:underline">Privacy Policy</Link>
+                <Link href="/privacy" className="text-orange-500 hover:text-orange-400 font-medium">Privacy Policy</Link>
               </span>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-orange-500 hover:bg-orange-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-slate-600 disabled:to-slate-700 shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 disabled:shadow-none disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ring-2 ring-transparent hover:ring-orange-500/50"
             >
               {isLoading ? (
                 <>
@@ -220,7 +219,7 @@ export default function RegisterPage() {
           <div className="mt-6 text-center">
             <p className="text-slate-400">
               Already have an account?{' '}
-              <Link href="/auth/login" className="text-orange-500 hover:text-orange-400 font-medium">
+              <Link href="/auth/login" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
                 Login here
               </Link>
             </p>

@@ -196,7 +196,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
 
           {/* Genres */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {movie.genre.map((g, i) => (
+            {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).map((g, i) => (
               <span key={i} className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-medium">
                 {g}
               </span>
@@ -214,7 +214,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
             </div>
             <div className="bg-slate-800/50 rounded-xl p-4">
               <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Cast</p>
-              <p className="text-white font-medium">{movie.cast.join(', ')}</p>
+              <p className="text-white font-medium">{(Array.isArray(movie.cast) ? movie.cast : String(movie.cast || '').split(',')).join(', ')}</p>
             </div>
           </div>
 

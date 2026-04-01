@@ -31,7 +31,7 @@ export default function MoviesPage() {
     
     // Apply genre filter
     if (selectedGenres.length > 0) {
-      results = results.filter(m => m.genre.some(g => selectedGenres.includes(g)))
+      results = results.filter(m => (Array.isArray(m.genre) ? m.genre : String(m.genre || '').split(',')).some(g => selectedGenres.includes(g)))
     }
     
     // Apply language filter

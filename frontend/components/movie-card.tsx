@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Movie } from '@/types'
 import { useApp } from '@/context/AppContext'
@@ -13,6 +14,7 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) {
+  const router = useRouter()
   const { user, addFavoriteMovie, removeFavoriteMovie } = useApp()
   const [isFavorite, setIsFavorite] = useState(false)
   const [showQuickView, setShowQuickView] = useState(false)
@@ -153,7 +155,7 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
               </div>
 
               <div className="flex flex-wrap gap-2 mt-2">
-                {movie.genre.slice(0, 3).map((g, i) => (
+                {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).slice(0, 3).map((g, i) => (
                   <span key={i} className="text-xs text-orange-500">{g}</span>
                 ))}
               </div>
@@ -286,13 +288,18 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
                   <Eye className="w-4 h-4" />
                   Quick View
                 </button>
-                <Link
-                  href={`/movies/${movie.id}`}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    router.push(`/movies/${movie.id}`)
+                    setShowMenu(false)
+                  }}
                   className="w-full px-4 py-2.5 text-left text-slate-300 hover:bg-slate-700/50 flex items-center gap-2 transition"
                 >
                   <Calendar className="w-4 h-4" />
                   Showtimes
-                </Link>
+                </button>
               </div>
             )}
           </div>
@@ -303,7 +310,7 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
             <h3 className="text-lg font-bold text-white mb-2 line-clamp-1">{movie.title}</h3>
             
             <div className="flex flex-wrap gap-2 mb-3">
-              {movie.genre.slice(0, 2).map((g, i) => (
+              {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).slice(0, 2).map((g, i) => (
                 <span key={i} className="text-xs text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded">
                   {g}
                 </span>

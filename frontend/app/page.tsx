@@ -53,7 +53,7 @@ export default function Home() {
                     </div>
                     <div>
                       <p className="text-white font-medium">{movie.title}</p>
-                      <p className="text-slate-400 text-sm">{movie.genre.join(', ')}</p>
+                      <p className="text-slate-400 text-sm">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).join(', ')}</p>
                     </div>
                   </Link>
                 ))}

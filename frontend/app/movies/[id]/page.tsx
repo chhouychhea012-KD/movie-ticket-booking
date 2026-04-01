@@ -121,7 +121,7 @@ export default function MovieDetailPage() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-6">
-                {movie.genre.map((g, i) => (
+                {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).map((g, i) => (
                   <span key={i} className="px-3 py-1 bg-slate-700/50 text-slate-300 rounded-full text-sm">
                     {g}
                   </span>
@@ -133,7 +133,7 @@ export default function MovieDetailPage() {
               {/* Director & Cast */}
               <div className="mb-6">
                 <p className="text-slate-400 text-sm mb-2">Director: <span className="text-white">{movie.director}</span></p>
-                <p className="text-slate-400 text-sm">Cast: <span className="text-white">{movie.cast.join(', ')}</span></p>
+                <p className="text-slate-400 text-sm">Cast: <span className="text-white">{(Array.isArray(movie.cast) ? movie.cast : String(movie.cast || '').split(',')).join(', ')}</span></p>
               </div>
 
               {/* Actions */}
