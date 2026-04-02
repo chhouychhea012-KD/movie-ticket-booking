@@ -1,102 +1,101 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Edit2, Trash2, X, Eye, Download, Calendar, Clock, DollarSign, Users, CheckCircle, XCircle } from 'lucide-react'
+import { showtimesAPI, moviesAPI, cinemasAPI } from '@/lib/api'
+import { Search, Plus, Edit2, Trash2, X, Eye, Download, Calendar, Clock, Users, CheckCircle, XCircle, Loader2, Film, Building2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { dataStore } from '@/lib/data-store'
-import { Showtime } from '@/types'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Showtime, Movie, Cinema } from '@/types'
 
-// Extended Showtime type for the UI (includes title info)
-interface ExtendedShowtime {
-  id: string
-  movieId: string
-  movieTitle: string
-  cinemaId: string
-  cinemaName: string
-  screenName: string
-  date: string
-  startTime: string
-  endTime: string
-  price: number
-  availableSeats: number
-  totalSeats: number
-  status: 'scheduled' | 'selling' | 'sold_out' | 'cancelled'
-}
-
-// Get showtimes from data store with movie/cinema info
-const generateInitialShowtimes = (): ExtendedShowtime[] => {
-  const showtimes = dataStore.showtimes.getAll()
-  const movies = dataStore.movies.getAll()
-  const cinemas = dataStore.cinemas.getAll()
-  
-  return showtimes.map(st => {
-    const movie = movies.find(m => m.id === st.movieId)
-    const cinema = cinemas.find(c => c.id === st.cinemaId)
-    const screen = cinema?.screens.find(s => s.id === st.screenId)
-    return {
-      ...st,
-      movieTitle: movie?.title || 'Unknown',
-      cinemaName: cinema?.name || 'Unknown',
-      screenName: screen?.name || 'Unknown'
-    }
-  })
-}
-
-// Get movies list
-const getMoviesList = (): { id: string; title: string }[] => {
-  return dataStore.movies.getAll().map(m => ({ id: m.id, title: m.title }))
-}
-
-// Get cinemas list
-const getCinemasList = (): { id: string; name: string; screens: string[] }[] => {
-  return dataStore.cinemas.getAll().map(c => ({
-    id: c.id,
-    name: c.name,
-    screens: c.screens?.map((s: any) => s.name) || []
-  }))
+interface ExtendedShowtime extends Showtime {
+  movieTitle?: string
+  cinemaName?: string
+  screenName?: string
 }
 
 export default function AdminShowtimesPage() {
-  const [showtimes, setShowtimes] = useState<any[]>([])
-  const [filteredShowtimes, setFilteredShowtimes] = useState<any[]>([])
-  const [mockMovies, setMockMovies] = useState<{ id: string; title: string }[]>([])
-  const [mockCinemas, setMockCinemas] = useState<{ id: string; name: string; screens: string[] }[]>([])
+  const [showtimes, setShowtimes] = useState<ExtendedShowtime[]>([])
+  const [filteredShowtimes, setFilteredShowtimes] = useState<ExtendedShowtime[]>([])
+  const [movies, setMovies] = useState<{ id: string; title: string; duration?: number }[]>([])
+  const [cinemas, setCinemas] = useState<Cinema[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedMovie, setSelectedMovie] = useState('')
   const [selectedCinema, setSelectedCinema] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingShowtime, setEditingShowtime] = useState<ExtendedShowtime | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [viewShowtime, setViewShowtime] = useState<ExtendedShowtime | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Form state
   const [formData, setFormData] = useState({
     movieId: '',
     cinemaId: '',
-    screenName: '',
+    screenId: '',
     date: '',
     startTime: '',
-    price: 15,
-    status: 'scheduled' as Showtime['status']
+    endTime: '',
+    price: 10,
+    totalSeats: 100,
+    status: 'selling' as Showtime['status']
   })
 
+  const loadData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const [showtimesRes, moviesRes, cinemasRes] = await Promise.all([
+        showtimesAPI.getAll({}),
+        moviesAPI.getAll({}),
+        cinemasAPI.getAll()
+      ])
+
+      if (showtimesRes.success && showtimesRes.data?.showtimes) {
+        const showtimesWithInfo: ExtendedShowtime[] = showtimesRes.data.showtimes.map((st: Showtime) => {
+          const movie = moviesRes.data?.movies?.find((m: Movie) => m.id === st.movieId)
+          const cinema = cinemasRes.data?.cinemas?.find((c: Cinema) => c.id === st.cinemaId)
+          const cinemaScreens = typeof cinema?.screens === 'string' ? JSON.parse(cinema.screens || '[]') : (cinema?.screens || [])
+          const screen = Array.isArray(cinemaScreens) ? cinemaScreens.find((s: any) => s.id === st.screenId) : null
+          return {
+            ...st,
+            movieTitle: movie?.title || 'Unknown',
+            cinemaName: cinema?.name || 'Unknown',
+            screenName: screen?.name || 'Unknown'
+          }
+        })
+        setShowtimes(showtimesWithInfo)
+        setFilteredShowtimes(showtimesWithInfo)
+      }
+
+      if (moviesRes.success && moviesRes.data?.movies) {
+        setMovies(moviesRes.data.movies)
+      }
+
+      if (cinemasRes.success && cinemasRes.data?.cinemas) {
+        setCinemas(cinemasRes.data.cinemas)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load data')
+      console.error('Load data error:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    dataStore.initialize()
-    const initial = generateInitialShowtimes()
-    setShowtimes(initial as ExtendedShowtime[])
-    setFilteredShowtimes(initial as ExtendedShowtime[])
-    setMockMovies(getMoviesList())
-    setMockCinemas(getCinemasList())
-    setLoading(false)
+    loadData()
   }, [])
 
   useEffect(() => {
     let filtered = showtimes.filter(showtime => {
       const matchesSearch = !searchTerm || 
-        showtime.movieTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        showtime.cinemaName.toLowerCase().includes(searchTerm.toLowerCase())
+        showtime.movieTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        showtime.cinemaName?.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesMovie = !selectedMovie || showtime.movieId === selectedMovie
       const matchesCinema = !selectedCinema || showtime.cinemaId === selectedCinema
       const matchesDate = !selectedDate || showtime.date === selectedDate
@@ -106,135 +105,133 @@ export default function AdminShowtimesPage() {
     setFilteredShowtimes(filtered)
   }, [searchTerm, selectedMovie, selectedCinema, selectedDate, showtimes])
 
-  // Save to localStorage
-  const saveShowtimes = (updatedShowtimes: ExtendedShowtime[]) => {
-    setShowtimes(updatedShowtimes)
-    setFilteredShowtimes(updatedShowtimes)
-    localStorage.setItem('showtimes', JSON.stringify(updatedShowtimes))
-  }
-
-  // Handle create/update
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const movie = mockMovies.find(m => m.id === formData.movieId)
-    const cinema = mockCinemas.find(c => c.id === formData.cinemaId)
-    
-    // Calculate duration based on movie (default 2 hours)
-    const duration = 120 // minutes
-    const endTime = calculateEndTime(formData.startTime, duration)
-    
-    if (editingShowtime) {
-      const updated = showtimes.map(s =>
-        s.id === editingShowtime.id
-          ? {
-              ...s,
-              movieId: formData.movieId,
-              movieTitle: movie?.title || s.movieTitle,
-              cinemaId: formData.cinemaId,
-              cinemaName: cinema?.name || s.cinemaName,
-              screenName: formData.screenName,
-              date: formData.date,
-              startTime: formData.startTime,
-              endTime,
-              price: formData.price,
-              status: formData.status
-            }
-          : s
-      )
-      saveShowtimes(updated)
-    } else {
-      const newShowtime: ExtendedShowtime = {
-        id: Date.now().toString(),
-        movieId: formData.movieId,
-        movieTitle: movie?.title || '',
-        cinemaId: formData.cinemaId,
-        cinemaName: cinema?.name || '',
-        screenName: formData.screenName,
-        date: formData.date,
-        startTime: formData.startTime,
-        endTime,
-        price: formData.price,
-        availableSeats: 100,
-        totalSeats: 100,
-        status: formData.status
-      }
-      saveShowtimes([...showtimes, newShowtime])
-    }
-    
-    setShowModal(false)
-    setEditingShowtime(null)
-  }
-
-  // Helper to calculate end time
-  // Build showtime with movie and cinema info
-  const buildShowtimeInfo = (showtime: Showtime): ExtendedShowtime => {
-    const movie = dataStore.movies.getById(showtime.movieId)
-    const cinema = dataStore.cinemas.getById(showtime.cinemaId)
-    return {
-      ...showtime,
-      movieTitle: movie?.title || 'Unknown',
-      cinemaName: cinema?.name || 'Unknown',
-      screenName: cinema?.screens.find(s => s.id === showtime.screenId)?.name || 'Unknown'
-    }
+  const getCinemaScreens = (cinema: Cinema | undefined) => {
+    if (!cinema) return []
+    return typeof cinema.screens === 'string' ? JSON.parse(cinema.screens || '[]') : (cinema.screens || [])
   }
 
   const calculateEndTime = (startTime: string, durationMinutes: number): string => {
-    const [time, period] = startTime.split(' ')
-    const [hours, minutes] = time.split(':').map(Number)
-    let hour = period === 'PM' && hours !== 12 ? hours + 12 : hours
-    if (period === 'AM' && hours === 12) hour = 0
-    
-    const totalMinutes = hour * 60 + minutes + durationMinutes
+    const [hours, minutes] = startTime.split(':').map(Number)
+    const totalMinutes = hours * 60 + minutes + durationMinutes
     const endHour = Math.floor(totalMinutes / 60) % 24
     const endMinutes = totalMinutes % 60
-    
-    const displayHour = endHour === 0 ? 12 : endHour > 12 ? endHour - 12 : endHour
-    const displayPeriod = endHour < 12 ? 'AM' : 'PM'
-    
-    return `${displayHour}:${endMinutes.toString().padStart(2, '0')} ${displayPeriod}`
+    return `${endHour.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`
   }
 
-  // Handle delete
-  const handleDelete = (id: string) => {
-    const updated = showtimes.filter(s => s.id !== id)
-    saveShowtimes(updated)
-    setDeleteConfirm(null)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const movie = movies.find(m => m.id === formData.movieId)
+      const duration = movie?.duration || 120
+      const endTime = calculateEndTime(formData.startTime, duration)
+
+      const showtimeData = {
+        ...formData,
+        endTime,
+        availableSeats: formData.totalSeats
+      }
+
+      if (editingShowtime) {
+        const response = await showtimesAPI.update(editingShowtime.id, showtimeData)
+        if (response.success && response.data) {
+          const movie = movies.find(m => m.id === response.data?.movieId)
+          const cinema = cinemas.find(c => c.id === response.data?.cinemaId)
+          const screens = getCinemaScreens(cinema)
+          const screen = screens.find((s: any) => s.id === response.data?.screenId)
+          setShowtimes(showtimes.map(s => 
+            s.id === editingShowtime.id 
+              ? { ...s, ...response.data, movieTitle: movie?.title, cinemaName: cinema?.name, screenName: screen?.name }
+              : s
+          ))
+          setShowModal(false)
+          setEditingShowtime(null)
+        } else {
+          setError(response.message || 'Failed to update showtime')
+        }
+      } else {
+        const response = await showtimesAPI.create(showtimeData)
+        if (response.success && response.data) {
+          const movie = movies.find(m => m.id === response.data?.movieId)
+          const cinema = cinemas.find(c => c.id === response.data?.cinemaId)
+          const screens = getCinemaScreens(cinema)
+          const screen = screens.find((s: any) => s.id === response.data?.screenId)
+          setShowtimes([{ ...response.data, movieTitle: movie?.title, cinemaName: cinema?.name, screenName: screen?.name }, ...showtimes])
+          setShowModal(false)
+        } else {
+          setError(response.message || 'Failed to create showtime')
+        }
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+      console.error('Submit error:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  // Handle update status
-  const handleUpdateStatus = (id: string, status: Showtime['status']) => {
-    const updated = showtimes.map(s =>
-      s.id === id ? { ...s, status } : s
-    )
-    saveShowtimes(updated)
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await showtimesAPI.delete(id)
+      if (response.success) {
+        setShowtimes(showtimes.filter(s => s.id !== id))
+        setDeleteConfirm(null)
+      } else {
+        setError(response.message || 'Failed to delete showtime')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete showtime')
+    }
   }
 
-  // Open create modal
+  const handleUpdateStatus = async (id: string, status: Showtime['status']) => {
+    try {
+      const response = await showtimesAPI.update(id, { status })
+      if (response.success) {
+        setShowtimes(showtimes.map(s => s.id === id ? { ...s, status } : s))
+        setViewShowtime(null)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update status')
+    }
+  }
+
   const handleOpenCreate = () => {
+    const firstMovie = movies[0]
+    const firstCinema = cinemas[0]
+    const firstCinemaScreens = firstCinema 
+      ? (typeof firstCinema.screens === 'string' ? JSON.parse(firstCinema.screens || '[]') : (firstCinema.screens || []))
+      : []
+    const firstScreen = firstCinemaScreens[0]
+    
     setEditingShowtime(null)
     setFormData({
-      movieId: mockMovies[0].id,
-      cinemaId: mockCinemas[0].id,
-      screenName: mockCinemas[0].screens[0],
+      movieId: firstMovie?.id || '',
+      cinemaId: firstCinema?.id || '',
+      screenId: firstScreen?.id || '',
       date: new Date().toISOString().split('T')[0],
-      startTime: '7:00 PM',
-      price: 15,
-      status: 'scheduled'
+      startTime: '19:00',
+      endTime: '',
+      price: 10,
+      totalSeats: 100,
+      status: 'selling'
     })
     setShowModal(true)
   }
 
-  // Open edit modal
   const handleOpenEdit = (showtime: ExtendedShowtime) => {
     setEditingShowtime(showtime)
     setFormData({
       movieId: showtime.movieId,
       cinemaId: showtime.cinemaId,
-      screenName: showtime.screenName,
+      screenId: showtime.screenId,
       date: showtime.date,
       startTime: showtime.startTime,
+      endTime: showtime.endTime,
       price: showtime.price,
+      totalSeats: showtime.totalSeats,
       status: showtime.status
     })
     setShowModal(true)
@@ -261,13 +258,12 @@ export default function AdminShowtimesPage() {
     )
   }
 
-  // Export to CSV
   const exportToCSV = () => {
     const headers = ['Movie', 'Cinema', 'Screen', 'Date', 'Time', 'Price', 'Status']
     const rows = showtimes.map(s => [
-      s.movieTitle,
-      s.cinemaName,
-      s.screenName,
+      s.movieTitle || '',
+      s.cinemaName || '',
+      s.screenName || '',
       s.date,
       s.startTime,
       s.price,
@@ -283,9 +279,31 @@ export default function AdminShowtimesPage() {
     a.click()
   }
 
+  const currentCinema = cinemas.find(c => c.id === formData.cinemaId)
+  const currentCinemaScreens = currentCinema 
+    ? (typeof currentCinema.screens === 'string' ? JSON.parse(currentCinema.screens || '[]') : (currentCinema.screens || []))
+    : []
+  const timeSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00']
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
-      {/* Page Header */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl lg:text-4xl font-bold text-white">Showtimes</h1>
@@ -293,72 +311,79 @@ export default function AdminShowtimesPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button onClick={exportToCSV} className="flex items-center gap-2 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl text-slate-300 text-sm transition">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
-          <button onClick={handleOpenCreate} className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-medium transition">
-            <Plus className="w-4 h-4" />
-            <span>Add Showtime</span>
-          </button>
+          <Button 
+            onClick={exportToCSV}
+            variant="outline" 
+            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Button 
+            onClick={handleOpenCreate}
+            className="bg-orange-500 hover:bg-orange-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Showtime
+          </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search by movie or cinema..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-slate-400 text-xs mb-2">Movie</label>
-            <select
-              value={selectedMovie}
-              onChange={(e) => setSelectedMovie(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500 transition"
-            >
-              <option value="">All Movies</option>
-              {mockMovies.map((movie) => (
-                <option key={movie.id} value={movie.id}>{movie.title}</option>
-              ))}
-            </select>
-          </div>
+      <Card className="bg-slate-800/50 border-slate-700/50">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Input
+                type="text"
+                placeholder="Search by movie or cinema..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-slate-400 text-xs mb-2">Movie</label>
+              <select
+                value={selectedMovie}
+                onChange={(e) => setSelectedMovie(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+              >
+                <option value="">All Movies</option>
+                {movies.map((movie) => (
+                  <option key={movie.id} value={movie.id}>{movie.title}</option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-slate-400 text-xs mb-2">Cinema</label>
-            <select
-              value={selectedCinema}
-              onChange={(e) => setSelectedCinema(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500 transition"
-            >
-              <option value="">All Cinemas</option>
-              {mockCinemas.map((cinema) => (
-                <option key={cinema.id} value={cinema.id}>{cinema.name}</option>
-              ))}
-            </select>
-          </div>
+            <div>
+              <label className="block text-slate-400 text-xs mb-2">Cinema</label>
+              <select
+                value={selectedCinema}
+                onChange={(e) => setSelectedCinema(e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+              >
+                <option value="">All Cinemas</option>
+                {cinemas.map((cinema) => (
+                  <option key={cinema.id} value={cinema.id}>{cinema.name}</option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-slate-400 text-xs mb-2">Date</label>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500 transition"
-            />
+            <div>
+              <label className="block text-slate-400 text-xs mb-2">Date</label>
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-slate-700/50 border-slate-600 text-white"
+              />
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-4">
@@ -412,7 +437,7 @@ export default function AdminShowtimesPage() {
               <div>
                 <p className="text-slate-400 text-xs">Available Seats</p>
                 <p className="text-xl font-bold text-white">
-                  {filteredShowtimes.reduce((acc, s) => acc + s.availableSeats, 0)}
+                  {filteredShowtimes.reduce((acc, s) => acc + (s.availableSeats || 0), 0)}
                 </p>
               </div>
             </div>
@@ -420,111 +445,126 @@ export default function AdminShowtimesPage() {
         </Card>
       </div>
 
-      {/* Showtimes Table */}
-      {loading ? (
-        <div className="flex justify-center items-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
-        </div>
-      ) : (
-        <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
+      <Card className="bg-slate-800/50 border-slate-700/50">
+        <CardHeader>
+          <CardTitle className="text-white">Showtimes List</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700/50 bg-slate-700/20">
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Movie</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Cinema</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Screen</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Date</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Time</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Price</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Seats</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Status</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Actions</th>
+                <tr className="border-b border-slate-700/50">
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Movie</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Cinema</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Screen</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Date</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Time</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Price</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Seats</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Status</th>
+                  <th className="text-right text-slate-400 font-medium px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredShowtimes.map((showtime, index) => {
-                  const occupancy = ((showtime.totalSeats - showtime.availableSeats) / showtime.totalSeats * 100).toFixed(0)
+                {filteredShowtimes.map((showtime) => {
+                  const occupancy = showtime.totalSeats > 0 
+                    ? ((showtime.totalSeats - (showtime.availableSeats || 0)) / showtime.totalSeats * 100).toFixed(0)
+                    : 0
                   
                   return (
-                    <tr 
-                      key={showtime.id}
-                      className={`${index % 2 === 0 ? "bg-slate-800/40" : "bg-slate-800/20"} border-b border-slate-700/30 hover:bg-slate-700/30 transition`}
-                    >
-                      <td className="px-6 py-4">
-                        <p className="text-white font-medium">{showtime.movieTitle}</p>
+                    <tr key={showtime.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition">
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center">
+                            <Film className="w-5 h-5 text-orange-500" />
+                          </div>
+                          <p className="text-white font-medium">{showtime.movieTitle}</p>
+                        </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <p className="text-slate-300">{showtime.cinemaName}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-slate-300">{showtime.screenName}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-slate-300">{new Date(showtime.date).toLocaleDateString()}</p>
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-2 text-slate-300">
-                          <Clock className="w-4 h-4" />
+                          <Building2 className="w-4 h-4 text-slate-500" />
+                          {showtime.cinemaName}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-slate-300">
+                        {showtime.screenName || '-'}
+                      </td>
+                      <td className="px-4 py-4 text-slate-300">
+                        {showtime.date ? new Date(showtime.date).toLocaleDateString() : '-'}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2 text-slate-300">
+                          <Clock className="w-4 h-4 text-slate-500" />
                           {showtime.startTime} - {showtime.endTime}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <p className="text-orange-400 font-semibold">${showtime.price}</p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <div>
-                          <p className="text-slate-300">{showtime.availableSeats} / {showtime.totalSeats}</p>
+                          <p className="text-slate-300">{showtime.availableSeats || 0} / {showtime.totalSeats}</p>
                           <div className="w-24 h-2 bg-slate-700 rounded-full mt-1">
                             <div 
                               className={`h-full rounded-full ${
-                                parseInt(occupancy) > 80 ? 'bg-red-500' : 
-                                parseInt(occupancy) > 50 ? 'bg-orange-500' : 'bg-green-500'
+                                parseInt(occupancy as string) > 80 ? 'bg-red-500' : 
+                                parseInt(occupancy as string) > 50 ? 'bg-orange-500' : 'bg-green-500'
                               }`}
                               style={{ width: `${occupancy}%` }}
                             />
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {getStatusBadge(showtime.status)}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <button 
+                      <td className="px-4 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => setViewShowtime(showtime)}
-                            className="p-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                            className="text-slate-400 hover:text-white hover:bg-slate-700"
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button 
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => handleOpenEdit(showtime)}
-                            className="p-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                            className="text-slate-400 hover:text-white hover:bg-slate-700"
                           >
                             <Edit2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                           {deleteConfirm === showtime.id ? (
                             <div className="flex items-center gap-1">
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => handleDelete(showtime.id)}
-                                className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition"
+                                className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                               >
                                 <CheckCircle className="w-4 h-4" />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 onClick={() => setDeleteConfirm(null)}
-                                className="p-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                                className="text-slate-400 hover:text-white hover:bg-slate-700"
                               >
                                 <X className="w-4 h-4" />
-                              </button>
+                              </Button>
                             </div>
                           ) : (
-                            <button 
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               onClick={() => setDeleteConfirm(showtime.id)}
-                              className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg transition"
+                              className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </td>
@@ -536,16 +576,14 @@ export default function AdminShowtimesPage() {
           </div>
 
           {filteredShowtimes.length === 0 && (
-            <div className="p-12 text-center">
-              <Calendar className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400 text-lg font-medium">No showtimes found</p>
-              <p className="text-slate-500 text-sm mt-1">Try adjusting your filters</p>
+            <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+              <Calendar className="w-12 h-12 mb-4" />
+              <p>No showtimes found</p>
             </div>
           )}
-        </div>
-      )}
+        </CardContent>
+      </Card>
 
-      {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <Card className="w-full max-w-md bg-slate-800 border-slate-700">
@@ -564,52 +602,63 @@ export default function AdminShowtimesPage() {
                   <select
                     value={formData.movieId}
                     onChange={(e) => setFormData({ ...formData, movieId: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    required
                   >
-                    {mockMovies.map(m => (
+                    <option value="">Select Movie</option>
+                    {movies.map(m => (
                       <option key={m.id} value={m.id}>{m.title}</option>
                     ))}
                   </select>
                 </div>
+                
                 <div className="space-y-2">
                   <label className="text-slate-300 text-sm">Cinema</label>
                   <select
                     value={formData.cinemaId}
                     onChange={(e) => {
-                      const cinema = mockCinemas.find(c => c.id === e.target.value)
+                      const cinema = cinemas.find(c => c.id === e.target.value)
+                      const screens = getCinemaScreens(cinema)
                       setFormData({ 
                         ...formData, 
                         cinemaId: e.target.value,
-                        screenName: cinema?.screens[0] || ''
+                        screenId: screens[0]?.id || ''
                       })
                     }}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    required
                   >
-                    {mockCinemas.map(c => (
+                    <option value="">Select Cinema</option>
+                    {cinemas.map(c => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
                 </div>
+                
                 <div className="space-y-2">
                   <label className="text-slate-300 text-sm">Screen</label>
                   <select
-                    value={formData.screenName}
-                    onChange={(e) => setFormData({ ...formData, screenName: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    value={formData.screenId}
+                    onChange={(e) => setFormData({ ...formData, screenId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                    required
                   >
-                    {mockCinemas.find(c => c.id === formData.cinemaId)?.screens.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                    <option value="">Select Screen</option>
+                    {currentCinemaScreens.map((s: any) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                   </select>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-slate-300 text-sm">Date</label>
-                    <input
+                    <Input
                       type="date"
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -617,52 +666,73 @@ export default function AdminShowtimesPage() {
                     <select
                       value={formData.startTime}
                       onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                      required
                     >
-                      {['10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM'].map(t => (
+                      <option value="">Select Time</option>
+                      {timeSlots.map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
                   </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-slate-300 text-sm">Price ($)</label>
-                    <input
+                    <Input
                       type="number"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      min="0"
+                      step="0.01"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-slate-300 text-sm">Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-                    >
-                      <option value="scheduled">Scheduled</option>
-                      <option value="selling">Selling</option>
-                      <option value="sold_out">Sold Out</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                    <label className="text-slate-300 text-sm">Total Seats</label>
+                    <Input
+                      type="number"
+                      value={formData.totalSeats}
+                      onChange={(e) => setFormData({ ...formData, totalSeats: parseInt(e.target.value) })}
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                      min="1"
+                      required
+                    />
                   </div>
                 </div>
+                
+                <div className="space-y-2">
+                  <label className="text-slate-300 text-sm">Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Showtime['status'] })}
+                    className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
+                  >
+                    <option value="selling">Selling</option>
+                    <option value="sold_out">Sold Out</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                
                 <div className="flex gap-3 pt-4">
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={() => setShowModal(false)}
-                    className="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+                    className="flex-1 border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
+                    disabled={isSubmitting}
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition"
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isSubmitting}
                   >
-                    {editingShowtime ? 'Update' : 'Create'}
-                  </button>
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : editingShowtime ? 'Update' : 'Create'}
+                  </Button>
                 </div>
               </form>
             </CardContent>
@@ -670,7 +740,6 @@ export default function AdminShowtimesPage() {
         </div>
       )}
 
-      {/* View Modal */}
       {viewShowtime && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <Card className="w-full max-w-lg bg-slate-800 border-slate-700">
@@ -698,7 +767,7 @@ export default function AdminShowtimesPage() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Date</p>
-                  <p className="text-white font-medium">{new Date(viewShowtime.date).toLocaleDateString()}</p>
+                  <p className="text-white font-medium">{viewShowtime.date ? new Date(viewShowtime.date).toLocaleDateString() : '-'}</p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Time</p>
@@ -710,7 +779,7 @@ export default function AdminShowtimesPage() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Available Seats</p>
-                  <p className="text-white font-medium">{viewShowtime.availableSeats} / {viewShowtime.totalSeats}</p>
+                  <p className="text-white font-medium">{viewShowtime.availableSeats || 0} / {viewShowtime.totalSeats}</p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Status</p>
@@ -720,36 +789,32 @@ export default function AdminShowtimesPage() {
 
               <div className="flex gap-2 pt-4 border-t border-slate-700">
                 {viewShowtime.status !== 'selling' && (
-                  <button
-                    onClick={() => {
-                      handleUpdateStatus(viewShowtime.id, 'selling')
-                      setViewShowtime(null)
-                    }}
-                    className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 rounded-lg transition"
+                  <Button
+                    variant="outline"
+                    onClick={() => handleUpdateStatus(viewShowtime.id, 'selling')}
+                    className="flex-1 border-green-500/50 text-green-400 hover:bg-green-500/10"
                   >
                     Start Selling
-                  </button>
+                  </Button>
                 )}
                 {viewShowtime.status === 'selling' && (
-                  <button
-                    onClick={() => {
-                      handleUpdateStatus(viewShowtime.id, 'sold_out')
-                      setViewShowtime(null)
-                    }}
-                    className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-lg transition"
+                  <Button
+                    variant="outline"
+                    onClick={() => handleUpdateStatus(viewShowtime.id, 'sold_out')}
+                    className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/10"
                   >
                     Mark Sold Out
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   onClick={() => {
                     handleOpenEdit(viewShowtime)
                     setViewShowtime(null)
                   }}
-                  className="flex-1 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
                 >
                   Edit
-                </button>
+                </Button>
               </div>
             </CardContent>
           </Card>

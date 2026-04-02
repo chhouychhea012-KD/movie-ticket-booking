@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import SeatMap from '@/components/seat-map'
 import BookingSummary from '@/components/booking-summary'
 import { Movie } from '@/types/movie'
+import { useApp } from '@/context/AppContext'
 
 export default function BookingPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
+  const { user } = useApp()
   const movieId = searchParams.get('movieId')
   const showtime = searchParams.get('showtime')
   
@@ -15,7 +18,13 @@ export default function BookingPage() {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([])
 
   useEffect(() => {
-    // Mock data - in real app, fetch from backend
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    
+    if (!storedUser && !user) {
+      router.push(`/auth/login?redirect=/booking?movieId=${movieId}&showtime=${showtime}`)
+      return
+    }
+
     const mockMovies: Record<string, Movie> = {
       '1': {
         id: '1',
@@ -33,7 +42,7 @@ export default function BookingPage() {
     if (movieId && mockMovies[movieId]) {
       setMovie(mockMovies[movieId])
     }
-  }, [movieId])
+  }, [movieId, showtime, user, router])
 
   const ticketPrice = 12.99
   const totalPrice = selectedSeats.length * ticketPrice

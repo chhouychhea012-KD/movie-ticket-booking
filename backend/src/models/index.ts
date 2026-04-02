@@ -6,6 +6,7 @@ import Showtime from './Showtime';
 import Booking from './Booking';
 import Ticket from './Ticket';
 import Coupon from './Coupon';
+import Notification from './Notification';
 
 // User - Booking associations
 User.hasMany(Booking, { foreignKey: 'userId', as: 'bookings' });
@@ -45,6 +46,7 @@ export {
   Booking,
   Ticket,
   Coupon,
+  Notification,
 };
 
 // Export models for convenience
@@ -56,6 +58,7 @@ export const models = {
   Booking,
   Ticket,
   Coupon,
+  Notification,
 };
 
 export default models;

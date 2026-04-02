@@ -111,8 +111,11 @@ export const getBookings = async (req: Request, res: Response): Promise<void> =>
     const { page = 1, limit = 20 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
+    // If userId is provided, filter by user, otherwise return all
+    const where: any = req.userId ? { userId: req.userId } : {};
+
     const { count, rows: bookings } = await Booking.findAndCountAll({
-      where: { userId: req.userId },
+      where,
       limit: Number(limit),
       offset,
       order: [['bookingDate', 'DESC']],
@@ -141,7 +144,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const booking = await Booking.findOne({
-      where: { id, userId: req.userId },
+      where: req.userId ? { id, userId: req.userId } : { id },
       include: ['tickets'],
     });
 
@@ -171,7 +174,7 @@ export const cancelBooking = async (req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
     const booking = await Booking.findOne({
-      where: { id, userId: req.userId },
+      where: req.userId ? { id, userId: req.userId } : { id },
     });
 
     if (!booking) {
@@ -229,7 +232,6 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       limit: Number(limit),
       offset,
       order: [['bookingDate', 'DESC']],
-      include: ['user', 'movie', 'cinema'],
     });
 
     res.json({

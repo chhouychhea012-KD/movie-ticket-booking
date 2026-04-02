@@ -1,63 +1,45 @@
 'use client'
 
-import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, X, Ticket, AlertCircle, CheckCircle } from 'lucide-react'
+import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, X, Ticket, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { useApp } from '@/context/AppContext'
+import { notificationsAPI } from '@/lib/api'
 
-// Mock notifications data
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'booking',
-    title: 'New Booking Received',
-    message: 'John Doe booked 3 tickets for Dune: Part Two',
-    time: '5 min ago',
-    read: false,
-    icon: Ticket,
-    color: 'text-orange-500'
-  },
-  {
-    id: 2,
-    type: 'alert',
-    title: 'Low Seat Availability',
-    message: 'Only 15 seats remaining for Oppenheimer - 7PM show',
-    time: '15 min ago',
-    read: false,
-    icon: AlertCircle,
-    color: 'text-yellow-500'
-  },
-  {
-    id: 3,
-    type: 'success',
-    title: 'Booking Confirmed',
-    message: 'Booking #BK-2847 has been successfully paid',
-    time: '1 hour ago',
-    read: true,
-    icon: CheckCircle,
-    color: 'text-green-500'
-  },
-  {
-    id: 4,
-    type: 'alert',
-    title: 'System Update',
-    message: 'Server maintenance scheduled for tonight at 2AM',
-    time: '2 hours ago',
-    read: true,
-    icon: AlertCircle,
-    color: 'text-blue-500'
-  },
-]
+interface Notification {
+  id: string
+  type: 'booking' | 'alert' | 'success' | 'system'
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
 
 export default function AdminHeader() {
   const { user, logout } = useApp()
   const [searchQuery, setSearchQuery] = useState('')
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
   const profileDropdownRef = useRef<HTMLDivElement>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
 
-  const unreadCount = mockNotifications.filter(n => !n.read).length
+  const loadNotifications = async () => {
+    try {
+      setLoadingNotifications(true)
+      const response = await notificationsAPI.getAll({ limit: 10 })
+      if (response.success && response.data?.notifications) {
+        setNotifications(response.data.notifications)
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error)
+    } finally {
+      setLoadingNotifications(false)
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.read).length
 
   // Handle logout - clear everything and redirect
   const handleLogout = () => {
@@ -92,6 +74,7 @@ export default function AdminHeader() {
     
     if (showNotifications) {
       document.addEventListener('mousedown', handleClickOutside)
+      loadNotifications()
     }
     
     return () => {
@@ -115,9 +98,63 @@ export default function AdminHeader() {
     setShowProfileDropdown(false)
   }
 
-  const handleMarkAllRead = () => {
-    // In a real app, this would update the notification status
-    console.log('Mark all as read')
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationsAPI.markAllAsRead()
+      setNotifications(notifications.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('Failed to mark all as read:', error)
+    }
+  }
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationsAPI.markAsRead(id)
+      setNotifications(notifications.map(n => 
+        n.id === id ? { ...n, read: true } : n
+      ))
+    } catch (error) {
+      console.error('Failed to mark as read:', error)
+    }
+  }
+
+  const formatTime = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr)
+      const now = new Date()
+      const diff = now.getTime() - date.getTime()
+      const minutes = Math.floor(diff / 60000)
+      const hours = Math.floor(diff / 3600000)
+      const days = Math.floor(diff / 86400000)
+      
+      if (minutes < 1) return 'Just now'
+      if (minutes < 60) return `${minutes}m ago`
+      if (hours < 24) return `${hours}h ago`
+      if (days < 7) return `${days}d ago`
+      return date.toLocaleDateString()
+    } catch {
+      return ''
+    }
+  }
+
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'booking': return Ticket
+      case 'alert': return AlertCircle
+      case 'success': return CheckCircle
+      case 'system': return Info
+      default: return Bell
+    }
+  }
+
+  const getColor = (type: string) => {
+    switch (type) {
+      case 'booking': return 'text-orange-500'
+      case 'alert': return 'text-yellow-500'
+      case 'success': return 'text-green-500'
+      case 'system': return 'text-blue-500'
+      default: return 'text-slate-500'
+    }
   }
 
   const profileMenuItems = [
@@ -185,30 +222,41 @@ export default function AdminHeader() {
               </div>
               
               <div className="max-h-96 overflow-y-auto">
-                {mockNotifications.map((notification) => (
-                  <div 
-                    key={notification.id}
-                    className={`px-4 py-3 border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer ${
-                      !notification.read ? 'bg-slate-700/30' : ''
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`mt-1 ${notification.color}`}>
-                        <notification.icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-white text-sm font-medium">{notification.title}</p>
-                          {!notification.read && (
-                            <span className="w-2 h-2 bg-orange-500 rounded-full" />
-                          )}
+                {loadingNotifications ? (
+                  <div className="px-4 py-8 text-center text-slate-400">Loading...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-slate-400">No notifications</div>
+                ) : (
+                  notifications.map((notification) => {
+                    const Icon = getIcon(notification.type)
+                    const color = getColor(notification.type)
+                    return (
+                      <div 
+                        key={notification.id}
+                        onClick={() => handleMarkAsRead(notification.id)}
+                        className={`px-4 py-3 border-b border-slate-700/50 hover:bg-slate-700/50 transition cursor-pointer ${
+                          !notification.read ? 'bg-slate-700/30' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`mt-1 ${color}`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-white text-sm font-medium">{notification.title}</p>
+                              {!notification.read && (
+                                <span className="w-2 h-2 bg-orange-500 rounded-full" />
+                              )}
+                            </div>
+                            <p className="text-slate-400 text-xs mt-0.5 truncate">{notification.message}</p>
+                            <p className="text-slate-500 text-xs mt-1">{formatTime(notification.createdAt)}</p>
+                          </div>
                         </div>
-                        <p className="text-slate-400 text-xs mt-0.5 truncate">{notification.message}</p>
-                        <p className="text-slate-500 text-xs mt-1">{notification.time}</p>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    )
+                  })
+                )}
               </div>
 
               <div className="px-4 py-3 border-t border-slate-700">
@@ -235,8 +283,8 @@ export default function AdminHeader() {
               <User className="w-4 h-4 text-white" />
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm text-white font-medium">Admin</p>
-              <p className="text-xs text-slate-400">Administrator</p>
+              <p className="text-sm text-white font-medium">{user?.firstName || user?.email?.split('@')[0] || 'Admin'}</p>
+              <p className="text-xs text-slate-400">{user?.role === 'admin' ? 'Administrator' : user?.role || 'User'}</p>
             </div>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -261,8 +309,8 @@ export default function AdminHeader() {
               style={{ animation: 'fadeIn 0.2s ease-out' }}
             >
               <div className="px-4 py-3 border-b border-slate-700">
-                <p className="text-sm text-white font-medium">Admin User</p>
-                <p className="text-xs text-slate-400">admin@cinemahub.com</p>
+                <p className="text-sm text-white font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-slate-400">{user?.email}</p>
               </div>
               <div className="py-2">
                 {profileMenuItems.map((item, index) => (

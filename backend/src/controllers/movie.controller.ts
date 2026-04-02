@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import Movie from '../models/Movie';
 
 export const getMovies = async (req: Request, res: Response): Promise<void> => {
@@ -12,13 +13,13 @@ export const getMovies = async (req: Request, res: Response): Promise<void> => {
     }
     
     if (genre) {
-      where.genre = { $contains: genre };
+      where.genre = { [Op.contains]: genre };
     }
     
     if (search) {
-      where.$or = [
-        { title: { $ilike: `%${search}%` } },
-        { synopsis: { $ilike: `%${search}%` } },
+      where[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { synopsis: { [Op.like]: `%${search}%` } },
       ];
     }
 

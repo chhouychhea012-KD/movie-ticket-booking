@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
+import { Op } from 'sequelize';
 import User from '../models/User';
 import bcrypt from 'bcryptjs';
 
@@ -63,10 +64,10 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
     }
     
     if (search) {
-      where.$or = [
-        { email: { $ilike: `%${search}%` } },
-        { firstName: { $ilike: `%${search}%` } },
-        { lastName: { $ilike: `%${search}%` } },
+      where[Op.or] = [
+        { email: { [Op.like]: `%${search}%` } },
+        { firstName: { [Op.like]: `%${search}%` } },
+        { lastName: { [Op.like]: `%${search}%` } },
       ];
     }
 

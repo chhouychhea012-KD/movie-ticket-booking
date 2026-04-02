@@ -8,15 +8,18 @@ import {
   Plus, 
   Edit2, 
   Trash2, 
-  MoreVertical,
   Mail,
   Phone,
   Calendar,
   Shield,
   X,
   Check,
-  Filter,
-  Download
+  Download,
+  Loader2,
+  ToggleLeft,
+  ToggleRight,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -24,142 +27,56 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { User, UserRole } from '@/types/index'
 
-// Mock initial users data
-const initialUsers: User[] = [
-  {
-    id: '1',
-    email: 'john.doe@example.com',
-    phone: '+1 234 567 8901',
-    firstName: 'John',
-    lastName: 'Doe',
-    avatar: '',
-    role: 'user',
-    createdAt: '2024-01-15T10:30:00Z',
-    favoriteMovies: ['Dune: Part Two', 'Oppenheimer'],
-    favoriteCinemas: ['Cineplex Downtown'],
-    notifications: { email: true, sms: true, push: true }
-  },
-  {
-    id: '2',
-    email: 'jane.smith@example.com',
-    phone: '+1 234 567 8902',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    avatar: '',
-    role: 'admin',
-    createdAt: '2024-01-10T08:20:00Z',
-    favoriteMovies: ['Barbie', 'The Batman'],
-    favoriteCinemas: ['Cineplex Uptown'],
-    notifications: { email: true, sms: false, push: true }
-  },
-  {
-    id: '3',
-    email: 'bob.wilson@example.com',
-    phone: '+1 234 567 8903',
-    firstName: 'Bob',
-    lastName: 'Wilson',
-    avatar: '',
-    role: 'user',
-    createdAt: '2024-02-20T14:45:00Z',
-    favoriteMovies: ['Spider-Man: ATSV'],
-    favoriteCinemas: ['Cineplex Downtown'],
-    notifications: { email: false, sms: true, push: false }
-  },
-  {
-    id: '4',
-    email: 'alice.johnson@example.com',
-    phone: '+1 234 567 8904',
-    firstName: 'Alice',
-    lastName: 'Johnson',
-    avatar: '',
-    role: 'user',
-    createdAt: '2024-03-05T09:15:00Z',
-    favoriteMovies: ['Dune: Part Two', 'Barbie', 'Oppenheimer'],
-    favoriteCinemas: ['Cineplex Mall'],
-    notifications: { email: true, sms: true, push: false }
-  },
-  {
-    id: '5',
-    email: 'charlie.brown@example.com',
-    phone: '+1 234 567 8905',
-    firstName: 'Charlie',
-    lastName: 'Brown',
-    avatar: '',
-    role: 'user',
-    createdAt: '2024-03-12T16:30:00Z',
-    favoriteMovies: ['The Batman'],
-    favoriteCinemas: ['Cineplex Downtown'],
-    notifications: { email: true, sms: false, push: true }
-  }
-]
-
 export default function CustomersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [filterRole, setFilterRole] = useState<'all' | UserRole>('all')
+  const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
-  // Form state
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
+    password: '',
     role: 'user' as UserRole
   })
 
-  // Load users from API or localStorage
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const response = await usersAPI.getAll({ limit: 100 })
-        if (response.success && response.data?.users) {
-          setUsers(response.data.users)
-        } else {
-          const storedUsers = localStorage.getItem('users')
-          if (storedUsers) {
-            setUsers(JSON.parse(storedUsers))
-          } else {
-            setUsers(initialUsers)
-            localStorage.setItem('users', JSON.stringify(initialUsers))
-          }
-        }
-      } catch (error) {
-        const storedUsers = localStorage.getItem('users')
-        if (storedUsers) {
-          setUsers(JSON.parse(storedUsers))
-        } else {
-          setUsers(initialUsers)
-          localStorage.setItem('users', JSON.stringify(initialUsers))
-        }
-      } finally {
-        setIsLoading(false)
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const response = await usersAPI.getAll({ limit: 100 })
+      if (response.success && response.data?.users) {
+        setUsers(response.data.users)
       }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load users')
+      console.error('Load users error:', err)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     loadUsers()
   }, [])
 
-  // Save users to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading && users.length > 0) {
-      localStorage.setItem('users', JSON.stringify(users))
-    }
-  }, [users, isLoading])
-
-  // Filter users
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesRole = filterRole === 'all' || user.role === filterRole
     return matchesSearch && matchesRole
   })
 
-  // Open modal for creating new user
   const handleOpenCreateModal = () => {
     setEditingUser(null)
     setFormData({
@@ -167,69 +84,119 @@ export default function CustomersPage() {
       lastName: '',
       email: '',
       phone: '',
+      password: '',
       role: 'user'
     })
     setShowModal(true)
   }
 
-  // Open modal for editing user
   const handleOpenEditModal = (user: User) => {
     setEditingUser(user)
     setFormData({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      password: '',
+      role: user.role || 'user'
     })
     setShowModal(true)
   }
 
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (editingUser) {
-      // Update existing user
-      setUsers(users.map(user => 
-        user.id === editingUser.id 
-          ? { ...user, ...formData }
-          : user
-      ))
-    } else {
-      // Create new user
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...formData,
-        avatar: '',
-        createdAt: new Date().toISOString(),
-        favoriteMovies: [],
-        favoriteCinemas: [],
-        notifications: { email: true, sms: false, push: false }
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      if (editingUser) {
+        const updateData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          role: formData.role
+        }
+        const response = await usersAPI.update(editingUser.id, updateData)
+        if (response.success) {
+          setUsers(users.map(user => 
+            user.id === editingUser.id 
+              ? { ...user, ...updateData }
+              : user
+          ))
+          setShowModal(false)
+          setEditingUser(null)
+        } else {
+          setError(response.message || 'Failed to update user')
+        }
+      } else {
+        if (!formData.password) {
+          setError('Password is required for new users')
+          setIsSubmitting(false)
+          return
+        }
+        const response = await usersAPI.create({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          role: formData.role
+        })
+        if (response.success && response.data) {
+          setUsers([response.data as User, ...users])
+          setShowModal(false)
+        } else {
+          setError(response.message || 'Failed to create user')
+        }
       }
-      setUsers([...users, newUser])
+    } catch (err: any) {
+      setError(err.message || 'An error occurred')
+      console.error('Submit error:', err)
+    } finally {
+      setIsSubmitting(false)
     }
-    
-    setShowModal(false)
-    setEditingUser(null)
   }
 
-  // Handle delete user
-  const handleDelete = (id: string) => {
-    setUsers(users.filter(user => user.id !== id))
-    setDeleteConfirm(null)
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await usersAPI.delete(id)
+      if (response.success) {
+        setUsers(users.filter(user => user.id !== id))
+        setDeleteConfirm(null)
+      } else {
+        setError(response.message || 'Failed to delete user')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete user')
+      console.error('Delete error:', err)
+    }
   }
 
-  // Export users to CSV
+  const handleToggleActive = async (user: User) => {
+    try {
+      const response = await usersAPI.update(user.id, { isActive: !user.isActive })
+      if (response.success) {
+        setUsers(users.map(u => 
+          u.id === user.id 
+            ? { ...u, isActive: !u.isActive }
+            : u
+        ))
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update user status')
+    }
+  }
+
   const exportToCSV = () => {
-    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Created At']
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Role', 'Active', 'Created At']
     const rows = users.map(user => [
-      user.firstName,
-      user.lastName,
-      user.email,
-      user.phone,
-      user.role,
-      user.createdAt
+      user.firstName || '',
+      user.lastName || '',
+      user.email || '',
+      user.phone || '',
+      user.role || '',
+      user.isActive ? 'Yes' : 'No',
+      user.createdAt || ''
     ])
     
     const csvContent = [
@@ -245,24 +212,44 @@ export default function CustomersPage() {
     a.click()
   }
 
+  const getRoleBadgeClass = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-purple-500/20 text-purple-500 border-purple-500/50'
+      case 'owner':
+        return 'bg-red-500/20 text-red-500 border-red-500/50'
+      case 'staff':
+        return 'bg-blue-500/20 text-blue-500 border-blue-500/50'
+      default:
+        return 'bg-green-500/20 text-green-500 border-green-500/50'
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl lg:text-4xl font-bold text-white">Customers</h1>
           <p className="text-slate-400 mt-1">Manage your users and their permissions.</p>
         </div>
         
-        {/* Actions */}
         <div className="flex items-center gap-3">
           <Button 
             onClick={exportToCSV}
@@ -282,8 +269,7 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-slate-800/50 border-slate-700/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -303,7 +289,7 @@ export default function CustomersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-slate-400 text-sm">Active Users</p>
-                <p className="text-2xl font-bold text-white">{users.filter(u => u.role === 'user').length}</p>
+                <p className="text-2xl font-bold text-white">{users.filter(u => u.isActive !== false).length}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
                 <Shield className="w-6 h-6 text-green-500" />
@@ -325,9 +311,22 @@ export default function CustomersPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-400 text-sm">Staff</p>
+                <p className="text-2xl font-bold text-white">{users.filter(u => u.role === 'staff').length}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <Shield className="w-6 h-6 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Search and Filter */}
       <Card className="bg-slate-800/50 border-slate-700/50">
         <CardContent className="p-6">
           <div className="flex flex-col lg:flex-row gap-4">
@@ -341,48 +340,22 @@ export default function CustomersPage() {
                 className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-500"
               />
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant={filterRole === 'all' ? 'default' : 'outline'}
-                onClick={() => setFilterRole('all')}
-                className={filterRole === 'all' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
-              >
-                All
-              </Button>
-              <Button
-                variant={filterRole === 'user' ? 'default' : 'outline'}
-                onClick={() => setFilterRole('user')}
-                className={filterRole === 'user' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
-              >
-                Users
-              </Button>
-              <Button
-                variant={filterRole === 'admin' ? 'default' : 'outline'}
-                onClick={() => setFilterRole('admin')}
-                className={filterRole === 'admin' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
-              >
-                Admins
-              </Button>
-              <Button
-                variant={filterRole === 'staff' ? 'default' : 'outline'}
-                onClick={() => setFilterRole('staff')}
-                className={filterRole === 'staff' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
-              >
-                Staff
-              </Button>
-              <Button
-                variant={filterRole === 'owner' ? 'default' : 'outline'}
-                onClick={() => setFilterRole('owner')}
-                className={filterRole === 'owner' ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
-              >
-                Owners
-              </Button>
+            <div className="flex gap-2 flex-wrap">
+              {(['all', 'user', 'admin', 'staff', 'owner'] as const).map((role) => (
+                <Button
+                  key={role}
+                  variant={filterRole === role ? 'default' : 'outline'}
+                  onClick={() => setFilterRole(role)}
+                  className={filterRole === role ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
+                >
+                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                </Button>
+              ))}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Users Table */}
       <Card className="bg-slate-800/50 border-slate-700/50">
         <CardHeader>
           <CardTitle className="text-white">User List</CardTitle>
@@ -396,6 +369,7 @@ export default function CustomersPage() {
                   <th className="text-left text-slate-400 font-medium px-4 py-3">Email</th>
                   <th className="text-left text-slate-400 font-medium px-4 py-3">Phone</th>
                   <th className="text-left text-slate-400 font-medium px-4 py-3">Role</th>
+                  <th className="text-left text-slate-400 font-medium px-4 py-3">Status</th>
                   <th className="text-left text-slate-400 font-medium px-4 py-3">Joined</th>
                   <th className="text-right text-slate-400 font-medium px-4 py-3">Actions</th>
                 </tr>
@@ -406,7 +380,7 @@ export default function CustomersPage() {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
-                          {user.firstName[0]}{user.lastName[0]}
+                          {(user.firstName?.[0] || '')}{(user.lastName?.[0] || '')}
                         </div>
                         <div>
                           <p className="text-white font-medium">{user.firstName} {user.lastName}</p>
@@ -422,18 +396,31 @@ export default function CustomersPage() {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2 text-slate-300">
                         <Phone className="w-4 h-4 text-slate-500" />
-                        {user.phone}
+                        {user.phone || '-'}
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <Badge className={user.role === 'admin' ? 'bg-purple-500/20 text-purple-500 border-purple-500/50' : 'bg-green-500/20 text-green-500 border-green-500/50'}>
+                      <Badge className={getRoleBadgeClass(user.role || 'user')}>
                         {user.role}
                       </Badge>
                     </td>
                     <td className="px-4 py-4">
+                      <button
+                        onClick={() => handleToggleActive(user)}
+                        className={`flex items-center gap-2 ${user.isActive !== false ? 'text-green-500' : 'text-slate-500'}`}
+                      >
+                        {user.isActive !== false ? (
+                          <ToggleRight className="w-6 h-6" />
+                        ) : (
+                          <ToggleLeft className="w-6 h-6" />
+                        )}
+                        <span className="text-sm">{user.isActive !== false ? 'Active' : 'Inactive'}</span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-4">
                       <div className="flex items-center gap-2 text-slate-300">
                         <Calendar className="w-4 h-4 text-slate-500" />
-                        {new Date(user.createdAt).toLocaleDateString()}
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -492,7 +479,6 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <Card className="w-full max-w-md bg-slate-800 border-slate-700">
@@ -533,7 +519,8 @@ export default function CustomersPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
-                    className="bg-slate-700/50 border-slate-600 text-white"
+                    disabled={!!editingUser}
+                    className="bg-slate-700/50 border-slate-600 text-white disabled:opacity-50"
                   />
                 </div>
                 
@@ -543,10 +530,31 @@ export default function CustomersPage() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
                     className="bg-slate-700/50 border-slate-600 text-white"
                   />
                 </div>
+                
+                {!editingUser && (
+                  <div className="space-y-2">
+                    <label className="text-slate-300 text-sm">Password</label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        required={!editingUser}
+                        className="bg-slate-700/50 border-slate-600 text-white pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <label className="text-slate-300 text-sm">Role</label>
@@ -568,14 +576,18 @@ export default function CustomersPage() {
                     variant="outline"
                     onClick={() => setShowModal(false)}
                     className="flex-1 border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
+                    disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isSubmitting}
                   >
-                    {editingUser ? 'Update' : 'Create'}
+                    {isSubmitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : editingUser ? 'Update' : 'Create'}
                   </Button>
                 </div>
               </form>

@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Filter, TrendingUp, Ticket, Users, DollarSign, Activity, BarChart3 } from 'lucide-react'
+import { Calendar, Clock, Filter, TrendingUp, Ticket, Users, DollarSign, Activity, BarChart3, Loader2 } from 'lucide-react'
 import AdminStats from '@/components/admin-stats'
 import AdminBookingsList from '@/components/admin-bookings-list'
 import { Booking } from '@/types/booking'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { analyticsAPI, bookingsAPI } from '@/lib/api'
 import { 
   LineChart, 
   Line, 
@@ -26,87 +27,124 @@ import {
   ComposedChart
 } from 'recharts'
 
-// Dashboard mock data
-const weeklyRevenue = [
-  { day: 'Mon', revenue: 4500, bookings: 45, expenses: 1200 },
-  { day: 'Tue', revenue: 3200, bookings: 32, expenses: 1100 },
-  { day: 'Wed', revenue: 5100, bookings: 51, expenses: 1300 },
-  { day: 'Thu', revenue: 4800, bookings: 48, expenses: 1250 },
-  { day: 'Fri', revenue: 7200, bookings: 72, expenses: 1800 },
-  { day: 'Sat', revenue: 8900, bookings: 89, expenses: 2100 },
-  { day: 'Sun', revenue: 7600, bookings: 76, expenses: 1900 }
-]
+interface DashboardData {
+  weeklyRevenue: Array<{ day: string; revenue: number; bookings: number; expenses: number }>
+  hourlyBookings: Array<{ hour: string; bookings: number }>
+  bookingsByStatus: Array<{ name: string; value: number; color: string }>
+  revenueByGenre: Array<{ name: string; value: number; color: string }>
+  topMovies: Array<{ title: string; bookings: number; revenue: number; rating: number }>
+  topGenres: Array<{ genre: string; bookings: number; percentage: number; color: string }>
+  monthlyTrend: Array<{ month: string; revenue: number; bookings: number }>
+  totalRevenue: number
+  totalBookings: number
+  totalUsers: number
+}
 
-const hourlyBookings = [
-  { hour: '10 AM', bookings: 12 },
-  { hour: '11 AM', bookings: 18 },
-  { hour: '12 PM', bookings: 25 },
-  { hour: '1 PM', bookings: 22 },
-  { hour: '2 PM', bookings: 28 },
-  { hour: '3 PM', bookings: 24 },
-  { hour: '4 PM', bookings: 32 },
-  { hour: '5 PM', bookings: 45 },
-  { hour: '6 PM', bookings: 68 },
-  { hour: '7 PM', bookings: 85 },
-  { hour: '8 PM', bookings: 92 },
-  { hour: '9 PM', bookings: 78 },
-  { hour: '10 PM', bookings: 54 },
-  { hour: '11 PM', bookings: 28 }
-]
-
-const bookingsByStatus = [
-  { name: 'Confirmed', value: 650, color: '#10b981' },
-  { name: 'Pending', value: 85, color: '#f59e0b' },
-  { name: 'Cancelled', value: 45, color: '#ef4444' },
-  { name: 'Used', value: 320, color: '#3b82f6' }
-]
-
-const revenueByGenre = [
-  { name: 'Action', value: 45000, color: '#ef4444' },
-  { name: 'Drama', value: 32000, color: '#3b82f6' },
-  { name: 'Comedy', value: 28000, color: '#f59e0b' },
-  { name: 'Sci-Fi', value: 38000, color: '#8b5cf6' },
-  { name: 'Horror', value: 15000, color: '#10b981' }
-]
-
-const topMovies = [
-  { title: 'Dune: Part Two', bookings: 342, revenue: 34200, rating: 4.8 },
-  { title: 'The Batman', bookings: 287, revenue: 28700, rating: 4.6 },
-  { title: 'Oppenheimer', bookings: 256, revenue: 25600, rating: 4.7 },
-  { title: 'Barbie', bookings: 234, revenue: 23400, rating: 4.4 },
-  { title: 'Spider-Man: ATSV', bookings: 198, revenue: 19800, rating: 4.5 }
-]
-
-const topGenres = [
-  { genre: 'Action', bookings: 320, percentage: 28, color: '#ef4444' },
-  { genre: 'Drama', bookings: 245, percentage: 21, color: '#3b82f6' },
-  { genre: 'Comedy', bookings: 198, percentage: 17, color: '#f59e0b' },
-  { genre: 'Sci-Fi', bookings: 156, percentage: 14, color: '#8b5cf6' },
-  { genre: 'Horror', bookings: 112, percentage: 10, color: '#10b981' }
-]
-
-// Monthly trend data
-const monthlyTrend = [
-  { month: 'Jan', revenue: 18500, bookings: 185 },
-  { month: 'Feb', revenue: 22300, bookings: 223 },
-  { month: 'Mar', revenue: 19800, bookings: 198 },
-  { month: 'Apr', revenue: 24500, bookings: 245 }
-]
+const defaultData: DashboardData = {
+  weeklyRevenue: [
+    { day: 'Mon', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Tue', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Wed', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Thu', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Fri', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Sat', revenue: 0, bookings: 0, expenses: 0 },
+    { day: 'Sun', revenue: 0, bookings: 0, expenses: 0 }
+  ],
+  hourlyBookings: [
+    { hour: '10 AM', bookings: 0 }, { hour: '11 AM', bookings: 0 }, { hour: '12 PM', bookings: 0 },
+    { hour: '1 PM', bookings: 0 }, { hour: '2 PM', bookings: 0 }, { hour: '3 PM', bookings: 0 },
+    { hour: '4 PM', bookings: 0 }, { hour: '5 PM', bookings: 0 }, { hour: '6 PM', bookings: 0 },
+    { hour: '7 PM', bookings: 0 }, { hour: '8 PM', bookings: 0 }, { hour: '9 PM', bookings: 0 },
+    { hour: '10 PM', bookings: 0 }, { hour: '11 PM', bookings: 0 }
+  ],
+  bookingsByStatus: [
+    { name: 'Confirmed', value: 0, color: '#10b981' },
+    { name: 'Pending', value: 0, color: '#f59e0b' },
+    { name: 'Cancelled', value: 0, color: '#ef4444' },
+    { name: 'Used', value: 0, color: '#3b82f6' }
+  ],
+  revenueByGenre: [
+    { name: 'Action', value: 0, color: '#ef4444' },
+    { name: 'Drama', value: 0, color: '#3b82f6' },
+    { name: 'Comedy', value: 0, color: '#f59e0b' },
+    { name: 'Sci-Fi', value: 0, color: '#8b5cf6' },
+    { name: 'Horror', value: 0, color: '#10b981' }
+  ],
+  topMovies: [],
+  topGenres: [
+    { genre: 'Action', bookings: 0, percentage: 0, color: '#ef4444' },
+    { genre: 'Drama', bookings: 0, percentage: 0, color: '#3b82f6' },
+    { genre: 'Comedy', bookings: 0, percentage: 0, color: '#f59e0b' },
+    { genre: 'Sci-Fi', bookings: 0, percentage: 0, color: '#8b5cf6' },
+    { genre: 'Horror', bookings: 0, percentage: 0, color: '#10b981' }
+  ],
+  monthlyTrend: [
+    { month: 'Jan', revenue: 0, bookings: 0 },
+    { month: 'Feb', revenue: 0, bookings: 0 },
+    { month: 'Mar', revenue: 0, bookings: 0 },
+    { month: 'Apr', revenue: 0, bookings: 0 }
+  ],
+  totalRevenue: 0,
+  totalBookings: 0,
+  totalUsers: 0
+}
 
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [dashboardData, setDashboardData] = useState<DashboardData>(defaultData)
 
   useEffect(() => {
-    const storedBookings = localStorage.getItem('bookings')
-    if (storedBookings) {
-      setBookings(JSON.parse(storedBookings))
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true)
+        
+        const [analyticsRes, bookingsRes] = await Promise.all([
+          analyticsAPI.getDashboard(),
+          bookingsAPI.getAll({ limit: 100 })
+        ])
+
+        if (analyticsRes.success && analyticsRes.data) {
+          const data = analyticsRes.data
+          setDashboardData({
+            weeklyRevenue: data.weeklyRevenue || defaultData.weeklyRevenue,
+            hourlyBookings: data.hourlyBookings || defaultData.hourlyBookings,
+            bookingsByStatus: data.bookingsByStatus || defaultData.bookingsByStatus,
+            revenueByGenre: data.revenueByGenre || defaultData.revenueByGenre,
+            topMovies: data.topMovies || defaultData.topMovies,
+            topGenres: data.topGenres || defaultData.topGenres,
+            monthlyTrend: data.monthlyTrend || defaultData.monthlyTrend,
+            totalRevenue: data.totalRevenue || 0,
+            totalBookings: data.totalBookings || 0,
+            totalUsers: data.totalUsers || 0
+          })
+        }
+
+        if (bookingsRes.success && bookingsRes.data?.bookings) {
+          setBookings(bookingsRes.data.bookings)
+        } else {
+          const storedBookings = localStorage.getItem('bookings')
+          if (storedBookings) {
+            setBookings(JSON.parse(storedBookings))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err)
+        const storedBookings = localStorage.getItem('bookings')
+        if (storedBookings) {
+          setBookings(JSON.parse(storedBookings))
+        }
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    fetchDashboardData()
   }, [])
 
-  const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0)
-  const totalBookings = bookings.length
+  const { weeklyRevenue, hourlyBookings, bookingsByStatus, revenueByGenre, topMovies, topGenres, monthlyTrend } = dashboardData
+  const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0) + dashboardData.totalRevenue
+  const totalBookings = bookings.length + dashboardData.totalBookings
 
   return (
     <div className="space-y-8">

@@ -168,14 +168,18 @@ export const cinemasAPI = {
 
 // ============ SHOWTIMES API ============
 export const showtimesAPI = {
-  getAll: async (params?: { movieId?: string; cinemaId?: string; date?: string }) => {
+  getAll: async (params?: { movieId?: string; cinemaId?: string; date?: string; page?: number; limit?: number }) => {
     const searchParams = new URLSearchParams()
     if (params?.movieId) searchParams.set('movieId', params.movieId)
     if (params?.cinemaId) searchParams.set('cinemaId', params.cinemaId)
     if (params?.date) searchParams.set('date', params.date)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
     
-    const response = await fetch(`${API_BASE_URL}/showtimes?${searchParams.toString()}`)
-    return handleResponse<{ showtimes: Showtime[] }>(response)
+    const response = await fetch(`${API_BASE_URL}/showtimes?${searchParams.toString()}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse<{ showtimes: Showtime[]; total: number; page: number; totalPages: number }>(response)
   },
 
   getById: async (id: string) => {
@@ -277,6 +281,15 @@ export const usersAPI = {
   getById: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/users/${id}`, {
       headers: getHeaders(),
+    })
+    return handleResponse<User>(response)
+  },
+
+  create: async (data: { email: string; password: string; firstName: string; lastName: string; phone?: string; role?: string }) => {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
     })
     return handleResponse<User>(response)
   },

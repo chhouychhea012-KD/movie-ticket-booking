@@ -1,21 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import BookingCard from '@/components/booking-card'
 import { Booking } from '@/types/booking'
+import { useApp } from '@/context/AppContext'
 
 export default function BookingsPage() {
+  const router = useRouter()
+  const { user } = useApp()
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get bookings from localStorage
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    
+    if (!storedUser && !user) {
+      router.push(`/auth/login?redirect=/bookings`)
+      return
+    }
+
     const storedBookings = localStorage.getItem('bookings')
     if (storedBookings) {
       setBookings(JSON.parse(storedBookings))
     }
     setLoading(false)
-  }, [])
+  }, [user, router])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-12">

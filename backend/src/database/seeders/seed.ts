@@ -1,4 +1,4 @@
-import { sequelize, User, Movie, Cinema, Showtime, Coupon } from '../../models';
+import { sequelize, User, Movie, Cinema, Showtime, Coupon, Notification } from '../../models';
 
 interface SeedData {
   users: any[];
@@ -6,6 +6,7 @@ interface SeedData {
   cinemas: any[];
   showtimes: any[];
   coupons: any[];
+  notifications: any[];
 }
 
 const seedData: SeedData = {
@@ -229,6 +230,56 @@ const seedData: SeedData = {
       isActive: true,
     },
   ],
+  notifications: [
+    {
+      type: 'booking',
+      title: 'New Booking Received',
+      message: 'John Doe booked 3 tickets for Dune: Part Two',
+      read: false,
+    },
+    {
+      type: 'alert',
+      title: 'Low Seat Availability',
+      message: 'Only 15 seats remaining for Oppenheimer - 7PM show',
+      read: false,
+    },
+    {
+      type: 'success',
+      title: 'Booking Confirmed',
+      message: 'Booking #BK-2847 has been successfully paid',
+      read: true,
+    },
+    {
+      type: 'system',
+      title: 'System Update',
+      message: 'Server maintenance scheduled for tonight at 2AM',
+      read: true,
+    },
+    {
+      type: 'booking',
+      title: 'New Booking Received',
+      message: 'Jane Smith booked 2 tickets for Avatar: The Way of Water',
+      read: false,
+    },
+    {
+      type: 'alert',
+      title: 'Low Seat Availability',
+      message: 'Only 5 seats remaining for The Quantum Paradox - 4PM show',
+      read: false,
+    },
+    {
+      type: 'success',
+      title: 'Payment Received',
+      message: 'Payment of $45.00 received for Booking #BK-2850',
+      read: true,
+    },
+    {
+      type: 'system',
+      title: 'New Movie Added',
+      message: 'New movie "Dragon Legends" has been added to the system',
+      read: false,
+    },
+  ],
 };
 
 export const runSeeders = async (): Promise<void> => {
@@ -291,6 +342,11 @@ export const runSeeders = async (): Promise<void> => {
     console.log('🎟️ Seeding coupons...');
     await Coupon.bulkCreate(seedData.coupons);
     console.log('✅ Coupons seeded');
+
+    // Seed Notifications
+    console.log('🔔 Seeding notifications...');
+    await Notification.bulkCreate(seedData.notifications);
+    console.log('✅ Notifications seeded');
 
     console.log('📊 Database seeded successfully');
   } catch (error) {

@@ -199,13 +199,23 @@ export default function Navigation() {
                 <Clapperboard className="w-4 h-4" />
                 <span className="text-sm font-medium">Movies</span>
               </Link>
-              <Link 
-                href="/bookings" 
-                className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all duration-300 flex items-center gap-2"
-              >
-                <Ticket className="w-4 h-4" />
-                <span className="text-sm font-medium">Bookings</span>
-              </Link>
+              {user ? (
+                <Link 
+                  href="/bookings" 
+                  className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all duration-300 flex items-center gap-2"
+                >
+                  <Ticket className="w-4 h-4" />
+                  <span className="text-sm font-medium">Bookings</span>
+                </Link>
+              ) : (
+                <button 
+                  onClick={() => router.push('/auth/login?redirect=/bookings')}
+                  className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all duration-300 flex items-center gap-2"
+                >
+                  <Ticket className="w-4 h-4" />
+                  <span className="text-sm font-medium">Bookings</span>
+                </button>
+              )}
             </div>
 
             {/* User Menu */}
@@ -345,14 +355,27 @@ export default function Navigation() {
                 <Clapperboard className="w-5 h-5" />
                 <span className="font-medium">Movies</span>
               </Link>
-              <Link 
-                href="/bookings" 
-                className="flex items-center gap-3 px-4 py-3 bg-slate-800/60 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-all"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Ticket className="w-5 h-5" />
-                <span className="font-medium">My Bookings</span>
-              </Link>
+              {user ? (
+                <Link 
+                  href="/bookings" 
+                  className="flex items-center gap-3 px-4 py-3 bg-slate-800/60 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Ticket className="w-5 h-5" />
+                  <span className="font-medium">My Bookings</span>
+                </Link>
+              ) : (
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    router.push('/auth/login?redirect=/bookings')
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 bg-slate-800/60 hover:bg-slate-800 rounded-xl text-slate-300 hover:text-white transition-all"
+                >
+                  <Ticket className="w-5 h-5" />
+                  <span className="font-medium">My Bookings</span>
+                </button>
+              )}
               
               {user ? (
                 <>

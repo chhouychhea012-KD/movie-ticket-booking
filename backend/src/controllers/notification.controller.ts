@@ -1,122 +1,41 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-
-// In-memory storage for notifications (in production, use a database)
-let notifications: Notification[] = [];
-
-export interface Notification {
-  id: string;
-  type: 'booking' | 'alert' | 'success' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  date: string;
-  read: boolean;
-  createdAt: Date;
-}
-
-// Initialize with some default notifications
-const initializeNotifications = () => {
-  if (notifications.length === 0) {
-    notifications = [
-      {
-        id: uuidv4(),
-        type: 'booking',
-        title: 'New Booking Received',
-        message: 'John Doe booked 3 tickets for Dune: Part Two at Legend Cinema - Screen 1',
-        time: '5 min ago',
-        date: new Date().toISOString().split('T')[0],
-        read: false,
-        createdAt: new Date(),
-      },
-      {
-        id: uuidv4(),
-        type: 'alert',
-        title: 'Low Seat Availability',
-        message: 'Only 15 seats remaining for Oppenheimer - 7PM show today',
-        time: '15 min ago',
-        date: new Date().toISOString().split('T')[0],
-        read: false,
-        createdAt: new Date(),
-      },
-      {
-        id: uuidv4(),
-        type: 'success',
-        title: 'Booking Confirmed',
-        message: 'Booking #BK-2847 for "The Batman" has been successfully paid - $45.00',
-        time: '1 hour ago',
-        date: new Date().toISOString().split('T')[0],
-        read: true,
-        createdAt: new Date(Date.now() - 3600000),
-      },
-      {
-        id: uuidv4(),
-        type: 'system',
-        title: 'System Update',
-        message: 'Server maintenance scheduled for tonight at 2:00 AM',
-        time: '2 hours ago',
-        date: new Date().toISOString().split('T')[0],
-        read: true,
-        createdAt: new Date(Date.now() - 7200000),
-      },
-      {
-        id: uuidv4(),
-        type: 'booking',
-        title: 'Booking Cancelled',
-        message: 'Customer Sarah Lee cancelled booking #BK-2845 for "Barbie"',
-        time: '3 hours ago',
-        date: new Date().toISOString().split('T')[0],
-        read: true,
-        createdAt: new Date(Date.now() - 10800000),
-      },
-      {
-        id: uuidv4(),
-        type: 'success',
-        title: 'Payment Received',
-        message: 'Payment of $120.00 received for booking #BK-2850',
-        time: '4 hours ago',
-        date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-        read: true,
-        createdAt: new Date(Date.now() - 14400000),
-      },
-    ];
-  }
-};
-
-initializeNotifications();
+import { Op } from 'sequelize';
+import Notification from '../models/Notification';
 
 export const getNotifications = async (req: Request, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 20, type, read } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
-    let filtered = [...notifications];
-
-    // Filter by type
+    const where: any = {};
+    
     if (type && type !== 'all') {
-      filtered = filtered.filter(n => n.type === type);
+      where.type = type;
     }
-
-    // Filter by read status
+    
     if (read !== undefined) {
-      const isRead = read === 'true';
-      filtered = filtered.filter(n => n.read === isRead);
+      where.read = read === 'true';
     }
 
-    // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const { count, rows: notifications } = await Notification.findAndCountAll({
+      where,
+      limit: Number(limit),
+      offset,
+      order: [['createdAt', 'DESC']],
+    });
 
-    const total = filtered.length;
-    const paginated = filtered.slice(offset, offset + Number(limit));
+    const unreadCount = await Notification.count({
+      where: { read: false },
+    });
 
     res.json({
       success: true,
       data: {
-        notifications: paginated,
-        total,
+        notifications,
+        total: count,
         page: Number(page),
-        totalPages: Math.ceil(total / Number(limit)),
-        unreadCount: filtered.filter(n => !n.read).length,
+        totalPages: Math.ceil(count / Number(limit)),
+        unreadCount,
       },
     });
   } catch (error: any) {
@@ -131,20 +50,15 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
 
 export const createNotification = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { type, title, message } = req.body;
+    const { type, title, message, userId } = req.body;
 
-    const notification: Notification = {
-      id: uuidv4(),
+    const notification = await Notification.create({
       type: type || 'system',
       title,
       message,
-      time: 'Just now',
-      date: new Date().toISOString().split('T')[0],
+      userId,
       read: false,
-      createdAt: new Date(),
-    };
-
-    notifications.unshift(notification);
+    });
 
     res.status(201).json({
       success: true,
@@ -165,7 +79,7 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
   try {
     const { id } = req.params;
 
-    const notification = notifications.find(n => n.id === id);
+    const notification = await Notification.findByPk(id);
     if (!notification) {
       res.status(404).json({
         success: false,
@@ -174,7 +88,7 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    notification.read = true;
+    await notification.update({ read: true });
 
     res.json({
       success: true,
@@ -193,9 +107,10 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
 
 export const markAllAsRead = async (req: Request, res: Response): Promise<void> => {
   try {
-    notifications.forEach(n => {
-      n.read = true;
-    });
+    await Notification.update(
+      { read: true },
+      { where: { read: false } }
+    );
 
     res.json({
       success: true,
@@ -215,8 +130,8 @@ export const deleteNotification = async (req: Request, res: Response): Promise<v
   try {
     const { id } = req.params;
 
-    const index = notifications.findIndex(n => n.id === id);
-    if (index === -1) {
+    const notification = await Notification.findByPk(id);
+    if (!notification) {
       res.status(404).json({
         success: false,
         message: 'Notification not found',
@@ -224,7 +139,7 @@ export const deleteNotification = async (req: Request, res: Response): Promise<v
       return;
     }
 
-    notifications.splice(index, 1);
+    await notification.destroy();
 
     res.json({
       success: true,
@@ -242,7 +157,7 @@ export const deleteNotification = async (req: Request, res: Response): Promise<v
 
 export const deleteAllNotifications = async (req: Request, res: Response): Promise<void> => {
   try {
-    notifications = [];
+    await Notification.destroy({ where: {} });
 
     res.json({
       success: true,
@@ -260,20 +175,16 @@ export const deleteAllNotifications = async (req: Request, res: Response): Promi
 
 export const getNotificationStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const total = notifications.length;
-    const unread = notifications.filter(n => !n.read).length;
-    const read = notifications.filter(n => n.read).length;
+    const total = await Notification.count();
+    const unread = await Notification.count({ where: { read: false } });
+    const read = await Notification.count({ where: { read: true } });
 
     const typeCounts: Record<string, number> = {
-      booking: 0,
-      alert: 0,
-      success: 0,
-      system: 0,
+      booking: await Notification.count({ where: { type: 'booking' } }),
+      alert: await Notification.count({ where: { type: 'alert' } }),
+      success: await Notification.count({ where: { type: 'success' } }),
+      system: await Notification.count({ where: { type: 'system' } }),
     };
-
-    notifications.forEach(n => {
-      typeCounts[n.type] = (typeCounts[n.type] || 0) + 1;
-    });
 
     res.json({
       success: true,

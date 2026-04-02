@@ -11,6 +11,8 @@ export interface User {
   lastName: string
   avatar?: string
   role: UserRole
+  isActive?: boolean
+  emailVerified?: boolean
   createdAt: string
   favoriteMovies: string[]
   favoriteCinemas: string[]
@@ -122,7 +124,7 @@ export interface Showtime {
   price: number // base price
   availableSeats: number
   totalSeats: number
-  status: 'scheduled' | 'selling' | 'sold_out' | 'cancelled'
+  status: 'selling' | 'sold_out' | 'cancelled'
   dynamicPricing?: DynamicPricing
 }
 

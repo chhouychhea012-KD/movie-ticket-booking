@@ -9,7 +9,8 @@ import {
   Calendar,
   Download,
   Activity,
-  PieChart as PieChartIcon
+  PieChart as PieChartIcon,
+  Loader2
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +21,7 @@ import {
   ChartLegend,
   ChartLegendContent
 } from '@/components/ui/chart'
+import { analyticsAPI } from '@/lib/api'
 import { 
   LineChart, 
   Line, 
@@ -38,53 +40,30 @@ import {
   ResponsiveContainer 
 } from 'recharts'
 
-// Mock analytics data
-const mockAnalytics = {
-  totalRevenue: 125430,
-  totalBookings: 1245,
-  totalUsers: 856,
-  occupancyRate: 72,
-  revenueByMonth: [
-    { month: 'Jan', revenue: 18500, bookings: 185, expenses: 8500 },
-    { month: 'Feb', revenue: 22300, bookings: 223, expenses: 9200 },
-    { month: 'Mar', revenue: 19800, bookings: 198, expenses: 7800 },
-    { month: 'Apr', revenue: 24500, bookings: 245, expenses: 10500 },
-    { month: 'May', revenue: 21200, bookings: 212, expenses: 8800 },
-    { month: 'Jun', revenue: 19130, bookings: 182, expenses: 7500 }
-  ],
-  topMovies: [
-    { title: 'Dune: Part Two', bookings: 342, revenue: 34200 },
-    { title: 'The Batman', bookings: 287, revenue: 28700 },
-    { title: 'Oppenheimer', bookings: 256, revenue: 25600 },
-    { title: 'Barbie', bookings: 234, revenue: 23400 },
-    { title: 'Spider-Man: ATSV', bookings: 198, revenue: 19800 }
-  ],
-  peakHours: [
-    { hour: '6 PM', bookings: 145 },
-    { hour: '7 PM', bookings: 189 },
-    { hour: '8 PM', bookings: 201 },
-    { hour: '9 PM', bookings: 178 },
-    { hour: '10 PM', bookings: 134 }
-  ],
-  userDemographics: [
-    { name: '18-24', value: 35, color: '#f97316' },
-    { name: '25-34', value: 40, color: '#3b82f6' },
-    { name: '35-44', value: 15, color: '#8b5cf6' },
-    { name: '45+', value: 10, color: '#10b981' }
-  ],
-  bookingStatus: [
-    { name: 'Confirmed', value: 850, color: '#10b981' },
-    { name: 'Pending', value: 120, color: '#f59e0b' },
-    { name: 'Cancelled', value: 75, color: '#ef4444' },
-    { name: 'Completed', value: 200, color: '#3b82f6' }
-  ],
-  revenueByGenre: [
-    { name: 'Action', value: 45000, color: '#ef4444' },
-    { name: 'Drama', value: 32000, color: '#3b82f6' },
-    { name: 'Comedy', value: 28000, color: '#f59e0b' },
-    { name: 'Sci-Fi', value: 38000, color: '#8b5cf6' },
-    { name: 'Horror', value: 15000, color: '#10b981' }
-  ]
+interface AnalyticsData {
+  totalRevenue: number
+  totalBookings: number
+  totalUsers: number
+  occupancyRate: number
+  revenueByMonth: Array<{ month: string; revenue: number; bookings: number; expenses: number }>
+  topMovies: Array<{ title: string; bookings: number; revenue: number }>
+  peakHours: Array<{ hour: string; bookings: number }>
+  userDemographics: Array<{ name: string; value: number; color: string }>
+  bookingStatus: Array<{ name: string; value: number; color: string }>
+  revenueByGenre: Array<{ name: string; value: number; color: string }>
+}
+
+const defaultAnalytics: AnalyticsData = {
+  totalRevenue: 0,
+  totalBookings: 0,
+  totalUsers: 0,
+  occupancyRate: 0,
+  revenueByMonth: [],
+  topMovies: [],
+  peakHours: [],
+  userDemographics: [],
+  bookingStatus: [],
+  revenueByGenre: []
 }
 
 // Chart configurations
@@ -109,19 +88,36 @@ const bookingsChartConfig = {
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('6m')
   const [isLoading, setIsLoading] = useState(true)
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>(defaultAnalytics)
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800)
-    return () => clearTimeout(timer)
-  }, [])
+    const fetchAnalytics = async () => {
+      try {
+        setIsLoading(true)
+        const response = await analyticsAPI.getDashboard()
+        
+        if (response.success && response.data) {
+          setAnalyticsData(response.data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAnalytics()
+  }, [timeRange])
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        <Loader2 className="w-12 h-12 animate-spin text-orange-500" />
       </div>
     )
   }
+
+  const { totalRevenue, totalBookings, totalUsers, occupancyRate, revenueByMonth, topMovies, peakHours, userDemographics, bookingStatus, revenueByGenre } = analyticsData
 
   return (
     <div className="space-y-8">
@@ -159,7 +155,7 @@ export default function AnalyticsPage() {
             <DollarSign className="w-4 h-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">${mockAnalytics.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-white">${analyticsData.totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-green-500 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" /> +12.5% from last month
             </p>
@@ -172,7 +168,7 @@ export default function AnalyticsPage() {
             <Ticket className="w-4 h-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockAnalytics.totalBookings.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-white">{analyticsData.totalBookings.toLocaleString()}</div>
             <p className="text-xs text-green-500 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" /> +8.2% from last month
             </p>
@@ -185,7 +181,7 @@ export default function AnalyticsPage() {
             <Users className="w-4 h-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockAnalytics.totalUsers.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-white">{analyticsData.totalUsers.toLocaleString()}</div>
             <p className="text-xs text-green-500 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" /> +15.3% from last month
             </p>
@@ -198,7 +194,7 @@ export default function AnalyticsPage() {
             <Activity className="w-4 h-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{mockAnalytics.occupancyRate}%</div>
+            <div className="text-2xl font-bold text-white">{analyticsData.occupancyRate}%</div>
             <p className="text-xs text-green-500 flex items-center mt-1">
               <TrendingUp className="w-3 h-3 mr-1" /> +3.2% from last month
             </p>
@@ -216,7 +212,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockAnalytics.revenueByMonth}>
+                <LineChart data={analyticsData.revenueByMonth}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis 
                     dataKey="month" 
@@ -270,7 +266,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockAnalytics.revenueByMonth}>
+                <AreaChart data={analyticsData.revenueByMonth}>
                   <defs>
                     <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
@@ -327,7 +323,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockAnalytics.userDemographics}
+                    data={analyticsData.userDemographics}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -337,7 +333,7 @@ export default function AnalyticsPage() {
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                     labelLine={true}
                   >
-                    {mockAnalytics.userDemographics.map((entry, index) => (
+                    {analyticsData.userDemographics.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -354,7 +350,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {mockAnalytics.userDemographics.map((item, index) => (
+              {analyticsData.userDemographics.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-400 text-xs">{item.name}: {item.value}%</span>
@@ -377,7 +373,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockAnalytics.bookingStatus}
+                    data={analyticsData.bookingStatus}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -387,7 +383,7 @@ export default function AnalyticsPage() {
                     label={({ name, value }) => `${name}: ${value}`}
                     labelLine={true}
                   >
-                    {mockAnalytics.bookingStatus.map((entry, index) => (
+                    {analyticsData.bookingStatus.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -404,7 +400,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {mockAnalytics.bookingStatus.map((item, index) => (
+              {analyticsData.bookingStatus.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-400 text-xs">{item.name}: {item.value}</span>
@@ -427,7 +423,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockAnalytics.revenueByGenre}
+                    data={analyticsData.revenueByGenre}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -437,7 +433,7 @@ export default function AnalyticsPage() {
                     label={({ name, value }) => `$${(value/1000).toFixed(0)}k`}
                     labelLine={true}
                   >
-                    {mockAnalytics.revenueByGenre.map((entry, index) => (
+                    {analyticsData.revenueByGenre.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -454,7 +450,7 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {mockAnalytics.revenueByGenre.map((item, index) => (
+              {analyticsData.revenueByGenre.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-slate-400 text-xs">{item.name}</span>
@@ -475,7 +471,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockAnalytics.topMovies} layout="vertical">
+                <BarChart data={analyticsData.topMovies} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={true} vertical={false} />
                   <XAxis 
                     type="number"
@@ -505,7 +501,7 @@ export default function AnalyticsPage() {
                     radius={[0, 4, 4, 0]}
                     name="Revenue"
                   >
-                    {mockAnalytics.topMovies.map((entry, index) => (
+                    {analyticsData.topMovies.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={index === 0 ? '#f97316' : '#f97316aa'} />
                     ))}
                   </Bar>
@@ -523,7 +519,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockAnalytics.peakHours}>
+                <BarChart data={analyticsData.peakHours}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={true} />
                   <XAxis 
                     dataKey="hour" 
@@ -549,7 +545,7 @@ export default function AnalyticsPage() {
                     radius={[4, 4, 0, 0]}
                     name="Bookings"
                   >
-                    {mockAnalytics.peakHours.map((entry, index) => (
+                    {analyticsData.peakHours.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill="#3b82f6" />
                     ))}
                   </Bar>

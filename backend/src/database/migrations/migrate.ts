@@ -6,6 +6,7 @@ import Showtime from '../../models/Showtime';
 import Booking from '../../models/Booking';
 import Ticket from '../../models/Ticket';
 import Coupon from '../../models/Coupon';
+import Notification from '../../models/Notification';
 
 export const runMigrations = async (): Promise<void> => {
   try {

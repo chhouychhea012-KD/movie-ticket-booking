@@ -10,7 +10,7 @@ import { ChevronLeft, Calendar, Clock, MapPin, Ticket, Film, Loader2 } from 'luc
 export default function BookingPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { getMovieById, getCinemaById } = useApp()
+  const { getMovieById, getCinemaById, user } = useApp()
   
   const movieId = searchParams.get('movieId') || ''
   const showtimeId = searchParams.get('showtimeId') || ''
@@ -20,6 +20,18 @@ export default function BookingPage() {
 
   const [movie, setMovie] = useState<any>(null)
   const [cinema, setCinema] = useState<any>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    
+    if (!storedUser && !user) {
+      router.push(`/auth/login?redirect=/booking/new?movieId=${movieId}&showtimeId=${showtimeId}&cinemaId=${cinemaId}&date=${date}&time=${time}`)
+      return
+    }
+    
+    setIsAuthenticated(true)
+  }, [user, router, movieId, showtimeId, cinemaId, date, time])
 
   useEffect(() => {
     if (movieId) {
@@ -31,6 +43,17 @@ export default function BookingPage() {
       setCinema(foundCinema)
     }
   }, [movieId, cinemaId, getMovieById, getCinemaById])
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+          <span className="text-white">Loading...</span>
+        </div>
+      </div>
+    )
+  }
 
   if (!movie) {
     return (
