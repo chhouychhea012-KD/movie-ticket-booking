@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link'
-import { useApp } from '@/context/AppContext'
-import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, Check } from 'lucide-react'
+import { useApp } from '@/context/AppContext';
+import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, Check } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter()
-  const { register, isLoading } = useApp()
+  const { register, isLoading } = useApp();
   
   const [formData, setFormData] = useState({
     firstName: '',

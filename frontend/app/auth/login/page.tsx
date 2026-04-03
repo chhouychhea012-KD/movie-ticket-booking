@@ -1,23 +1,23 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link'
-import { useApp } from '@/context/AppContext'
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react'
+import { useApp } from '@/context/AppContext';
+import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || ''
-  const { login, isLoading } = useApp()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '';
+  const { login, isLoading } = useApp();
   
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
