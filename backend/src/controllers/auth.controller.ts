@@ -3,7 +3,7 @@ import { ValidationError } from 'sequelize';
 import User from '../models/User';
 import { generateToken } from '../middleware/auth';
 
-export const register = async (req: Request, res: Response): Promise<Response> => {
+export const register = async (req: Request, res: Response): Promise<void> => {
   console.log('Register attempt - body:', JSON.stringify(req.body, null, 2));
   try {
     const { email, password, firstName, lastName, phone } = req.body;

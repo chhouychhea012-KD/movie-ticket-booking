@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-import { User, UserRole } from '../models/User';
+import User, { UserRole } from '../models/User';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -25,9 +25,11 @@ export const generateToken = (user: User): string => {
     role: user.role,
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET || 'secret', {
-    expiresIn: process.env.JWT_EXPIRE || '7d',
-  });
+  const options: jwt.SignOptions = {
+    expiresIn: (process.env.JWT_EXPIRE || '7d') as jwt.SignOptions['expiresIn'],
+  };
+
+  return jwt.sign(payload, process.env.JWT_SECRET || 'secret', options);
 };
 
 // Verify JWT token
@@ -93,4 +95,3 @@ export const authorizeRoles = (...allowedRoles: UserRole[]) => {
   };
 };
 
-import dotenv from 'dotenv';

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Booking } from '@/types/booking'
 
-export default function BookingConfirmationPage() {
+function BookingConfirmationPageContent() {
   const searchParams = useSearchParams()
   const bookingId = searchParams.get('bookingId')
   const [booking, setBooking] = useState<Booking | null>(null)
@@ -109,5 +109,12 @@ export default function BookingConfirmationPage() {
         </div>
       </div>
     </div>
+  )
+}
+export default function BookingConfirmationPage() {
+  return (
+    <Suspense fallback={null}>
+      <BookingConfirmationPageContent />
+    </Suspense>
   )
 }

@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import { AuthRequest } from '../middleware/auth';
 import Booking from '../models/Booking';
 import Showtime from '../models/Showtime';
 import Ticket from '../models/Ticket';
 import Coupon from '../models/Coupon';
 
-export const createBooking = async (req: Request, res: Response): Promise<void> => {
+export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { 
       movieId, movieTitle, cinemaId, cinemaName, screenId, 
@@ -106,7 +106,7 @@ export const createBooking = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getBookings = async (req: Request, res: Response): Promise<void> => {
+export const getBookings = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
@@ -140,7 +140,7 @@ export const getBookings = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getBookingById = async (req: Request, res: Response): Promise<void> => {
+export const getBookingById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const booking = await Booking.findOne({
@@ -170,7 +170,7 @@ export const getBookingById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const cancelBooking = async (req: Request, res: Response): Promise<void> => {
+export const cancelBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const booking = await Booking.findOne({

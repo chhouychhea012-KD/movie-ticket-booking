@@ -147,13 +147,13 @@ export const deleteShowtime = async (req: Request, res: Response): Promise<void>
 export const getAvailableShowtimes = async (req: Request, res: Response): Promise<void> => {
   try {
     const { movieId, date } = req.query;
+    const where: any = { status: 'selling' };
+
+    if (typeof movieId === 'string') where.movieId = movieId;
+    if (typeof date === 'string') where.date = date;
     
     const showtimes = await Showtime.findAll({
-      where: {
-        movieId,
-        date,
-        status: 'selling',
-      },
+      where,
       order: [['startTime', 'ASC']],
     });
 

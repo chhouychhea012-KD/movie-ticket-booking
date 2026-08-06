@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import SeatMap from '@/components/seat-map'
 import BookingSummary from '@/components/booking-summary'
 import { Movie } from '@/types/movie'
 import { useApp } from '@/context/AppContext'
 
-export default function BookingPage() {
+function BookingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useApp()
@@ -86,5 +86,12 @@ export default function BookingPage() {
         </div>
       </div>
     </div>
+  )
+}
+export default function BookingPage() {
+  return (
+    <Suspense fallback={null}>
+      <BookingPageContent />
+    </Suspense>
   )
 }

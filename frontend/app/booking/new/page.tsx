@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
 import EnhancedSeatMap from '@/components/enhanced-seat-map'
 import { ChevronLeft, Calendar, Clock, MapPin, Ticket, Film, Loader2 } from 'lucide-react'
 
-export default function BookingPage() {
+function BookingPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { getMovieById, getCinemaById, user } = useApp()
@@ -124,5 +124,12 @@ export default function BookingPage() {
         />
       </div>
     </div>
+  )
+}
+export default function BookingPage() {
+  return (
+    <Suspense fallback={null}>
+      <BookingPageContent />
+    </Suspense>
   )
 }
