@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
           {/* Logo */}
           <div className="text-center mb-8">
             <Link href="/" className="text-4xl font-bold text-orange-500">
-              CinemaHub
+              CamboCine
             </Link>
             <p className="text-slate-400 mt-2">Password reset request</p>
           </div>
@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="text-4xl font-bold text-orange-500">
-            CinemaHub
+            CamboCine
           </Link>
           <p className="text-slate-400 mt-2">Reset your password</p>
         </div>

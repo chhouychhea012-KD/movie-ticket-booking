@@ -34,7 +34,7 @@ export default function HelpPage() {
       answer: 'Click on the Register button in the navigation bar, fill in your details, and start enjoying member-exclusive benefits and rewards.',
     },
     {
-      question: 'What are the benefits of CinemaHub membership?',
+      question: 'What are the benefits of CamboCine membership?',
       answer: 'Members get access to exclusive deals, early booking for new releases, reward points, and special event invitations.',
     },
     {
@@ -49,7 +49,7 @@ export default function HelpPage() {
   )
 
   const helpCategories = [
-    { icon: Book, title: 'Getting Started', description: 'Learn the basics of using CinemaHub', href: '#getting-started' },
+    { icon: Book, title: 'Getting Started', description: 'Learn the basics of using CamboCine', href: '#getting-started' },
     { icon: MessageCircle, title: 'Booking Help', description: 'Tickets, payments, and reservations', href: '#booking' },
     { icon: Phone, title: 'Account Support', description: 'Login, registration, and settings', href: '#account' },
     { icon: Mail, title: 'Contact Us', description: 'Get in touch with our team', href: '/contact' },

@@ -26,7 +26,7 @@ export default function RefundsPage() {
           <div className="bg-slate-900 p-8 rounded-xl mb-8">
             <p className="text-slate-400 leading-relaxed">
               This Refund Policy outlines our guidelines for cancellations and refunds on movie ticket 
-              bookings made through CinemaHub. Please read this policy carefully before making a booking.
+              bookings made through CamboCine. Please read this policy carefully before making a booking.
             </p>
           </div>
 
@@ -104,7 +104,7 @@ export default function RefundsPage() {
                 If you have questions about refunds or need assistance, please contact us:
               </p>
               <ul className="text-slate-400 space-y-2">
-                <li>Email: support@cinemahub.com</li>
+                <li>Email: support@cambocine.online</li>
                 <li>Phone: +855 23 888 888</li>
                 <li>Use the Contact form for urgent requests</li>
               </ul>

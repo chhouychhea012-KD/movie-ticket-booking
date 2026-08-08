@@ -38,7 +38,7 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: 'Email Us',
-      details: 'support@cinemahub.com',
+      details: 'support@cambocine.online',
     },
     {
       icon: Clock,

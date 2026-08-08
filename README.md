@@ -43,7 +43,7 @@ cp .env.example .env
 Create the MySQL database:
 
 ```sql
-CREATE DATABASE IF NOT EXISTS cinemahub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS cambocine CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 Run schema sync and seed demo data:
@@ -122,7 +122,7 @@ DB_SYNC_FORCE=true
 After seeding:
 
 ```txt
-Admin: admin@cinemahub.com / admin123
+Admin: admin@cambocine.online / admin123
 User: john.doe@example.com / user123
 User: jane.smith@example.com / user123
 ```

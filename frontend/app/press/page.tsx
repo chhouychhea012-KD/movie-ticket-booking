@@ -6,25 +6,25 @@ import { ChevronLeft, Newspaper, Calendar, ExternalLink } from 'lucide-react'
 export default function PressPage() {
   const pressReleases = [
     {
-      title: 'CinemaHub Launches Revolutionary Booking Platform',
+      title: 'CamboCine Launches Revolutionary Booking Platform',
       date: 'January 15, 2024',
-      excerpt: 'CinemaHub announces the launch of its new booking platform with enhanced features and seamless user experience.',
+      excerpt: 'CamboCine announces the launch of its new booking platform with enhanced features and seamless user experience.',
       category: 'Product Launch',
     },
     {
-      title: 'CinemaHub Partners with Major Cinema Chains in Cambodia',
+      title: 'CamboCine Partners with Major Cinema Chains in Cambodia',
       date: 'December 10, 2023',
       excerpt: 'Strategic partnership brings together over 50 cinemas across Cambodia under one platform.',
       category: 'Partnership',
     },
     {
-      title: 'CinemaHub Reaches 500,000 Active Users Milestone',
+      title: 'CamboCine Reaches 500,000 Active Users Milestone',
       date: 'November 5, 2023',
       excerpt: 'Growing popularity of the platform marks a significant achievement in the Cambodian market.',
       category: 'Milestone',
     },
     {
-      title: 'CinemaHub Introduces Mobile App with Exclusive Features',
+      title: 'CamboCine Introduces Mobile App with Exclusive Features',
       date: 'October 20, 2023',
       excerpt: 'New mobile app brings instant booking, exclusive deals, and personalized recommendations.',
       category: 'Product Launch',
@@ -34,12 +34,12 @@ export default function PressPage() {
   const mediaContacts = [
     {
       name: 'Press Office',
-      email: 'press@cinemahub.com',
+      email: 'press@cambocine.online',
       phone: '+855 23 888 889',
     },
     {
       name: 'Marketing Team',
-      email: 'marketing@cinemahub.com',
+      email: 'marketing@cambocine.online',
       phone: '+855 23 888 890',
     },
   ]
@@ -55,7 +55,7 @@ export default function PressPage() {
           </Link>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Press Center</h1>
           <p className="text-xl text-white/80 max-w-2xl">
-            Latest news, press releases, and media resources from CinemaHub
+            Latest news, press releases, and media resources from CamboCine
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function PressPage() {
             <div className="bg-slate-900 p-8 rounded-xl">
               <h3 className="text-xl font-semibold text-white mb-4">Media Kit</h3>
               <p className="text-slate-400 mb-6">
-                Get comprehensive information about CinemaHub, our history, and key statistics.
+                Get comprehensive information about CamboCine, our history, and key statistics.
               </p>
               <button className="bg-orange-500 text-white px-6 py-3 rounded-xl font-medium hover:bg-orange-600 transition">
                 Download Kit

@@ -25,8 +25,8 @@ export default function CookiesPage() {
         <div className="prose prose-invert prose-lg max-w-none">
           <div className="bg-slate-900 p-8 rounded-xl mb-8">
             <p className="text-slate-400 leading-relaxed">
-              This Cookie Policy explains what cookies are, how CinemaHub uses them, and your choices 
-              regarding cookies. By using our website, you consent to the use of cookies as described 
+              This Cookie Policy explains what cookies are, how CamboCine uses them, and your choices
+              regarding cookies. By using our website, you consent to the use of cookies as described
               in this policy.
             </p>
           </div>
@@ -38,8 +38,8 @@ export default function CookiesPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed">
-                Cookies are small text files that are stored on your device when you visit websites. 
-                They help websites function properly and provide information to website owners about 
+                Cookies are small text files that are stored on your device when you visit websites.
+                They help websites function properly and provide information to website owners about
                 how users interact with their site.
               </p>
             </div>
@@ -54,28 +54,28 @@ export default function CookiesPage() {
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Essential Cookies</h3>
                 <p className="text-slate-400">
-                  Required for the website to function. These include authentication cookies, 
+                  Required for the website to function. These include authentication cookies,
                   security cookies, and preferences. You cannot disable these.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Analytics Cookies</h3>
                 <p className="text-slate-400">
-                  Help us understand how visitors interact with our website by collecting 
+                  Help us understand how visitors interact with our website by collecting
                   and reporting information anonymously.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Marketing Cookies</h3>
                 <p className="text-slate-400">
-                  Used to track visitors across websites to display relevant advertisements 
+                  Used to track visitors across websites to display relevant advertisements
                   that are engaging for individual users.
                 </p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Functional Cookies</h3>
                 <p className="text-slate-400">
-                  Allow the website to remember choices you make and provide enhanced, 
+                  Allow the website to remember choices you make and provide enhanced,
                   personalized features.
                 </p>
               </div>
@@ -126,8 +126,8 @@ export default function CookiesPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed">
-                We may update this Cookie Policy from time to time. Any changes will be posted 
-                on this page with an updated revision date. We encourage you to review this 
+                We may update this Cookie Policy from time to time. Any changes will be posted
+                on this page with an updated revision date. We encourage you to review this
                 policy periodically.
               </p>
             </div>
@@ -140,8 +140,8 @@ export default function CookiesPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed">
-                If you have questions about our Cookie Policy, please contact us at 
-                privacy@cinemahub.com
+                If you have questions about our Cookie Policy, please contact us at
+                privacy@cambocine.online
               </p>
             </div>
           </section>

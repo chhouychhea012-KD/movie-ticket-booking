@@ -55,10 +55,10 @@ export default function Navigation() {
           <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeMobile}>
             <img
               src="/logo-nav.png"
-              alt="CinemaHub Movie Time"
+              alt="CamboCine Movie Time"
               className="h-16 w-32 object-contain drop-shadow-[0_0_14px_rgba(236,72,153,0.45)] sm:w-40 lg:w-44"
             />
-            <span className="sr-only">CinemaHub</span>
+            <span className="sr-only">CamboCine</span>
           </Link>
 
           <div className="relative hidden max-w-md flex-1 lg:block">

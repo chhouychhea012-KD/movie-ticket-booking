@@ -32,7 +32,7 @@ app.use('/api/v1', routes);
 app.get('/', (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: 'Welcome to CinemaHub API',
+    message: 'Welcome to CamboCine API',
     version: '1.0.0',
     documentation: '/api/v1',
   });

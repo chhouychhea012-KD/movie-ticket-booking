@@ -25,7 +25,7 @@ export default function TermsPage() {
         <div className="prose prose-invert prose-lg max-w-none">
           <div className="bg-slate-900 p-8 rounded-xl mb-8">
             <p className="text-slate-400 leading-relaxed">
-              Welcome to CinemaHub. By accessing and using our website and services, you agree to be bound 
+              Welcome to CamboCine. By accessing and using our website and services, you agree to be bound
               by these Terms of Service. Please read them carefully before using our platform.
             </p>
           </div>
@@ -37,12 +37,12 @@ export default function TermsPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed mb-4">
-                By accessing or using CinemaHub's services, you acknowledge that you have read, understood, 
-                and agree to be bound by these Terms of Service. If you do not agree to these terms, 
+                By accessing or using CamboCine's services, you acknowledge that you have read, understood,
+                and agree to be bound by these Terms of Service. If you do not agree to these terms,
                 please do not use our services.
               </p>
               <p className="text-slate-400 leading-relaxed">
-                We reserve the right to update these terms at any time. Your continued use of the service 
+                We reserve the right to update these terms at any time. Your continued use of the service
                 after any changes constitutes acceptance of the new terms.
               </p>
             </div>
@@ -55,7 +55,7 @@ export default function TermsPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed mb-4">
-                To access certain features of our service, you may be required to create an account. 
+                To access certain features of our service, you may be required to create an account.
                 You are responsible for:
               </p>
               <ul className="list-disc list-inside text-slate-400 space-y-2 ml-4">
@@ -74,7 +74,7 @@ export default function TermsPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed mb-4">
-                When you book tickets through CinemaHub:
+                When you book tickets through CamboCine:
               </p>
               <ul className="list-disc list-inside text-slate-400 space-y-2 ml-4">
                 <li>All bookings are subject to availability and confirmation</li>
@@ -112,8 +112,8 @@ export default function TermsPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed">
-                All content, logos, designs, and materials on CinemaHub are the intellectual property 
-                of CinemaHub or its licensors. You may not reproduce, distribute, or modify any content 
+                All content, logos, designs, and materials on CamboCine are the intellectual property
+                of CamboCine or its licensors. You may not reproduce, distribute, or modify any content
                 without our prior written consent.
               </p>
             </div>
@@ -129,7 +129,7 @@ export default function TermsPage() {
                 If you have any questions about these Terms of Service, please contact us:
               </p>
               <ul className="text-slate-400 space-y-2">
-                <li>Email: legal@cinemahub.com</li>
+                <li>Email: legal@cambocine.online</li>
                 <li>Phone: +855 23 888 888</li>
                 <li>Address: Russian Blvd, Phnom Penh, Cambodia</li>
               </ul>

@@ -60,11 +60,11 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-3 mb-6 group">
               <div style={{ width: '380px', height: '100px' }}>
-                <img 
-                  src="/logo.png" 
-                  alt="CinemaHub Movie Time" 
+                <img
+                  src="/logo.png"
+                  alt="CamboCine Movie Time"
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                  style={{ 
+                  style={{
                     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                     transformOrigin: 'center'
                   }}
@@ -115,7 +115,7 @@ export default function Footer() {
               </p>
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-orange-500" />
-                <span>support@cinemahub.com</span>
+                <span>support@cambocine.online</span>
               </p>
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function Footer() {
       <div className="bg-slate-900 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-slate-500 text-sm">
-            <p>© 2024 CinemaHub. All rights reserved.</p>
+            <p>© 2024 CamboCine. All rights reserved.</p>
             <p>Designed with ❤️ for movie lovers</p>
           </div>
         </div>

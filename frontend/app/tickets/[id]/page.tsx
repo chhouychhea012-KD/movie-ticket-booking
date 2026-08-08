@@ -215,7 +215,7 @@ export default function TicketDetailPage() {
         {/* Contact Support */}
         <div className="mt-6 text-center">
           <p className="text-slate-500 text-sm">Need help? Contact us at</p>
-          <p className="text-orange-500">support@cinemahub.com or +855 23 888 888</p>
+          <p className="text-orange-500">support@cambocine.online or +855 23 888 888</p>
         </div>
       </div>
     </div>

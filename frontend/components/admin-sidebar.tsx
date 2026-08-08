@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  LayoutDashboard, 
+import {
+  LayoutDashboard,
   Ticket,
-  Film, 
-  Users, 
-  Settings, 
+  Film,
+  Users,
+  Settings,
   BarChart3,
   X,
   Menu,
@@ -54,7 +54,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile Menu Button */}
-      <button 
+      <button
         onClick={() => setIsMobileOpen(true)}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 rounded-lg text-white"
       >
@@ -63,7 +63,7 @@ export default function AdminSidebar() {
 
       {/* Sidebar Overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setIsMobileOpen(false)}
         />
@@ -78,17 +78,17 @@ export default function AdminSidebar() {
         <div className="flex items-center justify-between p-6 border-b border-slate-700/50">
           <Link href="/admin" className="flex items-center gap-3">
             <div style={{ width: '200px', height: '60px' }}>
-              <img 
-                src="/logo.png" 
-                alt="CinemaHub Movie Time Admin" 
+              <img
+                src="/logo.png"
+                alt="CamboCine Movie Time Admin"
                 className="w-full h-full object-contain"
-                style={{ 
+                style={{
                   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
                 }}
               />
             </div>
           </Link>
-          <button 
+          <button
             onClick={() => setIsMobileOpen(false)}
             className="lg:hidden p-2 text-slate-400 hover:text-white"
           >

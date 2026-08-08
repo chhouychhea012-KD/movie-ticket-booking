@@ -28,7 +28,7 @@ PORT=3001
 NODE_ENV=production
 DB_HOST=localhost
 DB_PORT=3306
-DB_NAME=cinemahub
+DB_NAME=cambocine
 DB_USER=your_mysql_user
 DB_PASSWORD=your_mysql_password
 JWT_SECRET=change_this_to_a_long_random_secret
@@ -43,9 +43,9 @@ Create the database if needed:
 
 ```bash
 sudo mysql
-CREATE DATABASE IF NOT EXISTS cinemahub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS cambocine CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'cinema_user'@'localhost' IDENTIFIED BY 'strong_password_here';
-GRANT ALL PRIVILEGES ON cinemahub.* TO 'cinema_user'@'localhost';
+GRANT ALL PRIVILEGES ON cambocine.* TO 'cinema_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```

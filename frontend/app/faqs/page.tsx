@@ -102,7 +102,7 @@ export default function FaqsPage() {
           </Link>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Frequently Asked Questions</h1>
           <p className="text-xl text-white/80 max-w-2xl">
-            Find answers to common questions about CinemaHub
+            Find answers to common questions about CamboCine
           </p>
           
           {/* Search */}

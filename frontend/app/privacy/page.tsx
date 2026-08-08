@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         <div className="prose prose-invert prose-lg max-w-none">
           <div className="bg-slate-900 p-8 rounded-xl mb-8">
             <p className="text-slate-400 leading-relaxed">
-              At CinemaHub, we take your privacy seriously. This Privacy Policy explains how we collect, 
+              At CamboCine, we take your privacy seriously. This Privacy Policy explains how we collect,
               use, disclose, and safeguard your information when you use our website and services.
             </p>
           </div>
@@ -79,8 +79,8 @@ export default function PrivacyPage() {
             </h2>
             <div className="bg-slate-900 p-6 rounded-xl">
               <p className="text-slate-400 leading-relaxed">
-                We implement appropriate technical and organizational measures to protect your personal 
-                information against unauthorized access, alteration, disclosure, or destruction. 
+                We implement appropriate technical and organizational measures to protect your personal
+                information against unauthorized access, alteration, disclosure, or destruction.
                 All payment transactions are encrypted using industry-standard SSL technology.
               </p>
             </div>
@@ -132,7 +132,7 @@ export default function PrivacyPage() {
                 If you have any questions about this Privacy Policy, please contact us:
               </p>
               <ul className="text-slate-400 space-y-2">
-                <li>Email: privacy@cinemahub.com</li>
+                <li>Email: privacy@cambocine.online</li>
                 <li>Phone: +855 23 888 888</li>
               </ul>
             </div>

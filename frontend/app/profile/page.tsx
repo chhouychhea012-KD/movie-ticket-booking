@@ -46,7 +46,7 @@ export default function ProfilePage() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     localStorage.removeItem('bookings')
-    localStorage.removeItem('cinemahub_bookings')
+    localStorage.removeItem('cambocine_bookings')
     
     // Reset state and reload
     if (typeof window !== 'undefined') {

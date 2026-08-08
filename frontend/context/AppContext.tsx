@@ -334,7 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     // Clear user-specific data from localStorage
     localStorage.removeItem('bookings')
-    localStorage.removeItem('cinemahub_bookings')
+    localStorage.removeItem('cambocine_bookings')
     
     // Reset state
     setUser(null)

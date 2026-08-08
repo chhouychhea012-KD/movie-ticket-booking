@@ -75,7 +75,7 @@ export default function AdminPaymentsPage() {
     const storedBookings = localStorage.getItem('bookings')
     const bookings = storedBookings ? JSON.parse(storedBookings) : []
     
-    const dataStoreBookings = localStorage.getItem('cinemahub_bookings')
+    const dataStoreBookings = localStorage.getItem('cambocine_bookings')
     const dsBookings = dataStoreBookings ? JSON.parse(dataStoreBookings) : []
 
     const allPayments: PaymentRecord[] = [

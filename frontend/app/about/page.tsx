@@ -13,7 +13,7 @@ export default function AboutPage() {
             <ChevronLeft className="w-5 h-5 mr-2" />
             Back to Home
           </Link>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">About CinemaHub</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">About CamboCine</h1>
           <p className="text-xl text-white/80 max-w-2xl">
             Your premier destination for movie ticket booking in Cambodia
           </p>
@@ -27,12 +27,12 @@ export default function AboutPage() {
           <div>
             <h2 className="text-3xl font-bold text-white mb-6">Our Mission</h2>
             <p className="text-slate-400 text-lg leading-relaxed mb-6">
-              At CinemaHub, we are passionate about bringing the magic of cinema to everyone. 
-              Our mission is to make movie booking as seamless and enjoyable as watching the 
+              At CamboCine, we are passionate about bringing the magic of cinema to everyone.
+              Our mission is to make movie booking as seamless and enjoyable as watching the
               film itself.
             </p>
             <p className="text-slate-400 text-lg leading-relaxed">
-              Founded in Phnom Penh, Cambodia, we have grown to become the most trusted 
+              Founded in Phnom Penh, Cambodia, we have grown to become the most trusted
               platform for movie enthusiasts across the country.
             </p>
           </div>
@@ -102,8 +102,8 @@ export default function AboutPage() {
           <p className="text-white/80 text-lg mb-8 max-w-2xl mx-auto">
             Be the first to know about new movie releases, exclusive deals, and special events.
           </p>
-          <Link 
-            href="/contact" 
+          <Link
+            href="/contact"
             className="inline-flex items-center gap-2 bg-white text-orange-600 px-8 py-3 rounded-xl font-semibold hover:bg-slate-100 transition"
           >
             Contact Us

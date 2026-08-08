@@ -5,12 +5,12 @@ import { Movie, Cinema, Showtime, Booking, User, Seat } from '@/types';
 
 // Storage Keys
 const STORAGE_KEYS = {
-  MOVIES: 'cinemahub_movies',
-  CINEMAS: 'cinemahub_cinemas',
-  SHOWTIMES: 'cinemahub_showtimes',
-  BOOKINGS: 'cinemahub_bookings',
-  USERS: 'cinemahub_users',
-  COUPONS: 'cinemahub_coupons',
+  MOVIES: 'cambocine_movies',
+  CINEMAS: 'cambocine_cinemas',
+  SHOWTIMES: 'cambocine_showtimes',
+  BOOKINGS: 'cambocine_bookings',
+  USERS: 'cambocine_users',
+  COUPONS: 'cambocine_coupons',
 } as const;
 
 // Initial Mock Data - Movies
@@ -208,7 +208,7 @@ const initialUsers: User[] = [
   },
   {
     id: '2',
-    email: 'admin@cinemahub.com',
+    email: 'admin@cambocine.online',
     phone: '+855 12 888 888',
     firstName: 'Admin',
     lastName: 'User',

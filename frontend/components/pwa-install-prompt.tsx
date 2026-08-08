@@ -8,8 +8,8 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
 }
 
-const installDismissKey = 'cinemahub-pwa-install-dismissed'
-const iosDismissKey = 'cinemahub-ios-install-dismissed'
+const installDismissKey = 'cambocine-pwa-install-dismissed'
+const iosDismissKey = 'cambocine-ios-install-dismissed'
 
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
@@ -91,10 +91,10 @@ export default function PWAInstallPrompt() {
           </button>
           <div className="flex gap-3 pr-8">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#252a32] bg-black">
-              <img src="/logo.png" alt="CinemaHub Movie Time" className="h-full w-full object-contain" />
+              <img src="/logo.png" alt="CamboCine Movie Time" className="h-full w-full object-contain" />
             </div>
             <div>
-              <p className="font-semibold text-white">Install CinemaHub</p>
+              <p className="font-semibold text-white">Install CamboCine</p>
               <p className="mt-1 text-sm leading-5 text-slate-400">Open faster, use full screen, and keep tickets one tap away.</p>
             </div>
           </div>
@@ -115,10 +115,10 @@ export default function PWAInstallPrompt() {
           </button>
           <div className="flex gap-3 pr-8">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#252a32] bg-black">
-              <img src="/logo.png" alt="CinemaHub Movie Time" className="h-full w-full object-contain" />
+              <img src="/logo.png" alt="CamboCine Movie Time" className="h-full w-full object-contain" />
             </div>
             <div>
-              <p className="font-semibold text-white">Add CinemaHub to Home Screen</p>
+              <p className="font-semibold text-white">Add CamboCine to Home Screen</p>
               <p className="mt-1 text-sm leading-5 text-slate-400">Tap Share, then choose Add to Home Screen.</p>
             </div>
           </div>

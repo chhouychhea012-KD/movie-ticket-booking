@@ -195,8 +195,8 @@ const seedDatabase = async (): Promise<void> => {
     console.log('Database synchronized.');
 
     const users = await Promise.all([
-      upsertBy(User, { email: 'owner@cinemahub.com' }, {
-        email: 'owner@cinemahub.com',
+      upsertBy(User, { email: 'owner@cambocine.online' }, {
+        email: 'owner@cambocine.online',
         password: 'owner123',
         firstName: 'System',
         lastName: 'Owner',
@@ -209,8 +209,8 @@ const seedDatabase = async (): Promise<void> => {
         favoriteCinemas: [],
         notifications: { email: true, sms: true, push: true },
       }),
-      upsertBy(User, { email: 'admin@cinemahub.com' }, {
-        email: 'admin@cinemahub.com',
+      upsertBy(User, { email: 'admin@cambocine.online' }, {
+        email: 'admin@cambocine.online',
         password: 'admin123',
         firstName: 'Cinema',
         lastName: 'Admin',
@@ -223,8 +223,8 @@ const seedDatabase = async (): Promise<void> => {
         favoriteCinemas: [],
         notifications: { email: true, sms: true, push: true },
       }),
-      upsertBy(User, { email: 'staff@cinemahub.com' }, {
-        email: 'staff@cinemahub.com',
+      upsertBy(User, { email: 'staff@cambocine.online' }, {
+        email: 'staff@cambocine.online',
         password: 'staff123',
         firstName: 'Sokha',
         lastName: 'Staff',
@@ -470,7 +470,7 @@ const seedDatabase = async (): Promise<void> => {
         address: '132 Samdach Sothearos Blvd, Tonle Bassac, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888001',
-        email: 'aeonpp@cinemahub.com',
+        email: 'aeonpp@cambocine.online',
         image: cinemaImages.premiumHall,
         facilities: ['Dolby Atmos', 'Online Booking', 'Food Court', 'Parking', 'Wheelchair Access'],
         screens: buildScreens('aeon-pp'),
@@ -481,7 +481,7 @@ const seedDatabase = async (): Promise<void> => {
         address: 'Olympia Mall, Street 182, Veal Vong, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888002',
-        email: 'olympia@cinemahub.com',
+        email: 'olympia@cambocine.online',
         image: cinemaImages.reclinerHall,
         facilities: ['VIP Recliner', 'Laser Projection', 'Cafe', 'Parking', 'Family Seats'],
         screens: buildScreens('olympia'),
@@ -492,7 +492,7 @@ const seedDatabase = async (): Promise<void> => {
         address: 'Old Market Riverside, Krong Siem Reap',
         city: 'Siem Reap',
         phone: '+85563888003',
-        email: 'siemreap@cinemahub.com',
+        email: 'siemreap@cambocine.online',
         image: cinemaImages.multiplex,
         facilities: ['Premium Seats', 'Tourist Desk', 'Snack Bar', 'Online Booking'],
         screens: buildScreens('siem-reap'),
@@ -503,7 +503,7 @@ const seedDatabase = async (): Promise<void> => {
         address: 'Street 3, Svay Por, Battambang',
         city: 'Battambang',
         phone: '+85553888004',
-        email: 'battambang@cinemahub.com',
+        email: 'battambang@cambocine.online',
         image: cinemaImages.classicHall,
         facilities: ['Classic Hall', 'Student Discount', 'Snack Bar', 'Motorbike Parking'],
         screens: buildScreens('battambang'),
@@ -514,7 +514,7 @@ const seedDatabase = async (): Promise<void> => {
         address: 'Street 1003, Phnom Penh Thmei, Sen Sok, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888005',
-        email: 'sensok@cinemahub.com',
+        email: 'sensok@cambocine.online',
         image: cinemaImages.imaxHall,
         facilities: ['IMAX', 'Dolby Atmos', 'VIP Lounge', 'Premium Parking', 'Mobile Check-in'],
         screens: buildScreens('sen-sok'),
@@ -715,9 +715,9 @@ const seedDatabase = async (): Promise<void> => {
     console.log('');
     console.log('Seed data completed successfully.');
     console.log('Demo logins:');
-    console.log('Owner: owner@cinemahub.com / owner123');
-    console.log('Admin: admin@cinemahub.com / admin123');
-    console.log('Staff: staff@cinemahub.com / staff123');
+    console.log('Owner: owner@cambocine.online / owner123');
+    console.log('Admin: admin@cambocine.online / admin123');
+    console.log('Staff: staff@cambocine.online / staff123');
     console.log('User: john.doe@example.com / user123');
     console.log('User: jane.smith@example.com / user123');
   } catch (error) {

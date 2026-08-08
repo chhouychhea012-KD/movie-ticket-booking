@@ -26,7 +26,7 @@ export default function AdminProfilePage() {
   const [formData, setFormData] = useState({
     firstName: 'Admin',
     lastName: 'User',
-    email: 'admin@cinemahub.com',
+    email: 'admin@cambocine.online',
     phone: '+855 12 888 888',
   })
 
@@ -40,7 +40,7 @@ export default function AdminProfilePage() {
         setFormData({
           firstName: appUser.firstName || 'Admin',
           lastName: appUser.lastName || 'User',
-          email: appUser.email || 'admin@cinemahub.com',
+          email: appUser.email || 'admin@cambocine.online',
           phone: appUser.phone || '+855 12 888 888',
         })
       }

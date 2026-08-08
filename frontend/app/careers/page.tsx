@@ -62,7 +62,7 @@ export default function CareersPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-16">
         {/* Benefits */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-white mb-8">Why Join CinemaHub?</h2>
+          <h2 className="text-3xl font-bold text-white mb-8">Why Join CamboCine?</h2>
           <div className="grid md:grid-cols-4 gap-6">
             <div className="bg-slate-900 p-6 rounded-xl">
               <Briefcase className="w-10 h-10 text-orange-500 mb-4" />
