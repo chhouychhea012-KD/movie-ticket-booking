@@ -125,8 +125,8 @@ After seeding:
 
 ```txt
 Admin: admin@cambocine.online / admin123
-User: john.doe@example.com / user123
-User: jane.smith@example.com / user123
+Customer: john.doe@example.com / user123
+Customer: jane.smith@example.com / user123
 ```
 
 ## Ubuntu/Nginx Hosting

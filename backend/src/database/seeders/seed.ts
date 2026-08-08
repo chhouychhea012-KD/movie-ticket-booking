@@ -50,13 +50,14 @@ const upsertBy = async (
   where: Record<string, unknown>,
   defaults: Record<string, unknown>
 ): Promise<any> => {
-  const [record, created] = await model.findOrCreate({ where, defaults });
+  const record = await model.findOne({ where });
 
-  if (!created) {
+  if (record) {
     await record.update(defaults);
+    return record;
   }
 
-  return record;
+  return model.create({ ...where, ...defaults });
 };
 
 const formatDate = (date: Date): string => date.toISOString().slice(0, 10);
@@ -244,7 +245,7 @@ const seedDatabase = async (): Promise<void> => {
         lastName: 'Doe',
         phone: '+85512888004',
         avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=1f2937&color=ffffff',
-        role: 'user',
+        role: 'customer',
         isActive: true,
         emailVerified: true,
         favoriteMovies: [],
@@ -258,7 +259,7 @@ const seedDatabase = async (): Promise<void> => {
         lastName: 'Smith',
         phone: '+85512888005',
         avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=7c2d12&color=ffffff',
-        role: 'user',
+        role: 'customer',
         isActive: true,
         emailVerified: true,
         favoriteMovies: [],
@@ -272,7 +273,7 @@ const seedDatabase = async (): Promise<void> => {
         lastName: 'VIP',
         phone: '+85512888006',
         avatar: 'https://ui-avatars.com/api/?name=Dara+VIP&background=854d0e&color=ffffff',
-        role: 'user',
+        role: 'customer',
         isActive: true,
         emailVerified: true,
         favoriteMovies: [],
@@ -465,8 +466,8 @@ const seedDatabase = async (): Promise<void> => {
     console.log(`Seeded ${movieRecords.length} movies with poster/source links.`);
 
     const cinemaRecords = await Promise.all([
-      upsertBy(Cinema, { name: 'CineHub Aeon Mall Phnom Penh' }, {
-        name: 'CineHub Aeon Mall Phnom Penh',
+      upsertBy(Cinema, { name: 'CamboCine Aeon Mall Phnom Penh' }, {
+        name: 'CamboCine Aeon Mall Phnom Penh',
         address: '132 Samdach Sothearos Blvd, Tonle Bassac, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888001',
@@ -476,8 +477,8 @@ const seedDatabase = async (): Promise<void> => {
         screens: buildScreens('aeon-pp'),
         isActive: true,
       }),
-      upsertBy(Cinema, { name: 'CineHub Olympia City' }, {
-        name: 'CineHub Olympia City',
+      upsertBy(Cinema, { name: 'CamboCine Olympia City' }, {
+        name: 'CamboCine Olympia City',
         address: 'Olympia Mall, Street 182, Veal Vong, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888002',
@@ -487,8 +488,8 @@ const seedDatabase = async (): Promise<void> => {
         screens: buildScreens('olympia'),
         isActive: true,
       }),
-      upsertBy(Cinema, { name: 'CineHub Siem Reap Riverside' }, {
-        name: 'CineHub Siem Reap Riverside',
+      upsertBy(Cinema, { name: 'CamboCine Siem Reap Riverside' }, {
+        name: 'CamboCine Siem Reap Riverside',
         address: 'Old Market Riverside, Krong Siem Reap',
         city: 'Siem Reap',
         phone: '+85563888003',
@@ -498,8 +499,8 @@ const seedDatabase = async (): Promise<void> => {
         screens: buildScreens('siem-reap'),
         isActive: true,
       }),
-      upsertBy(Cinema, { name: 'CineHub Battambang Central' }, {
-        name: 'CineHub Battambang Central',
+      upsertBy(Cinema, { name: 'CamboCine Battambang Central' }, {
+        name: 'CamboCine Battambang Central',
         address: 'Street 3, Svay Por, Battambang',
         city: 'Battambang',
         phone: '+85553888004',
@@ -509,8 +510,8 @@ const seedDatabase = async (): Promise<void> => {
         screens: buildScreens('battambang'),
         isActive: true,
       }),
-      upsertBy(Cinema, { name: 'CineHub Premium IMAX Sen Sok' }, {
-        name: 'CineHub Premium IMAX Sen Sok',
+      upsertBy(Cinema, { name: 'CamboCine Premium IMAX Sen Sok' }, {
+        name: 'CamboCine Premium IMAX Sen Sok',
         address: 'Street 1003, Phnom Penh Thmei, Sen Sok, Phnom Penh',
         city: 'Phnom Penh',
         phone: '+85523888005',
@@ -676,9 +677,9 @@ const seedDatabase = async (): Promise<void> => {
     }
 
     const notifications = await Promise.all([
-      upsertBy(Notification, { title: 'Welcome to CineHub', userId: john?.id }, {
+      upsertBy(Notification, { title: 'Welcome to CamboCine', userId: john?.id }, {
         type: 'system',
-        title: 'Welcome to CineHub',
+        title: 'Welcome to CamboCine',
         message: 'Your movie booking account is ready. Browse showtimes and book your next seat.',
         read: false,
         userId: john?.id,
@@ -718,8 +719,8 @@ const seedDatabase = async (): Promise<void> => {
     console.log('Owner: owner@cambocine.online / owner123');
     console.log('Admin: admin@cambocine.online / admin123');
     console.log('Staff: staff@cambocine.online / staff123');
-    console.log('User: john.doe@example.com / user123');
-    console.log('User: jane.smith@example.com / user123');
+    console.log('Customer: john.doe@example.com / user123');
+    console.log('Customer: jane.smith@example.com / user123');
   } catch (error) {
     console.error('Seed failed:', error);
     process.exit(1);

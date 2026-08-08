@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
 import AdminSidebar from '@/components/admin-sidebar'
@@ -16,12 +16,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user } = useApp()
   const [isLoading, setIsLoading] = useState(true)
 
-  // Force re-render when user changes
-  useEffect(() => {
-    checkAuth()
-  }, [user])
-
-  const checkAuth = () => {
+  const checkAuth = useCallback(() => {
     // Always read fresh from localStorage to ensure we have the latest
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
     const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
@@ -37,7 +32,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!userData && storedUser) {
       try {
         userData = JSON.parse(storedUser)
-      } catch (e) {
+      } catch {
         console.error('Failed to parse user from localStorage')
         router.push(`/auth/login?redirect=${pathname}`)
         return
@@ -52,7 +47,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     setIsLoading(false)
-  }
+  }, [pathname, router, user])
+
+  // Force re-render when user changes
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
 
   if (isLoading) {
     return (
@@ -70,7 +70,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <AdminSidebar />
       <div className="lg:ml-72">
         <AdminHeader />
-        <main className="p-6 lg:p-8">
+        <main className="px-4 pb-6 pt-24 sm:px-6 lg:px-8 lg:pb-8">
           {children}
         </main>
       </div>

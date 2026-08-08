@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
 import { authAPI, notificationsAPI } from '@/lib/api'
-import { User, Mail, Phone, Shield, CreditCard, Bell, Lock, Save, Loader2, Camera, Ticket, AlertCircle, CheckCircle, Info, X, Check, Trash2 } from 'lucide-react'
+import { User, Mail, Phone, Shield, CreditCard, Bell, Lock, Save, Loader2, Camera, Ticket, AlertCircle, CheckCircle, Info, Check, Trash2 } from 'lucide-react'
 
 interface Notification {
   id: string
@@ -17,6 +17,7 @@ interface Notification {
 
 export default function AdminProfilePage() {
   const { user: appUser } = useApp()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [activeTab, setActiveTab] = useState('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -28,13 +29,10 @@ export default function AdminProfilePage() {
     lastName: 'User',
     email: 'admin@cambocine.online',
     phone: '+855 12 888 888',
+    avatar: '',
   })
 
-  useEffect(() => {
-    loadUserProfile()
-  }, [appUser])
-
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     try {
       if (appUser) {
         setFormData({
@@ -42,6 +40,7 @@ export default function AdminProfilePage() {
           lastName: appUser.lastName || 'User',
           email: appUser.email || 'admin@cambocine.online',
           phone: appUser.phone || '+855 12 888 888',
+          avatar: appUser.avatar || '',
         })
       }
     } catch (error) {
@@ -49,7 +48,11 @@ export default function AdminProfilePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [appUser])
+
+  useEffect(() => {
+    loadUserProfile()
+  }, [loadUserProfile])
 
   const loadNotifications = async () => {
     try {
@@ -107,6 +110,7 @@ export default function AdminProfilePage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
+        avatar: formData.avatar,
       })
       if (response.success && response.data) {
         localStorage.setItem('user', JSON.stringify(response.data))
@@ -117,6 +121,32 @@ export default function AdminProfilePage() {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.')
+      return
+    }
+
+    if (file.size > 1024 * 1024) {
+      alert('Please choose an image smaller than 1MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const avatar = String(reader.result || '')
+      setFormData((current) => ({ ...current, avatar }))
+      const response = await authAPI.updateProfile({ avatar })
+      if (response.success && response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data))
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const getIcon = (type: string) => {
@@ -188,16 +218,31 @@ export default function AdminProfilePage() {
               {/* Avatar */}
               <div className="text-center mb-6">
                 <div className="relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto">
-                    {formData.firstName?.charAt(0) || 'A'}{formData.lastName?.charAt(0) || 'U'}
+                  <div className="w-24 h-24 overflow-hidden rounded-full bg-orange-500 flex items-center justify-center text-white text-3xl font-bold mx-auto">
+                    {formData.avatar ? (
+                      <img src={formData.avatar} alt={`${formData.firstName} ${formData.lastName}`} className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{formData.firstName?.charAt(0) || 'A'}{formData.lastName?.charAt(0) || 'U'}</span>
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 p-2 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 p-2 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition"
+                  >
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
-                <h3 className="text-white font-semibold mt-4">{formData.firstName} {formData.lastName}</h3>
-                <p className="text-slate-400 text-sm">{formData.email}</p>
-                <span className="inline-block mt-2 px-3 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full">{appUser?.role === 'admin' ? 'Administrator' : appUser?.role || 'User'}</span>
+                <h3 className="break-words text-white font-semibold mt-4">{formData.firstName} {formData.lastName}</h3>
+                <p className="break-all text-slate-400 text-sm">{formData.email}</p>
+                <span className="inline-block mt-2 px-3 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full">{appUser?.role === 'admin' ? 'Administrator' : appUser?.role || 'Customer'}</span>
               </div>
 
               {/* Navigation */}
@@ -232,7 +277,7 @@ export default function AdminProfilePage() {
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">Profile Information</h2>
                   <button
                     onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
@@ -255,7 +300,7 @@ export default function AdminProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <p className="text-white text-lg">{formData.firstName}</p>
+                      <p className="break-words text-white text-lg">{formData.firstName}</p>
                     )}
                   </div>
                   <div>
@@ -268,7 +313,7 @@ export default function AdminProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <p className="text-white text-lg">{formData.lastName}</p>
+                      <p className="break-words text-white text-lg">{formData.lastName}</p>
                     )}
                   </div>
                   <div>
@@ -281,9 +326,9 @@ export default function AdminProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-slate-500" />
-                        <p className="text-white text-lg">{formData.email}</p>
+                      <div className="flex items-start gap-2">
+                        <Mail className="w-5 h-5 shrink-0 text-slate-500 mt-1" />
+                        <p className="min-w-0 break-all text-white text-lg">{formData.email}</p>
                       </div>
                     )}
                   </div>
@@ -297,9 +342,9 @@ export default function AdminProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-slate-500" />
-                        <p className="text-white text-lg">{formData.phone}</p>
+                      <div className="flex items-start gap-2">
+                        <Phone className="w-5 h-5 shrink-0 text-slate-500 mt-1" />
+                        <p className="min-w-0 break-words text-white text-lg">{formData.phone || 'Not set'}</p>
                       </div>
                     )}
                   </div>

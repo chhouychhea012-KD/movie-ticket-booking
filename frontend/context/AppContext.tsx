@@ -19,6 +19,11 @@ interface AuthResponse {
   token: string
 }
 
+const normalizeUser = (user: User): User => ({
+  ...user,
+  role: (user.role as string) === 'user' ? 'customer' : user.role,
+})
+
 // API Helper
 const api = {
   async request<T>(
@@ -187,8 +192,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const storedToken = localStorage.getItem('token')
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser))
-      } catch (e) {
+        const parsedUser = normalizeUser(JSON.parse(storedUser))
+        localStorage.setItem('user', JSON.stringify(parsedUser))
+        setUser(parsedUser)
+      } catch {
         console.error('Failed to parse user from localStorage')
       }
     }
@@ -226,8 +233,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.get<User>('/auth/profile')
       if (response.success && response.data) {
-        localStorage.setItem('user', JSON.stringify(response.data))
-        setUser(response.data)
+        const nextUser = normalizeUser(response.data)
+        localStorage.setItem('user', JSON.stringify(nextUser))
+        setUser(nextUser)
         return
       }
 
@@ -295,9 +303,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       if (response.success && response.data) {
         // Store token and user
+        const nextUser = normalizeUser(response.data.user)
         localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        setUser(response.data.user)
+        localStorage.setItem('user', JSON.stringify(nextUser))
+        setUser(nextUser)
       } else {
         // Fallback to mock login
         throw new Error(response.message || 'Login failed')
@@ -312,7 +321,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           phone: '+85512345678',
           firstName: email.split('@')[0],
           lastName: 'User',
-          role: 'user',
+          role: 'customer',
           createdAt: new Date().toISOString(),
           favoriteMovies: [],
           favoriteCinemas: [],
@@ -335,9 +344,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const response = await api.post<AuthResponse>('/auth/google', { credential })
 
       if (response.success && response.data) {
+        const nextUser = normalizeUser(response.data.user)
         localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        setUser(response.data.user)
+        localStorage.setItem('user', JSON.stringify(nextUser))
+        setUser(nextUser)
         return
       }
 
@@ -380,9 +390,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       })
       
       if (response.success && response.data) {
+        const nextUser = normalizeUser(response.data.user)
         localStorage.setItem('token', response.data.token)
-        localStorage.setItem('user', JSON.stringify(response.data.user))
-        setUser(response.data.user)
+        localStorage.setItem('user', JSON.stringify(nextUser))
+        setUser(nextUser)
       } else {
         const errorMsg = response.errors?.join(', ') || response.message || 'Registration failed'
         throw new Error(errorMsg)
@@ -396,12 +407,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           phone: data.phone || '',
           firstName: data.firstName,
           lastName: data.lastName,
-          role: 'user',
+          role: 'customer',
           createdAt: new Date().toISOString(),
           favoriteMovies: [],
           favoriteCinemas: [],
           notifications: { email: true, sms: true, push: true },
         }
+        localStorage.setItem('user', JSON.stringify(mockUser))
         setUser(mockUser)
       } else {
         throw error
@@ -417,11 +429,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.put<User>('/auth/profile', data)
       if (response.success && response.data) {
-        setUser(response.data)
+        const nextUser = normalizeUser(response.data)
+        localStorage.setItem('user', JSON.stringify(nextUser))
+        setUser(nextUser)
       }
     } catch {
       // Fallback to local update
-      setUser({ ...user, ...data })
+      const nextUser = normalizeUser({ ...user, ...data })
+      localStorage.setItem('user', JSON.stringify(nextUser))
+      setUser(nextUser)
     }
   }
 
@@ -553,20 +569,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const getUserBookings = (_userId: string) => {
+  const getUserBookings = (userId: string) => {
+    void userId
     return bookings
   }
 
   // Seat functions
-  const getSeats = (_showtimeId: string): Seat[] => {
+  const getSeats = (showtimeId: string): Seat[] => {
+    void showtimeId
     return generateSeatLayout(10, 12).map(seat => ({
       ...seat,
       status: Math.random() > 0.7 ? 'booked' : 'available',
     }))
   }
 
-  const reserveSeats = (_showtimeId: string, _seats: string[]) => {
-    console.log('Reserving seats:', _seats)
+  const reserveSeats = (showtimeId: string, seats: string[]) => {
+    void showtimeId
+    console.log('Reserving seats:', seats)
   }
 
   // Coupon functions

@@ -1,6 +1,31 @@
 import sequelize from '../../config/database';
 import '../../models';
 
+const migrateUserRoleToCustomer = async (): Promise<void> => {
+  const dialect = sequelize.getDialect();
+
+  if (dialect === 'mysql' || dialect === 'mariadb') {
+    await sequelize.query(
+      "ALTER TABLE users MODIFY COLUMN role ENUM('user','customer','staff','admin','owner') NOT NULL DEFAULT 'customer'"
+    );
+    await sequelize.query("UPDATE users SET role = 'customer' WHERE role = 'user'");
+    await sequelize.query(
+      "ALTER TABLE users MODIFY COLUMN role ENUM('customer','staff','admin','owner') NOT NULL DEFAULT 'customer'"
+    );
+    return;
+  }
+
+  await sequelize.query("UPDATE users SET role = 'customer' WHERE role = 'user'");
+};
+
+const migrateUserAvatarColumn = async (): Promise<void> => {
+  const dialect = sequelize.getDialect();
+
+  if (dialect === 'mysql' || dialect === 'mariadb') {
+    await sequelize.query('ALTER TABLE users MODIFY COLUMN avatar TEXT NULL');
+  }
+};
+
 export const runMigrations = async (): Promise<void> => {
   try {
     console.log('Running database migrations...');
@@ -14,6 +39,8 @@ export const runMigrations = async (): Promise<void> => {
 
     // Default behavior creates missing tables without deleting production data.
     await sequelize.sync({ force, alter });
+    await migrateUserRoleToCustomer();
+    await migrateUserAvatarColumn();
 
     console.log('Database schema synchronized successfully');
     console.log('Database migrations completed');

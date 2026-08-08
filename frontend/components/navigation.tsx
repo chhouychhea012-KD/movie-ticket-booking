@@ -133,16 +133,22 @@ export default function Navigation() {
             {user ? (
               <div className="relative" ref={userRef}>
                 <button onClick={(event) => { event.stopPropagation(); setUserOpen(!userOpen) }} className="flex h-10 items-center gap-2 rounded-xl border border-[#252a32] bg-[#14171c] px-3 text-sm text-white transition hover:bg-[#1b1f26]">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#252a32] text-xs font-semibold">
-                    {user.firstName[0]}{user.lastName[0]}
+                  <span className="flex h-7 w-7 overflow-hidden rounded-lg bg-[#252a32] text-xs font-semibold">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.firstName || 'Account'} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
+                      </span>
+                    )}
                   </span>
                   <span className="max-w-24 truncate">{user.firstName}</span>
                 </button>
                 {userOpen && (
                   <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/40">
                     <div className="border-b border-[#252a32] px-4 py-3">
-                      <p className="font-medium text-white">{user.firstName} {user.lastName}</p>
-                      <p className="truncate text-xs text-slate-500">{user.email}</p>
+                      <p className="break-words font-medium text-white">{user.firstName} {user.lastName}</p>
+                      <p className="break-all text-xs text-slate-500">{user.email}</p>
                     </div>
                     <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 transition hover:bg-[#1b1f26]">
                       <User className="h-4 w-4" />

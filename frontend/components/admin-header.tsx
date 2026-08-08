@@ -1,10 +1,17 @@
 'use client'
 
-import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, X, Ticket, AlertCircle, CheckCircle, Info } from 'lucide-react'
+import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, Ticket, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { useApp } from '@/context/AppContext'
 import { notificationsAPI } from '@/lib/api'
+
+const roleLabels: Record<string, string> = {
+  customer: 'Customer',
+  staff: 'Staff',
+  admin: 'Administrator',
+  owner: 'Owner',
+}
 
 interface Notification {
   id: string
@@ -165,9 +172,9 @@ export default function AdminHeader() {
   ]
 
   return (
-    <header className="h-16 bg-slate-800/80 backdrop-blur-lg border-b border-slate-700/50 flex items-center justify-between px-6 sticky top-0 z-30">
+    <header className="fixed left-0 right-0 top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-800/90 px-4 py-3 backdrop-blur-lg lg:left-72 lg:px-6">
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="hidden flex-1 max-w-md sm:block">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input
@@ -181,7 +188,7 @@ export default function AdminHeader() {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center gap-3">
+      <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
         {/* Back to Site */}
         <Link 
           href="/" 
@@ -279,12 +286,18 @@ export default function AdminHeader() {
             onClick={handleToggleProfileDropdown}
             className="flex items-center gap-2 px-3 py-1.5 bg-slate-700/50 border border-slate-600/50 rounded-lg hover:bg-slate-700 transition"
           >
-            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-orange-500">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user?.firstName || 'Admin'} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
+              )}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-sm text-white font-medium">{user?.firstName || user?.email?.split('@')[0] || 'Admin'}</p>
-              <p className="text-xs text-slate-400">{user?.role === 'admin' ? 'Administrator' : user?.role || 'User'}</p>
+              <p className="max-w-32 truncate text-sm text-white font-medium">{user?.firstName || user?.email?.split('@')[0] || 'Admin'}</p>
+              <p className="text-xs text-slate-400">{roleLabels[user?.role || ''] || 'Customer'}</p>
             </div>
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -309,8 +322,8 @@ export default function AdminHeader() {
               style={{ animation: 'fadeIn 0.2s ease-out' }}
             >
               <div className="px-4 py-3 border-b border-slate-700">
-                <p className="text-sm text-white font-medium">{user?.firstName} {user?.lastName}</p>
-                <p className="text-xs text-slate-400">{user?.email}</p>
+                <p className="break-words text-sm text-white font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="break-all text-xs text-slate-400">{user?.email}</p>
               </div>
               <div className="py-2">
                 {profileMenuItems.map((item, index) => (

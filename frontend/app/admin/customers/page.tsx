@@ -27,6 +27,20 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { User, UserRole } from '@/types/index'
 
+const roleOptions: Array<{ value: UserRole; label: string }> = [
+  { value: 'customer', label: 'Customer' },
+  { value: 'staff', label: 'Staff' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'owner', label: 'Owner' },
+]
+
+const roleLabels: Record<UserRole, string> = {
+  customer: 'Customer',
+  staff: 'Staff',
+  admin: 'Admin',
+  owner: 'Owner',
+}
+
 export default function CustomersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -45,7 +59,7 @@ export default function CustomersPage() {
     email: '',
     phone: '',
     password: '',
-    role: 'user' as UserRole
+    role: 'customer' as UserRole
   })
 
   const loadUsers = async () => {
@@ -85,7 +99,7 @@ export default function CustomersPage() {
       email: '',
       phone: '',
       password: '',
-      role: 'user'
+      role: 'customer'
     })
     setShowModal(true)
   }
@@ -98,7 +112,7 @@ export default function CustomersPage() {
       email: user.email || '',
       phone: user.phone || '',
       password: '',
-      role: user.role || 'user'
+      role: user.role || 'customer'
     })
     setShowModal(true)
   }
@@ -220,8 +234,10 @@ export default function CustomersPage() {
         return 'bg-red-500/20 text-red-500 border-red-500/50'
       case 'staff':
         return 'bg-blue-500/20 text-blue-500 border-blue-500/50'
-      default:
+      case 'customer':
         return 'bg-green-500/20 text-green-500 border-green-500/50'
+      default:
+        return 'bg-slate-500/20 text-slate-300 border-slate-500/50'
     }
   }
 
@@ -247,7 +263,7 @@ export default function CustomersPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl lg:text-4xl font-bold text-white">Customers</h1>
-          <p className="text-slate-400 mt-1">Manage your users and their permissions.</p>
+          <p className="text-slate-400 mt-1">Manage customers, staff, administrators, and owners.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -274,7 +290,7 @@ export default function CustomersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm">Total Users</p>
+                <p className="text-slate-400 text-sm">Total Accounts</p>
                 <p className="text-2xl font-bold text-white">{users.length}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
@@ -288,8 +304,8 @@ export default function CustomersPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm">Active Users</p>
-                <p className="text-2xl font-bold text-white">{users.filter(u => u.isActive !== false).length}</p>
+                <p className="text-slate-400 text-sm">Customers</p>
+                <p className="text-2xl font-bold text-white">{users.filter(u => u.role === 'customer').length}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
                 <Shield className="w-6 h-6 text-green-500" />
@@ -341,14 +357,14 @@ export default function CustomersPage() {
               />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {(['all', 'user', 'admin', 'staff', 'owner'] as const).map((role) => (
+              {(['all', ...roleOptions.map((role) => role.value)] as const).map((role) => (
                 <Button
                   key={role}
                   variant={filterRole === role ? 'default' : 'outline'}
                   onClick={() => setFilterRole(role)}
                   className={filterRole === role ? 'bg-orange-500 hover:bg-orange-600' : 'border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700'}
                 >
-                  {role.charAt(0).toUpperCase() + role.slice(1)}
+                  {role === 'all' ? 'All' : roleLabels[role]}
                 </Button>
               ))}
             </div>
@@ -379,18 +395,24 @@ export default function CustomersPage() {
                   <tr key={user.id} className="border-b border-slate-700/30 hover:bg-slate-700/20 transition">
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold">
-                          {(user.firstName?.[0] || '')}{(user.lastName?.[0] || '')}
+                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-orange-500">
+                          {user.avatar ? (
+                            <img src={user.avatar} alt={`${user.firstName} ${user.lastName}`} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-white font-bold">
+                              {(user.firstName?.[0] || '')}{(user.lastName?.[0] || '')}
+                            </div>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-white font-medium">{user.firstName} {user.lastName}</p>
+                        <div className="min-w-0">
+                          <p className="break-words text-white font-medium">{user.firstName} {user.lastName}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-2 text-slate-300">
-                        <Mail className="w-4 h-4 text-slate-500" />
-                        {user.email}
+                      <div className="flex min-w-64 items-center gap-2 text-slate-300">
+                        <Mail className="w-4 h-4 shrink-0 text-slate-500" />
+                        <span className="break-all">{user.email}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4">
@@ -400,8 +422,8 @@ export default function CustomersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <Badge className={getRoleBadgeClass(user.role || 'user')}>
-                        {user.role}
+                      <Badge className={getRoleBadgeClass(user.role || 'customer')}>
+                        {roleLabels[user.role] || user.role}
                       </Badge>
                     </td>
                     <td className="px-4 py-4">
@@ -480,8 +502,8 @@ export default function CustomersPage() {
       </Card>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <Card className="max-h-[92vh] w-full max-w-md overflow-y-auto bg-slate-800 border-slate-700">
             <CardHeader>
               <CardTitle className="text-white">
                 {editingUser ? 'Edit User' : 'Create New User'}
@@ -489,7 +511,7 @@ export default function CustomersPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-slate-300 text-sm">First Name</label>
                     <Input
@@ -563,10 +585,9 @@ export default function CustomersPage() {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                     className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
                   >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="staff">Staff</option>
-                    <option value="owner">Owner</option>
+                    {roleOptions.map((role) => (
+                      <option key={role.value} value={role.value}>{role.label}</option>
+                    ))}
                   </select>
                 </div>
                 

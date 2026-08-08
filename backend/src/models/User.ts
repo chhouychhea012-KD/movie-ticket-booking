@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import bcrypt from 'bcryptjs';
 
-export type UserRole = 'user' | 'admin' | 'staff' | 'owner';
+export type UserRole = 'customer' | 'staff' | 'admin' | 'owner';
 
 interface UserAttributes {
   id: string;
@@ -95,12 +95,12 @@ User.init(
       allowNull: true,
     },
     avatar: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT,
       allowNull: true,
     },
     role: {
-      type: DataTypes.ENUM('user', 'admin', 'staff', 'owner'),
-      defaultValue: 'user',
+      type: DataTypes.ENUM('customer', 'staff', 'admin', 'owner'),
+      defaultValue: 'customer',
     },
     isActive: {
       type: DataTypes.BOOLEAN,

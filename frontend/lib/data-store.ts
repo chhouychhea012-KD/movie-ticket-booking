@@ -200,7 +200,7 @@ const initialUsers: User[] = [
     firstName: 'John',
     lastName: 'Doe',
     avatar: '',
-    role: 'user',
+    role: 'customer',
     createdAt: '2024-01-15T10:30:00Z',
     favoriteMovies: ['1', '5'],
     favoriteCinemas: ['1'],
@@ -226,7 +226,7 @@ const initialUsers: User[] = [
     firstName: 'Jane',
     lastName: 'Smith',
     avatar: '',
-    role: 'user',
+    role: 'customer',
     createdAt: '2024-02-20T14:45:00Z',
     favoriteMovies: ['2', '3'],
     favoriteCinemas: ['2'],
@@ -239,7 +239,7 @@ const initialUsers: User[] = [
     firstName: 'Bob',
     lastName: 'Wilson',
     avatar: '',
-    role: 'user',
+    role: 'customer',
     createdAt: '2024-03-05T09:15:00Z',
     favoriteMovies: ['4'],
     favoriteCinemas: ['1'],
@@ -252,7 +252,7 @@ const initialUsers: User[] = [
     firstName: 'Alice',
     lastName: 'Johnson',
     avatar: '',
-    role: 'user',
+    role: 'customer',
     createdAt: '2024-03-12T16:30:00Z',
     favoriteMovies: ['1', '2', '5'],
     favoriteCinemas: ['3'],
@@ -659,7 +659,7 @@ export const dataStore = {
     },
     getTotalUsers: (): number => {
       const users = getStoredData<User[]>(STORAGE_KEYS.USERS, initialUsers);
-      return users.filter(u => u.role === 'user').length;
+      return users.filter(u => u.role === 'customer').length;
     },
   },
 };

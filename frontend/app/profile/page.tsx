@@ -1,15 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
-import { User, Mail, Phone, Heart, History, Settings, Bell, CreditCard, LogOut, Camera, Save, Loader2, Ticket, Star } from 'lucide-react'
+import { User, Mail, Phone, Heart, History, Bell, CreditCard, LogOut, Camera, Save, Loader2, Ticket, Star } from 'lucide-react'
 import BookingCard from '@/components/booking-card'
 
 export default function ProfilePage() {
-  const router = useRouter()
   const { user, movies, bookings, updateProfile, removeFavoriteMovie } = useApp()
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [activeTab, setActiveTab] = useState('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -18,7 +17,20 @@ export default function ProfilePage() {
     lastName: user?.lastName || '',
     email: user?.email || '',
     phone: user?.phone || '',
+    avatar: user?.avatar || '',
   })
+
+  useEffect(() => {
+    if (!user) return
+
+    setFormData({
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      avatar: user.avatar || '',
+    })
+  }, [user])
 
   if (!user) {
     return (
@@ -35,10 +47,37 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     setIsSaving(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    updateProfile(formData)
+    await updateProfile({
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      phone: formData.phone.trim(),
+      avatar: formData.avatar,
+    })
     setIsSaving(false)
     setIsEditing(false)
+  }
+
+  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image file.')
+      return
+    }
+
+    if (file.size > 1024 * 1024) {
+      alert('Please choose an image smaller than 1MB.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const avatar = String(reader.result || '')
+      setFormData((current) => ({ ...current, avatar }))
+      updateProfile({ avatar })
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleLogout = () => {
@@ -75,29 +114,44 @@ export default function ProfilePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white">My Account</h1>
           <p className="text-slate-400">Manage your profile and preferences</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 lg:gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6">
+            <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-5 sm:p-6">
               {/* Avatar */}
               <div className="text-center mb-6">
                 <div className="relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto">
-                    {user.firstName[0]}{user.lastName[0]}
+                  <div className="w-24 h-24 overflow-hidden rounded-full bg-orange-500 flex items-center justify-center text-white text-3xl font-bold mx-auto">
+                    {formData.avatar ? (
+                      <img src={formData.avatar} alt={`${user.firstName} ${user.lastName}`} className="h-full w-full object-cover" />
+                    ) : (
+                      <span>{user.firstName[0]}{user.lastName[0]}</span>
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 p-2 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 p-2 bg-orange-500 rounded-full text-white hover:bg-orange-600 transition"
+                  >
                     <Camera className="w-4 h-4" />
                   </button>
                 </div>
-                <h3 className="text-white font-semibold mt-4">{user.firstName} {user.lastName}</h3>
-                <p className="text-slate-400 text-sm">{user.email}</p>
+                <h3 className="break-words text-white font-semibold mt-4">{user.firstName} {user.lastName}</h3>
+                <p className="break-all text-slate-400 text-sm">{user.email}</p>
               </div>
 
               {/* Navigation */}
@@ -113,7 +167,7 @@ export default function ProfilePage() {
                     }`}
                   >
                     <tab.icon className="w-5 h-5" />
-                    {tab.label}
+                    <span className="break-words">{tab.label}</span>
                   </button>
                 ))}
                 <button
@@ -131,8 +185,8 @@ export default function ProfilePage() {
           <div className="lg:col-span-3">
             {/* Profile Tab */}
             {activeTab === 'profile' && (
-              <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-5 sm:p-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
                   <h2 className="text-2xl font-bold text-white">Profile Information</h2>
                   <button
                     onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
@@ -155,7 +209,7 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <p className="text-white text-lg">{user.firstName}</p>
+                      <p className="break-words text-white text-lg">{user.firstName}</p>
                     )}
                   </div>
                   <div>
@@ -168,7 +222,7 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <p className="text-white text-lg">{user.lastName}</p>
+                      <p className="break-words text-white text-lg">{user.lastName}</p>
                     )}
                   </div>
                   <div>
@@ -181,9 +235,9 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-slate-500" />
-                        <p className="text-white text-lg">{user.email}</p>
+                      <div className="flex items-start gap-2">
+                        <Mail className="w-5 h-5 shrink-0 text-slate-500 mt-1" />
+                        <p className="min-w-0 break-all text-white text-lg">{user.email}</p>
                       </div>
                     )}
                   </div>
@@ -197,9 +251,9 @@ export default function ProfilePage() {
                         className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
                       />
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-slate-500" />
-                        <p className="text-white text-lg">{user.phone || 'Not set'}</p>
+                      <div className="flex items-start gap-2">
+                        <Phone className="w-5 h-5 shrink-0 text-slate-500 mt-1" />
+                        <p className="min-w-0 break-words text-white text-lg">{user.phone || 'Not set'}</p>
                       </div>
                     )}
                   </div>
@@ -209,7 +263,7 @@ export default function ProfilePage() {
                 <div className="mt-8 pt-6 border-t border-slate-700/50">
                   <h3 className="text-xl font-bold text-white mb-4">Notification Preferences</h3>
                   <div className="space-y-4">
-                    <label className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl cursor-pointer">
+                    <label className="flex items-center justify-between gap-4 p-4 bg-slate-700/30 rounded-xl cursor-pointer">
                       <div className="flex items-center gap-3">
                         <Mail className="w-5 h-5 text-slate-400" />
                         <span className="text-white">Email Notifications</span>
@@ -221,7 +275,7 @@ export default function ProfilePage() {
                         className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500"
                       />
                     </label>
-                    <label className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl cursor-pointer">
+                    <label className="flex items-center justify-between gap-4 p-4 bg-slate-700/30 rounded-xl cursor-pointer">
                       <div className="flex items-center gap-3">
                         <Bell className="w-5 h-5 text-slate-400" />
                         <span className="text-white">SMS Notifications</span>

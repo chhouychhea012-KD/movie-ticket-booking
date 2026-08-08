@@ -7,14 +7,14 @@ const protectedRoles = ['admin', 'owner'];
 
 const canManageRole = (actorRole: string | undefined, targetRole: string): boolean => {
   if (actorRole === 'owner') return true;
-  if (actorRole === 'admin') return ['user', 'staff'].includes(targetRole);
+  if (actorRole === 'admin') return ['customer', 'staff'].includes(targetRole);
   return false;
 };
 
 export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { email, password, firstName, lastName, phone, role } = req.body;
-    const requestedRole = role || 'user';
+    const requestedRole = role || 'customer';
 
     if (!canManageRole(req.userRole, requestedRole)) {
       res.status(403).json({
@@ -272,7 +272,7 @@ export const getUserStats = async (req: Request, res: Response): Promise<void> =
   try {
     const totalUsers = await User.count();
     const adminUsers = await User.count({ where: { role: 'admin' } });
-    const regularUsers = await User.count({ where: { role: 'user' } });
+    const regularUsers = await User.count({ where: { role: 'customer' } });
     const activeUsers = await User.count({ where: { isActive: true } });
 
     res.json({
@@ -280,6 +280,7 @@ export const getUserStats = async (req: Request, res: Response): Promise<void> =
       data: {
         totalUsers,
         adminUsers,
+        customerUsers: regularUsers,
         regularUsers,
         activeUsers,
       },

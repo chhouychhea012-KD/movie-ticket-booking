@@ -20,7 +20,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     });
 
     // Total users
-    const totalUsers = await User.count({ where: { role: 'user' } });
+    const totalUsers = await User.count({ where: { role: 'customer' } });
 
     // Occupancy rate (total booked seats / total available seats)
     // This is a simplified calculation

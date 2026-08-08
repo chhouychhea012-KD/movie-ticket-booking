@@ -20,8 +20,11 @@ export const googleLoginSchema = Joi.object({
 export const updateProfileSchema = Joi.object({
   firstName: Joi.string().min(1).max(100).optional(),
   lastName: Joi.string().min(1).max(100).optional(),
-  phone: Joi.string().pattern(/^\+?[0-9]{9,15}$/).optional(),
-  avatar: Joi.string().uri().optional(),
+  phone: Joi.string().pattern(/^\+?[0-9]{9,15}$/).allow('', null).optional(),
+  avatar: Joi.alternatives().try(
+    Joi.string().uri(),
+    Joi.string().pattern(/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/)
+  ).optional(),
   notifications: Joi.object({
     email: Joi.boolean().optional(),
     sms: Joi.boolean().optional(),

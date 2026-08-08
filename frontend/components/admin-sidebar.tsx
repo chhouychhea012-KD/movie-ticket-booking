@@ -56,7 +56,7 @@ export default function AdminSidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 rounded-lg text-white"
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-slate-800 rounded-lg text-white"
       >
         <Menu className="w-6 h-6" />
       </button>
@@ -97,7 +97,7 @@ export default function AdminSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="p-4 space-y-2">
+        <nav className="h-[calc(100vh-109px)] space-y-2 overflow-y-auto p-4">
           {sidebarItems.map((item) => (
             <Link
               key={item.href}
@@ -116,7 +116,7 @@ export default function AdminSidebar() {
               )}>
                 {item.icon}
               </span>
-              <span className="font-medium">{item.label}</span>
+              <span className="break-words font-medium">{item.label}</span>
               {isActive(item.href) && (
                 <div className="ml-auto w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
               )}

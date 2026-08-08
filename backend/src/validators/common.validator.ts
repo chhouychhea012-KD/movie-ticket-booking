@@ -38,7 +38,7 @@ export const paginationSchema = {
   limit: Joi.number().integer().min(1).max(100).default(20),
 };
 
-export const userRoleSchema = Joi.string().valid('user', 'admin', 'staff', 'owner');
+export const userRoleSchema = Joi.string().valid('customer', 'staff', 'admin', 'owner');
 export const bookingStatusSchema = Joi.string().valid('pending', 'confirmed', 'cancelled', 'completed', 'used', 'expired');
 export const paymentStatusSchema = Joi.string().valid('pending', 'completed', 'failed', 'refunded');
 export const seatTypeSchema = Joi.string().valid('regular', 'vip', 'couple', 'accessible');
