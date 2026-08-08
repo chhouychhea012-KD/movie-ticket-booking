@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { ExternalLink, Play, X } from 'lucide-react'
-import { getYouTubeEmbedUrl } from '@/lib/video'
+import { getDirectVideoUrl, getVideoMimeType, getYouTubeEmbedUrl } from '@/lib/video'
 
 interface TrailerModalProps {
   isOpen: boolean
@@ -13,6 +13,7 @@ interface TrailerModalProps {
 
 export default function TrailerModal({ isOpen, onClose, trailerUrl, title }: TrailerModalProps) {
   const embedUrl = getYouTubeEmbedUrl(trailerUrl)
+  const directVideoUrl = getDirectVideoUrl(trailerUrl)
   const trailerHost = getTrailerHost(trailerUrl)
 
   useEffect(() => {
@@ -79,6 +80,20 @@ export default function TrailerModal({ isOpen, onClose, trailerUrl, title }: Tra
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
+          </div>
+        ) : directVideoUrl ? (
+          <div className="aspect-video bg-black">
+            <video
+              key={directVideoUrl}
+              className="h-full w-full"
+              controls
+              autoPlay
+              playsInline
+              preload="metadata"
+            >
+              <source src={directVideoUrl} type={getVideoMimeType(directVideoUrl)} />
+              Your browser does not support this video.
+            </video>
           </div>
         ) : (
           <div className="flex min-h-[360px] flex-col items-center justify-center gap-5 bg-black px-6 py-14 text-center">

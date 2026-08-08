@@ -14,11 +14,11 @@ const trailerLinks = {
   fantasticFour: 'https://www.youtube.com/watch?v=AzMo-FgRp64',
   jurassicWorld: 'https://www.youtube.com/watch?v=jan5CFWs9ic',
   missionImpossible: 'https://www.youtube.com/watch?v=kLzsazwBanE',
-  f1: 'https://www.youtube.com/watch?v=DrE9umGiPZQ',
+  f1: 'https://www.youtube.com/watch?v=CT2_P2DZBR0',
   liloStitch: 'https://www.youtube.com/watch?v=VWqJifMMgZE',
   dragon: 'https://www.youtube.com/watch?v=22w7z_lT6YM',
   wicked: 'https://www.youtube.com/watch?v=vt98AlBDI9Y',
-  avengers: 'https://www.youtube.com/watch?v=399Ez7WHK5s',
+  avengers: 'https://www.youtube.com/watch?v=irVNGjRFZGk',
   spiderMan: 'https://www.youtube.com/watch?v=8TZMtslA3UY',
   mandalorian: 'https://www.youtube.com/watch?v=_pa1KLXuW0Y',
 };

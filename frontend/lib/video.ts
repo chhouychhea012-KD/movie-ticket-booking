@@ -1,3 +1,5 @@
+const directVideoExtensions = ['.mp4', '.webm', '.ogg', '.ogv', '.mov', '.m4v']
+
 export function getYouTubeVideoId(url?: string | null): string | null {
   if (!url) return null
 
@@ -23,11 +25,6 @@ export function getYouTubeVideoId(url?: string | null): string | null {
       }
     }
 
-    if (hostname.endsWith('universalstudios.com') || hostname.endsWith('universalpictures.com')) {
-      const videoPathIndex = pathnameParts.findIndex((part) => part === 'videos')
-      const videoId = pathnameParts[videoPathIndex + 1]
-      if (videoId && /^[A-Za-z0-9_-]{11}$/.test(videoId)) return videoId
-    }
   } catch {
     // Fall through to regex matching for values pasted without a full URL.
   }
@@ -35,7 +32,6 @@ export function getYouTubeVideoId(url?: string | null): string | null {
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/|youtube\.com\/shorts\/|youtube\.com\/live\/)([^&\n?#/]+)/,
     /youtube\.com\/watch\?.*v=([^&\n?#/]+)/,
-    /(?:universalstudios\.com|universalpictures\.com)\/videos\/([A-Za-z0-9_-]{11})/,
   ]
 
   for (const pattern of patterns) {
@@ -50,12 +46,43 @@ export function getYouTubeEmbedUrl(url?: string | null): string | null {
   const videoId = getYouTubeVideoId(url)
   if (!videoId) return null
 
-  return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`
+  return `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
 }
 
 export function getYouTubeThumbnailUrl(url?: string | null): string | null {
   const videoId = getYouTubeVideoId(url)
   if (!videoId) return null
 
-  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`
+}
+
+export function getDirectVideoUrl(url?: string | null): string | null {
+  if (!url) return null
+
+  try {
+    const parsedUrl = new URL(url)
+    const pathname = parsedUrl.pathname.toLowerCase()
+
+    if (directVideoExtensions.some((extension) => pathname.endsWith(extension))) {
+      return url
+    }
+  } catch {
+    const cleanUrl = url.split('?')[0].split('#')[0].toLowerCase()
+    if (directVideoExtensions.some((extension) => cleanUrl.endsWith(extension))) {
+      return url
+    }
+  }
+
+  return null
+}
+
+export function getVideoMimeType(url: string): string {
+  const cleanUrl = url.split('?')[0].split('#')[0].toLowerCase()
+
+  if (cleanUrl.endsWith('.webm')) return 'video/webm'
+  if (cleanUrl.endsWith('.ogg') || cleanUrl.endsWith('.ogv')) return 'video/ogg'
+  if (cleanUrl.endsWith('.mov')) return 'video/quicktime'
+  if (cleanUrl.endsWith('.m4v')) return 'video/x-m4v'
+
+  return 'video/mp4'
 }
