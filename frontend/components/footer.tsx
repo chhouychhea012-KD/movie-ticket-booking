@@ -62,7 +62,7 @@ export default function Footer() {
               <div style={{ width: '380px', height: '100px' }}>
                 <img 
                   src="/logo.png" 
-                  alt="CinemaHub" 
+                  alt="CinemaHub Movie Time" 
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                   style={{ 
                     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',

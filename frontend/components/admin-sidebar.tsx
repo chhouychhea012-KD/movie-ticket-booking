@@ -80,7 +80,7 @@ export default function AdminSidebar() {
             <div style={{ width: '200px', height: '60px' }}>
               <img 
                 src="/logo.png" 
-                alt="CinemaHub Admin" 
+                alt="CinemaHub Movie Time Admin" 
                 className="w-full h-full object-contain"
                 style={{ 
                   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'

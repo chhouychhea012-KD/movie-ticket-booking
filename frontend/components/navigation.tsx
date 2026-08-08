@@ -53,10 +53,12 @@ export default function Navigation() {
       <div className="cinema-container">
         <div className="flex h-16 items-center gap-4 lg:h-18">
           <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeMobile}>
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e50914] text-white">
-              <Clapperboard className="h-5 w-5" />
-            </span>
-            <span className="hidden text-lg font-semibold tracking-tight text-white sm:block">CinemaHub</span>
+            <img
+              src="/logo.png"
+              alt="CinemaHub Movie Time"
+              className="h-12 w-28 object-contain drop-shadow-[0_0_12px_rgba(236,72,153,0.35)] sm:w-36"
+            />
+            <span className="sr-only">CinemaHub</span>
           </Link>
 
           <div className="relative hidden max-w-md flex-1 lg:block">

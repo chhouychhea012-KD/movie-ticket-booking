@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Download, RefreshCw, Share, Smartphone, X } from 'lucide-react'
+import { Download, RefreshCw, X } from 'lucide-react'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -90,8 +90,8 @@ export default function PWAInstallPrompt() {
             <X className="h-4 w-4" />
           </button>
           <div className="flex gap-3 pr-8">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e50914] text-white">
-              <Smartphone className="h-5 w-5" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#252a32] bg-black">
+              <img src="/logo.png" alt="CinemaHub Movie Time" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="font-semibold text-white">Install CinemaHub</p>
@@ -114,8 +114,8 @@ export default function PWAInstallPrompt() {
             <X className="h-4 w-4" />
           </button>
           <div className="flex gap-3 pr-8">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e50914] text-white">
-              <Share className="h-5 w-5" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#252a32] bg-black">
+              <img src="/logo.png" alt="CinemaHub Movie Time" className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="font-semibold text-white">Add CinemaHub to Home Screen</p>
