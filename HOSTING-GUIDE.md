@@ -34,6 +34,7 @@ DB_PASSWORD=your_mysql_password
 JWT_SECRET=change_this_to_a_long_random_secret
 JWT_EXPIRE=7d
 FRONTEND_URL=https://cambocine.online
+GOOGLE_CLIENT_ID=900896751182-351tedmbt8jq69acpbip5fmvir10092h.apps.googleusercontent.com
 ENCRYPTION_KEY=change_this_32_character_key
 DB_SYNC_ALTER=false
 DB_SYNC_FORCE=false
@@ -62,6 +63,7 @@ Use:
 
 ```env
 NEXT_PUBLIC_API_URL=https://cambocine.online/api/v1
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=900896751182-351tedmbt8jq69acpbip5fmvir10092h.apps.googleusercontent.com
 ```
 
 ## 4. Install, Build, And Start

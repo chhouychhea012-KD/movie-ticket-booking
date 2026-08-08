@@ -21,6 +21,7 @@ Backend:
 - Sequelize
 - MySQL
 - JWT authentication
+- Google Identity login
 - Joi validation
 - Helmet, CORS, Morgan
 
@@ -74,6 +75,7 @@ For local development, set:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=900896751182-351tedmbt8jq69acpbip5fmvir10092h.apps.googleusercontent.com
 ```
 
 Frontend runs on:

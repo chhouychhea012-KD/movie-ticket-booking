@@ -1,6 +1,6 @@
 import express from 'express';
 import * as authController from '../controllers/auth.controller';
-import { registerSchema, loginSchema, updateProfileSchema, changePasswordSchema, validate } from '../validators/auth.validator';
+import { registerSchema, loginSchema, googleLoginSchema, updateProfileSchema, changePasswordSchema, validate } from '../validators/auth.validator';
 import { authenticate } from '../middleware/auth';
 import { validateBody, validateParams } from '../validators/common.validator';
 import Joi from 'joi';
@@ -16,6 +16,11 @@ router.post('/register', validate(registerSchema), authController.register);
 // @desc    Login user
 // @access  Public
 router.post('/login', validate(loginSchema), authController.login);
+
+// @route   POST /api/v1/auth/google
+// @desc    Login or register user with Google Identity Services
+// @access  Public
+router.post('/google', validate(googleLoginSchema), authController.googleLogin);
 
 // @route   GET /api/v1/auth/profile
 // @desc    Get user profile

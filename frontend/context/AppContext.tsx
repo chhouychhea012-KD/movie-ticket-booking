@@ -123,6 +123,7 @@ const generateSeatLayout = (rows: number, seatsPerRow: number): Seat[] => {
 interface AppContextType {
   user: User | null
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (credential: string) => Promise<void>
   logout: () => void
   register: (data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<void>
   updateProfile: (data: Partial<User>) => void
@@ -322,6 +323,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } else {
         throw error
       }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loginWithGoogle = async (credential: string) => {
+    setIsLoading(true)
+
+    try {
+      const response = await api.post<AuthResponse>('/auth/google', { credential })
+
+      if (response.success && response.data) {
+        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('user', JSON.stringify(response.data.user))
+        setUser(response.data.user)
+        return
+      }
+
+      throw new Error(response.message || 'Google login failed')
     } finally {
       setIsLoading(false)
     }
@@ -624,6 +644,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       user,
       login,
+      loginWithGoogle,
       logout,
       register,
       updateProfile,

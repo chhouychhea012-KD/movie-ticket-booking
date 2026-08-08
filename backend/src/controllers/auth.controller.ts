@@ -1,8 +1,13 @@
 import { Request, Response } from 'express';
 import { ValidationError } from 'sequelize';
+import crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
 import { generateToken } from '../middleware/auth';
 import Movie from '../models/Movie';
+
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '900896751182-351tedmbt8jq69acpbip5fmvir10092h.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -122,6 +127,91 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       success: false,
       message: 'Login failed',
       error: error.message,
+    });
+  }
+};
+
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { credential } = req.body;
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || !payload.email_verified) {
+      res.status(401).json({
+        success: false,
+        message: 'Google account email is not verified',
+      });
+      return;
+    }
+
+    const email = payload.email.toLowerCase();
+    const fallbackName = email.split('@')[0] || 'Google';
+    const firstName = payload.given_name || payload.name?.split(' ')[0] || fallbackName;
+    const lastName = payload.family_name || payload.name?.split(' ').slice(1).join(' ') || 'User';
+
+    let user = await User.findOne({ where: { email } });
+
+    if (user && !user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.',
+      });
+      return;
+    }
+
+    if (!user) {
+      user = await User.create({
+        email,
+        password: crypto.randomBytes(32).toString('hex'),
+        firstName,
+        lastName,
+        phone: '',
+        avatar: payload.picture,
+        role: 'user',
+        isActive: true,
+        emailVerified: true,
+        favoriteMovies: [],
+        favoriteCinemas: [],
+        notifications: {
+          email: true,
+          sms: true,
+          push: true,
+        },
+      });
+    } else {
+      await user.update({
+        firstName: user.firstName || firstName,
+        lastName: user.lastName || lastName,
+        avatar: payload.picture || user.avatar,
+        emailVerified: true,
+        lastLogin: new Date(),
+      });
+    }
+
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      data: {
+        user: user.toJSON(),
+        token,
+      },
+    });
+  } catch (error: any) {
+    console.error('Google login error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Google login failed',
+      error: process.env.NODE_ENV === 'production' ? undefined : error.message,
     });
   }
 };

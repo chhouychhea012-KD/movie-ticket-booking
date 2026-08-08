@@ -13,6 +13,10 @@ export const loginSchema = Joi.object({
   password: Joi.string().required(),
 });
 
+export const googleLoginSchema = Joi.object({
+  credential: Joi.string().trim().required(),
+});
+
 export const updateProfileSchema = Joi.object({
   firstName: Joi.string().min(1).max(100).optional(),
   lastName: Joi.string().min(1).max(100).optional(),
