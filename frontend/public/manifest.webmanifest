@@ -1,7 +1,7 @@
 {
-  "name": "CinemaHub Movie Ticket Booking",
-  "short_name": "CinemaHub",
-  "description": "Book movie tickets, choose seats, pay securely, and keep digital tickets on your device.",
+  "name": "CamboCine Movie Ticket Booking",
+  "short_name": "CamboCine",
+  "description": "Book movie tickets online in Cambodia, choose seats, pay securely, and keep digital tickets on your device.",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",

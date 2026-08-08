@@ -129,4 +129,4 @@ User: jane.smith@example.com / user123
 
 ## Ubuntu/Nginx Hosting
 
-Use [HOSTING-GUIDE.md](./HOSTING-GUIDE.md) for the full production steps for `movie-ticket-booking.online`.
+Use [HOSTING-GUIDE.md](./HOSTING-GUIDE.md) for the full production steps for `cambocine.online`.

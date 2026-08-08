@@ -1,6 +1,6 @@
 # Movie Ticket Booking Ubuntu/Nginx Hosting Guide
 
-Domain: movie-ticket-booking.online
+Domain: cambocine.online
 Server IP: 44.200.223.38
 App path: /var/www/html/movie-ticket-booking
 
@@ -33,7 +33,7 @@ DB_USER=your_mysql_user
 DB_PASSWORD=your_mysql_password
 JWT_SECRET=change_this_to_a_long_random_secret
 JWT_EXPIRE=7d
-FRONTEND_URL=https://movie-ticket-booking.online
+FRONTEND_URL=https://cambocine.online
 ENCRYPTION_KEY=change_this_32_character_key
 DB_SYNC_ALTER=false
 DB_SYNC_FORCE=false
@@ -61,7 +61,7 @@ nano .env.local
 Use:
 
 ```env
-NEXT_PUBLIC_API_URL=https://movie-ticket-booking.online/api/v1
+NEXT_PUBLIC_API_URL=https://cambocine.online/api/v1
 ```
 
 ## 4. Install, Build, And Start
@@ -96,7 +96,7 @@ After the first deploy, do not run `npm run seed` every release unless you want 
 ```nginx
 server {
     listen 80;
-    server_name movie-ticket-booking.online www.movie-ticket-booking.online;
+    server_name cambocine.online www.cambocine.online;
 
     location /api/v1/ {
         proxy_pass http://127.0.0.1:3001/api/v1/;
@@ -132,8 +132,8 @@ sudo systemctl reload nginx
 ```bash
 curl http://127.0.0.1:3001/api/v1/health
 curl http://127.0.0.1:3000
-curl http://movie-ticket-booking.online/api/v1/health
-curl http://movie-ticket-booking.online
+curl http://cambocine.online/api/v1/health
+curl http://cambocine.online
 pm2 logs movie-backend --lines 50
 pm2 logs movie-frontend --lines 50
 ```

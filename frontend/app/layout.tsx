@@ -3,15 +3,15 @@ import './globals.css'
 import RootContent from '@/components/root-content'
 import { AppProvider } from '@/context/AppContext'
 
-const siteUrl = 'https://movie-ticket-booking.online'
-const siteName = 'CinemaHub'
-const siteDescription = 'Book movie tickets online, browse showtimes, choose cinema seats, pay securely, and save digital tickets for local cinemas in Cambodia.'
+const siteUrl = 'https://cambocine.online'
+const siteName = 'CamboCine'
+const siteDescription = 'Book movie tickets online with CamboCine, browse cinema showtimes, choose seats, pay securely, and save digital tickets for local cinemas in Cambodia.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'CinemaHub - Movie Ticket Booking Online',
-    template: '%s | CinemaHub',
+    default: 'CamboCine - Movie Ticket Booking Online in Cambodia',
+    template: '%s | CamboCine',
   },
   description: siteDescription,
   keywords: [
@@ -24,9 +24,9 @@ export const metadata: Metadata = {
     'Phnom Penh cinema',
     'digital movie tickets',
   ],
-  authors: [{ name: 'CinemaHub' }],
-  creator: 'CinemaHub',
-  publisher: 'CinemaHub',
+  authors: [{ name: 'CamboCine' }],
+  creator: 'CamboCine',
+  publisher: 'CamboCine',
   category: 'entertainment',
   manifest: '/manifest.webmanifest',
   applicationName: siteName,
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' }],
   },
   openGraph: {
-    title: 'CinemaHub - Movie Ticket Booking Online',
+    title: 'CamboCine - Movie Ticket Booking Online in Cambodia',
     description: siteDescription,
     url: '/',
     siteName,
@@ -72,13 +72,13 @@ export const metadata: Metadata = {
         url: '/pwa-icon-512.png',
         width: 512,
         height: 512,
-        alt: 'CinemaHub movie ticket booking',
+        alt: 'CamboCine movie ticket booking',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CinemaHub - Movie Ticket Booking Online',
+    title: 'CamboCine - Movie Ticket Booking Online in Cambodia',
     description: siteDescription,
     images: ['/pwa-icon-512.png'],
   },

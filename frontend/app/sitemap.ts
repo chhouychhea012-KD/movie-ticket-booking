@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const siteUrl = 'https://movie-ticket-booking.online'
+const siteUrl = 'https://cambocine.online'
 
 const routes: Array<{
   path: string
