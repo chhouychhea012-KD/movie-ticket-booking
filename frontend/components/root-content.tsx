@@ -25,7 +25,7 @@ export default function RootContent({ children }: { children: React.ReactNode })
     <>
       <ServiceWorkerRegister />
       <Navigation />
-      <main className="pb-24 pt-16 md:pb-0 md:pt-20">
+      <main className="pb-24 pt-20 md:pb-0 md:pt-20">
         {children}
       </main>
       <Footer />

@@ -51,12 +51,12 @@ export default function Navigation() {
   return (
     <nav className={`fixed inset-x-0 top-0 z-50 transition ${scrolled ? 'border-b border-[#252a32] bg-[#0b0d10]/95 shadow-2xl shadow-black/30 backdrop-blur-xl' : 'bg-[#0b0d10]/80 backdrop-blur-md'}`}>
       <div className="cinema-container">
-        <div className="flex h-16 items-center gap-4 lg:h-18">
+        <div className="flex h-20 items-center gap-4 lg:h-20">
           <Link href="/" className="flex shrink-0 items-center gap-3" onClick={closeMobile}>
             <img
-              src="/logo.png"
+              src="/logo-nav.png"
               alt="CinemaHub Movie Time"
-              className="h-12 w-28 object-contain drop-shadow-[0_0_12px_rgba(236,72,153,0.35)] sm:w-36"
+              className="h-16 w-32 object-contain drop-shadow-[0_0_14px_rgba(236,72,153,0.45)] sm:w-40 lg:w-44"
             />
             <span className="sr-only">CinemaHub</span>
           </Link>
