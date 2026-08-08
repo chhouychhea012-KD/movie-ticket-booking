@@ -1,15 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
-import { Search, Filter, Star, Calendar, Clock, TrendingUp, Heart, Grid, List, SlidersHorizontal, X } from 'lucide-react'
+import { Check, Grid, Languages, List, Search, SlidersHorizontal, Star, Calendar, TrendingUp, X } from 'lucide-react'
 import MovieCard from '@/components/movie-card'
 import { Movie } from '@/types'
 
 export default function MoviesPage() {
-  const router = useRouter()
   const { movies, nowShowing, comingSoon, searchMovies, selectedCity } = useApp()
   
   const [searchQuery, setSearchQuery] = useState('')
@@ -25,6 +22,11 @@ export default function MoviesPage() {
 
   const genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thriller', 'Fantasy']
   const languages = ['English', 'Khmer', 'Chinese', 'Thai', 'Korean', 'Japanese']
+  const sortOptions = [
+    { value: 'release', label: 'Newest release' },
+    { value: 'rating', label: 'Highest rating' },
+    { value: 'title', label: 'Title A-Z' },
+  ] as const
 
   useEffect(() => {
     let results = searchQuery ? searchMovies(searchQuery) : nowShowing
@@ -64,6 +66,28 @@ export default function MoviesPage() {
   }
 
   const activeFiltersCount = selectedGenres.length + selectedLanguages.length + (selectedRating > 0 ? 1 : 0)
+  const genreCounts = genres.reduce<Record<string, number>>((counts, genre) => {
+    counts[genre] = movies.filter((movie) =>
+      (Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).includes(genre)
+    ).length
+    return counts
+  }, {})
+  const languageCounts = languages.reduce<Record<string, number>>((counts, language) => {
+    counts[language] = movies.filter((movie) => movie.language === language).length
+    return counts
+  }, {})
+
+  const toggleGenre = (genre: string) => {
+    setSelectedGenres((current) =>
+      current.includes(genre) ? current.filter((item) => item !== genre) : [...current, genre]
+    )
+  }
+
+  const toggleLanguage = (language: string) => {
+    setSelectedLanguages((current) =>
+      current.includes(language) ? current.filter((item) => item !== language) : [...current, language]
+    )
+  }
 
   // Trending movies (mock - based on rating)
   const trendingMovies = [...movies].sort((a, b) => b.rating - a.rating).slice(0, 5)
@@ -93,9 +117,15 @@ export default function MoviesPage() {
               />
               <button
                 onClick={() => setShowFilters(true)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-slate-700/50 hover:bg-slate-700 rounded-xl transition"
+                className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2 rounded-xl bg-slate-700/50 p-2 transition hover:bg-slate-700"
+                aria-label="Open movie filters"
               >
                 <SlidersHorizontal className="w-5 h-5 text-slate-400" />
+                {activeFiltersCount > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#e50914] px-1 text-[11px] font-semibold text-white">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -105,33 +135,33 @@ export default function MoviesPage() {
       <div className="max-w-7xl mx-auto px-4 pb-16">
         {/* Active Filters */}
         {(activeFiltersCount > 0 || searchQuery) && (
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            <span className="text-slate-400 text-sm">Active filters:</span>
+          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-[#252a32] bg-[#101318] p-3">
+            <span className="px-1 text-sm font-medium text-slate-400">Active filters</span>
             {searchQuery && (
-              <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm flex items-center gap-2">
+              <span className="flex items-center gap-2 rounded-full border border-[#e50914]/30 bg-[#e50914]/10 px-3 py-1.5 text-sm text-white">
                 Search: {searchQuery}
                 <button onClick={() => setSearchQuery('')}><X className="w-3 h-3" /></button>
               </span>
             )}
             {selectedGenres.map(genre => (
-              <span key={genre} className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm flex items-center gap-2">
+              <span key={genre} className="flex items-center gap-2 rounded-full border border-[#252a32] bg-[#1b1f26] px-3 py-1.5 text-sm text-slate-200">
                 {genre}
                 <button onClick={() => setSelectedGenres(selectedGenres.filter(g => g !== genre))}><X className="w-3 h-3" /></button>
               </span>
             ))}
             {selectedLanguages.map(lang => (
-              <span key={lang} className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm flex items-center gap-2">
+              <span key={lang} className="flex items-center gap-2 rounded-full border border-[#252a32] bg-[#1b1f26] px-3 py-1.5 text-sm text-slate-200">
                 {lang}
                 <button onClick={() => setSelectedLanguages(selectedLanguages.filter(l => l !== lang))}><X className="w-3 h-3" /></button>
               </span>
             ))}
             {selectedRating > 0 && (
-              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm flex items-center gap-2">
+              <span className="flex items-center gap-2 rounded-full border border-[#f5c451]/30 bg-[#f5c451]/10 px-3 py-1.5 text-sm text-[#f5c451]">
                 Rating: {selectedRating}+
                 <button onClick={() => setSelectedRating(0)}><X className="w-3 h-3" /></button>
               </span>
             )}
-            <button onClick={clearFilters} className="text-orange-500 hover:text-orange-400 text-sm">
+            <button onClick={clearFilters} className="ml-auto rounded-full px-3 py-1.5 text-sm font-semibold text-[#f23b43] transition hover:bg-[#1b1f26] hover:text-white">
               Clear all
             </button>
           </div>
@@ -140,93 +170,124 @@ export default function MoviesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Filters */}
           <div className="hidden lg:block">
-            <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50 sticky top-24">
-              <h3 className="text-xl font-bold text-white mb-6">Filters</h3>
+            <div className="cinema-card sticky top-24 overflow-hidden p-0">
+              <div className="border-b border-[#252a32] p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1b1f26] text-[#e50914]">
+                      <SlidersHorizontal className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Filters</h3>
+                      <p className="text-xs text-slate-500">Refine your movie list</p>
+                    </div>
+                  </div>
+                  {activeFiltersCount > 0 && (
+                    <span className="rounded-full bg-[#e50914] px-2.5 py-1 text-xs font-semibold text-white">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              {/* Sort By */}
-              <div className="mb-6">
-                <label className="block text-slate-400 text-sm mb-3">Sort By</label>
+              <div className="space-y-6 p-5">
+                <div>
+                  <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort By</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500"
+                    className="h-12 w-full rounded-xl border border-[#252a32] bg-[#101318] px-4 text-sm font-medium text-white outline-none transition focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20"
                 >
-                  <option value="release">Release Date</option>
-                  <option value="rating">Rating</option>
-                  <option value="title">Title A-Z</option>
+                    {sortOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                 </select>
               </div>
 
-              {/* Genres */}
-              <div className="mb-6">
-                <label className="block text-slate-400 text-sm mb-3">Genre</label>
-                <div className="space-y-2">
+                <div>
+                  <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Genre</label>
+                  <div className="grid grid-cols-2 gap-2">
                   {genres.map(genre => (
-                    <label key={genre} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedGenres.includes(genre)}
-                        onChange={() => setSelectedGenres(
+                      <button
+                        key={genre}
+                        onClick={() => toggleGenre(genre)}
+                        className={`group flex min-h-11 items-center justify-between gap-2 rounded-xl border px-3 text-left text-sm transition ${
                           selectedGenres.includes(genre)
-                            ? selectedGenres.filter(g => g !== genre)
-                            : [...selectedGenres, genre]
-                        )}
-                        className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500"
-                      />
-                      <span className="text-slate-300 text-sm">{genre}</span>
-                    </label>
+                            ? 'border-[#e50914] bg-[#e50914]/15 text-white'
+                            : 'border-[#252a32] bg-[#101318] text-slate-400 hover:border-[#343a46] hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate">{genre}</span>
+                        <span className={`flex h-5 min-w-5 items-center justify-center rounded-full text-[11px] ${
+                          selectedGenres.includes(genre)
+                            ? 'bg-[#e50914] text-white'
+                            : 'bg-[#1b1f26] text-slate-500 group-hover:text-slate-300'
+                        }`}>
+                          {selectedGenres.includes(genre) ? <Check className="h-3 w-3" /> : genreCounts[genre]}
+                        </span>
+                      </button>
                   ))}
                 </div>
               </div>
 
-              {/* Language */}
-              <div className="mb-6">
-                <label className="block text-slate-400 text-sm mb-3">Language</label>
-                <div className="space-y-2">
+                <div>
+                  <label className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <Languages className="h-3.5 w-3.5" />
+                    Language
+                  </label>
+                  <div className="flex flex-wrap gap-2">
                   {languages.map(lang => (
-                    <label key={lang} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedLanguages.includes(lang)}
-                        onChange={() => setSelectedLanguages(
+                      <button
+                        key={lang}
+                        onClick={() => toggleLanguage(lang)}
+                        className={`rounded-full border px-3 py-2 text-sm transition ${
                           selectedLanguages.includes(lang)
-                            ? selectedLanguages.filter(l => l !== lang)
-                            : [...selectedLanguages, lang]
-                        )}
-                        className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-orange-500 focus:ring-orange-500"
-                      />
-                      <span className="text-slate-300 text-sm">{lang}</span>
-                    </label>
+                            ? 'border-[#e50914] bg-[#e50914] text-white'
+                            : 'border-[#252a32] bg-[#101318] text-slate-400 hover:border-[#343a46] hover:text-white'
+                        }`}
+                      >
+                        {lang}
+                        <span className="ml-2 text-xs opacity-60">{languageCounts[lang]}</span>
+                      </button>
                   ))}
                 </div>
               </div>
 
-              {/* Rating */}
-              <div className="mb-6">
-                <label className="block text-slate-400 text-sm mb-3">Minimum Rating</label>
-                <div className="flex gap-2">
+                <div>
+                  <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Minimum Rating</label>
+                  <div className="grid grid-cols-3 gap-2">
                   {[7, 8, 9].map(rating => (
                     <button
                       key={rating}
                       onClick={() => setSelectedRating(selectedRating === rating ? 0 : rating)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
+                        className={`flex min-h-12 items-center justify-center gap-1.5 rounded-xl border text-sm font-semibold transition ${
                         selectedRating === rating
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
+                            ? 'border-[#e50914] bg-[#e50914] text-white'
+                            : 'border-[#252a32] bg-[#101318] text-slate-400 hover:border-[#343a46] hover:text-white'
                       }`}
                     >
+                        <Star className={`h-3.5 w-3.5 ${selectedRating === rating ? 'fill-current' : ''}`} />
                       {rating}+
                     </button>
                   ))}
                 </div>
               </div>
 
+                <div className="rounded-2xl border border-[#252a32] bg-[#101318] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">{filteredMovies.length} movies</p>
+                      <p className="text-xs text-slate-500">match your filters</p>
+                    </div>
               <button
                 onClick={clearFilters}
-                className="w-full py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 rounded-xl transition"
+                      className="rounded-xl bg-[#1b1f26] px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-[#252a32] hover:text-white"
               >
-                Clear Filters
+                      Reset
               </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -309,81 +370,117 @@ export default function MoviesPage() {
 
       {/* Mobile Filters Modal */}
       {showFilters && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 lg:hidden">
-          <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
-              <h3 className="text-xl font-bold text-white">Filters</h3>
-              <button onClick={() => setShowFilters(false)} className="text-slate-400 hover:text-white">
-                <X className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-3 backdrop-blur-sm lg:hidden sm:items-center sm:justify-center sm:p-4">
+          <div className="w-full max-h-[88vh] max-w-md overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/60">
+            <div className="flex items-center justify-between border-b border-[#252a32] p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1b1f26] text-[#e50914]">
+                  <SlidersHorizontal className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Filters</h3>
+                  <p className="text-xs text-slate-500">{filteredMovies.length} movies available</p>
+                </div>
+              </div>
+              <button onClick={() => setShowFilters(false)} className="rounded-full p-2 text-slate-400 transition hover:bg-[#1b1f26] hover:text-white" aria-label="Close filters">
+                <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-4 space-y-6">
-              {/* Same filters as sidebar - simplified for mobile */}
+
+            <div className="max-h-[calc(88vh-150px)] space-y-6 overflow-y-auto p-5">
               <div>
-                <label className="block text-slate-400 text-sm mb-3">Sort By</label>
+                <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort By</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
-                  className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white"
+                  className="h-12 w-full rounded-xl border border-[#252a32] bg-[#101318] px-4 text-sm font-medium text-white outline-none focus:border-[#e50914]"
                 >
-                  <option value="release">Release Date</option>
-                  <option value="rating">Rating</option>
-                  <option value="title">Title A-Z</option>
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-400 text-sm mb-3">Genre</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Genre</label>
+                <div className="grid grid-cols-2 gap-2">
                   {genres.map(genre => (
                     <button
                       key={genre}
-                      onClick={() => setSelectedGenres(
+                      onClick={() => toggleGenre(genre)}
+                      className={`flex min-h-11 items-center justify-between gap-2 rounded-xl border px-3 text-left text-sm transition ${
                         selectedGenres.includes(genre)
-                          ? selectedGenres.filter(g => g !== genre)
-                          : [...selectedGenres, genre]
-                      )}
-                      className={`px-3 py-1.5 rounded-full text-sm transition ${
-                        selectedGenres.includes(genre)
-                          ? 'bg-orange-500 text-white'
-                          : 'bg-slate-700/50 text-slate-400'
+                          ? 'border-[#e50914] bg-[#e50914]/15 text-white'
+                          : 'border-[#252a32] bg-[#101318] text-slate-400'
                       }`}
                     >
-                      {genre}
+                      <span className="truncate">{genre}</span>
+                      <span className={`flex h-5 min-w-5 items-center justify-center rounded-full text-[11px] ${
+                        selectedGenres.includes(genre) ? 'bg-[#e50914] text-white' : 'bg-[#1b1f26] text-slate-500'
+                      }`}>
+                        {selectedGenres.includes(genre) ? <Check className="h-3 w-3" /> : genreCounts[genre]}
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 text-sm mb-3">Minimum Rating</label>
-                <div className="flex gap-2">
+                <label className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <Languages className="h-3.5 w-3.5" />
+                  Language
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {languages.map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => toggleLanguage(lang)}
+                      className={`rounded-full border px-3 py-2 text-sm transition ${
+                        selectedLanguages.includes(lang)
+                          ? 'border-[#e50914] bg-[#e50914] text-white'
+                          : 'border-[#252a32] bg-[#101318] text-slate-400'
+                      }`}
+                    >
+                      {lang}
+                      <span className="ml-2 text-xs opacity-60">{languageCounts[lang]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-3 block text-xs font-semibold uppercase tracking-wide text-slate-500">Minimum Rating</label>
+                <div className="grid grid-cols-3 gap-2">
                   {[7, 8, 9].map(rating => (
                     <button
                       key={rating}
                       onClick={() => setSelectedRating(selectedRating === rating ? 0 : rating)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition ${
-                        selectedRating === rating ? 'bg-orange-500 text-white' : 'bg-slate-700/50 text-slate-400'
+                      className={`flex min-h-12 items-center justify-center gap-1.5 rounded-xl border text-sm font-semibold transition ${
+                        selectedRating === rating
+                          ? 'border-[#e50914] bg-[#e50914] text-white'
+                          : 'border-[#252a32] bg-[#101318] text-slate-400'
                       }`}
                     >
+                      <Star className={`h-3.5 w-3.5 ${selectedRating === rating ? 'fill-current' : ''}`} />
                       {rating}+
                     </button>
                   ))}
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-slate-700/50 flex gap-3">
+
+            <div className="flex gap-3 border-t border-[#252a32] p-4">
               <button
                 onClick={clearFilters}
-                className="flex-1 py-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl transition"
+                className="flex-1 rounded-xl bg-[#1b1f26] py-3 font-semibold text-slate-300 transition hover:bg-[#252a32] hover:text-white"
               >
                 Clear
               </button>
               <button
                 onClick={() => setShowFilters(false)}
-                className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition"
+                className="flex-1 rounded-xl bg-[#e50914] py-3 font-semibold text-white transition hover:bg-[#f23b43]"
               >
-                Apply
+                Show {filteredMovies.length}
               </button>
             </div>
           </div>
