@@ -9,18 +9,18 @@ interface SeatSeed {
   price: number;
 }
 
-const sourceLinks = {
-  superman: 'https://www.rottentomatoes.com/m/superman_2025',
-  fantasticFour: 'https://movies.disney.com/the-fantastic-four-first-steps',
-  jurassicWorld: 'https://www.wikizero.org/wiki/en/Jurassic_World_Rebirth',
-  missionImpossible: 'https://www.imdb.com/title/tt9603208',
-  f1: 'https://www.f1themovie.com/synopsis/',
-  liloStitch: 'https://movies.disney.com/lilo-and-stitch-2025',
-  dragon: 'https://www.bbfc.co.uk/release/how-to-train-your-dragon-q29sbgvjdglvbjpwwc0xmdi1otc0',
-  wicked: 'https://www.universalpicturesathome.com/movies/wicked-for-good',
-  avengers: 'https://www.marvel.com/movies/avengers-doomsday',
-  spiderMan: 'https://www.sonypictures.com/movies/spidermanbrandnewday',
-  mandalorian: 'https://www.starwars.com/films/star-wars-the-mandalorian-and-grogu',
+const trailerLinks = {
+  superman: 'https://www.youtube.com/watch?v=Ox8ZLF6cGM0',
+  fantasticFour: 'https://www.youtube.com/watch?v=AzMo-FgRp64',
+  jurassicWorld: 'https://www.youtube.com/watch?v=jan5CFWs9ic',
+  missionImpossible: 'https://www.youtube.com/watch?v=kLzsazwBanE',
+  f1: 'https://www.youtube.com/watch?v=DrE9umGiPZQ',
+  liloStitch: 'https://www.youtube.com/watch?v=VWqJifMMgZE',
+  dragon: 'https://www.youtube.com/watch?v=22w7z_lT6YM',
+  wicked: 'https://www.youtube.com/watch?v=vt98AlBDI9Y',
+  avengers: 'https://www.youtube.com/watch?v=399Ez7WHK5s',
+  spiderMan: 'https://www.youtube.com/watch?v=8TZMtslA3UY',
+  mandalorian: 'https://www.youtube.com/watch?v=_pa1KLXuW0Y',
 };
 
 const posterLinks = {
@@ -294,7 +294,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.3,
         ageRating: 'PG-13',
         releaseDate: new Date('2025-07-11'),
-        trailerUrl: sourceLinks.superman,
+        trailerUrl: trailerLinks.superman,
         poster: posterLinks.superman,
         director: 'James Gunn',
         cast: ['David Corenswet', 'Rachel Brosnahan', 'Nicholas Hoult', 'Edi Gathegi', 'Nathan Fillion'],
@@ -310,7 +310,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.1,
         ageRating: 'PG-13',
         releaseDate: new Date('2025-07-25'),
-        trailerUrl: sourceLinks.fantasticFour,
+        trailerUrl: trailerLinks.fantasticFour,
         poster: posterLinks.fantasticFour,
         director: 'Matt Shakman',
         cast: ['Pedro Pascal', 'Vanessa Kirby', 'Joseph Quinn', 'Ebon Moss-Bachrach', 'Julia Garner'],
@@ -326,7 +326,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 7.7,
         ageRating: 'PG-13',
         releaseDate: new Date('2025-07-02'),
-        trailerUrl: sourceLinks.jurassicWorld,
+        trailerUrl: trailerLinks.jurassicWorld,
         poster: posterLinks.jurassicWorld,
         director: 'Gareth Edwards',
         cast: ['Scarlett Johansson', 'Mahershala Ali', 'Jonathan Bailey', 'Rupert Friend', 'Manuel Garcia-Rulfo'],
@@ -342,7 +342,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.0,
         ageRating: 'PG-13',
         releaseDate: new Date('2025-05-23'),
-        trailerUrl: sourceLinks.missionImpossible,
+        trailerUrl: trailerLinks.missionImpossible,
         poster: posterLinks.missionImpossible,
         director: 'Christopher McQuarrie',
         cast: ['Tom Cruise', 'Hayley Atwell', 'Ving Rhames', 'Simon Pegg', 'Esai Morales'],
@@ -358,7 +358,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.2,
         ageRating: 'PG-13',
         releaseDate: new Date('2025-06-27'),
-        trailerUrl: sourceLinks.f1,
+        trailerUrl: trailerLinks.f1,
         poster: posterLinks.f1,
         director: 'Joseph Kosinski',
         cast: ['Brad Pitt', 'Damson Idris', 'Kerry Condon', 'Tobias Menzies', 'Javier Bardem'],
@@ -374,7 +374,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 7.6,
         ageRating: 'PG',
         releaseDate: new Date('2025-05-23'),
-        trailerUrl: sourceLinks.liloStitch,
+        trailerUrl: trailerLinks.liloStitch,
         poster: posterLinks.liloStitch,
         director: 'Dean Fleischer Camp',
         cast: ['Maia Kealoha', 'Sydney Elizebeth Agudong', 'Billy Magnussen', 'Tia Carrere', 'Chris Sanders'],
@@ -390,7 +390,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.4,
         ageRating: 'PG',
         releaseDate: new Date('2025-06-13'),
-        trailerUrl: sourceLinks.dragon,
+        trailerUrl: trailerLinks.dragon,
         poster: posterLinks.dragon,
         director: 'Dean DeBlois',
         cast: ['Mason Thames', 'Nico Parker', 'Gerard Butler', 'Nick Frost', 'Julian Dennison'],
@@ -406,7 +406,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 8.1,
         ageRating: 'PG',
         releaseDate: new Date('2025-11-21'),
-        trailerUrl: sourceLinks.wicked,
+        trailerUrl: trailerLinks.wicked,
         poster: posterLinks.wicked,
         director: 'Jon M. Chu',
         cast: ['Cynthia Erivo', 'Ariana Grande-Butera', 'Jonathan Bailey', 'Michelle Yeoh', 'Jeff Goldblum'],
@@ -422,7 +422,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 0,
         ageRating: 'PG-13',
         releaseDate: new Date('2026-12-18'),
-        trailerUrl: sourceLinks.avengers,
+        trailerUrl: trailerLinks.avengers,
         poster: posterLinks.avengers,
         director: 'Joe Russo, Anthony Russo',
         cast: ['Robert Downey Jr.', 'Chris Hemsworth', 'Anthony Mackie', 'Vanessa Kirby', 'Pedro Pascal'],
@@ -438,7 +438,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 0,
         ageRating: 'PG-13',
         releaseDate: new Date('2026-07-31'),
-        trailerUrl: sourceLinks.spiderMan,
+        trailerUrl: trailerLinks.spiderMan,
         poster: posterLinks.spiderMan,
         director: 'Destin Daniel Cretton',
         cast: ['Tom Holland', 'Zendaya', 'Sadie Sink', 'Jacob Batalon', 'Mark Ruffalo'],
@@ -454,7 +454,7 @@ const seedDatabase = async (): Promise<void> => {
         rating: 0,
         ageRating: 'PG-13',
         releaseDate: new Date('2026-05-22'),
-        trailerUrl: sourceLinks.mandalorian,
+        trailerUrl: trailerLinks.mandalorian,
         poster: posterLinks.mandalorian,
         director: 'Jon Favreau',
         cast: ['Pedro Pascal', 'Sigourney Weaver', 'Grogu'],
@@ -463,7 +463,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
     ]);
 
-    console.log(`Seeded ${movieRecords.length} movies with poster/source links.`);
+    console.log(`Seeded ${movieRecords.length} movies with poster/trailer links.`);
 
     const cinemaRecords = await Promise.all([
       upsertBy(Cinema, { name: 'CamboCine Aeon Mall Phnom Penh' }, {

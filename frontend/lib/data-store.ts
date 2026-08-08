@@ -25,7 +25,7 @@ const initialMovies: Movie[] = [
     rating: 8.5,
     ageRating: 'PG-13',
     releaseDate: '2024-12-15',
-    trailerUrl: 'https://youtube.com/watch?v=example',
+    trailerUrl: 'https://www.youtube.com/watch?v=AzMo-FgRp64',
     poster: '/sci-fi-movie-poster.png',
     director: 'Sarah Chen',
     cast: ['Emma Watson', 'John Cho', 'Idris Elba'],

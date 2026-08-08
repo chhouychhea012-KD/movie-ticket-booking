@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { X, Play, Star, Clock, Calendar, MapPin, Heart, Share2, Ticket, ChevronRight, Film } from 'lucide-react'
+import { X, Play, Star, Clock, Calendar, Heart, Share2, Ticket, ChevronRight, Film } from 'lucide-react'
 import { Movie } from '@/types'
+import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
+import { getYouTubeThumbnailUrl } from '@/lib/video'
 
 interface MovieQuickViewProps {
   movie: Movie | null
@@ -13,7 +15,7 @@ interface MovieQuickViewProps {
 }
 
 export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickViewProps) {
-  const { user, addFavoriteMovie, removeFavoriteMovie, getShowtimes, cinemas, selectedCity } = useApp()
+  const { user, addFavoriteMovie, removeFavoriteMovie } = useApp()
   const [isFavorite, setIsFavorite] = useState(false)
   const [showTrailer, setShowTrailer] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -75,7 +77,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
       }
-    } catch (err) {
+    } catch {
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -88,20 +90,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
     }
   }
 
-  // Extract YouTube video ID
-  const getYouTubeId = (url: string): string | null => {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-    ]
-    for (const pattern of patterns) {
-      const match = url.match(pattern)
-      if (match && match[1]) return match[1]
-    }
-    return null
-  }
-
-  const videoId = movie.trailerUrl ? getYouTubeId(movie.trailerUrl) : null
-  const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null
+  const thumbnailUrl = getYouTubeThumbnailUrl(movie.trailerUrl)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -155,19 +144,6 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
             </div>
           )}
         </div>
-
-        {/* Trailer Embed */}
-        {showTrailer && movie.trailerUrl && (
-          <div className="relative aspect-video bg-black">
-            <iframe
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-              title={movie.title}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
 
         {/* Content Section */}
         <div className="p-6">
@@ -246,7 +222,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
                 className="flex items-center gap-2 px-4 py-2.5 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 rounded-xl transition-all"
               >
                 <Play className="w-5 h-5" />
-                {showTrailer ? 'Close Trailer' : 'Watch Trailer'}
+                Watch Trailer
               </button>
             )}
           </div>
@@ -279,6 +255,15 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
           animation: modalIn 0.3s ease-out;
         }
       `}</style>
+
+      {showTrailer && movie.trailerUrl && (
+        <TrailerModal
+          isOpen={showTrailer}
+          onClose={() => setShowTrailer(false)}
+          trailerUrl={movie.trailerUrl}
+          title={movie.title}
+        />
+      )}
     </div>
   )
 }
