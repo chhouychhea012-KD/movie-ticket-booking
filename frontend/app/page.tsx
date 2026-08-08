@@ -24,23 +24,23 @@ export default function Home() {
     <div className="cinema-page">
       <MovieSlideshow movies={nowShowing.slice(0, 5)} />
 
-      <section className="cinema-container relative z-20 -mt-14">
-        <div className="cinema-card grid gap-4 p-4 md:grid-cols-[1fr_240px_auto] md:items-center">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+      <section className="cinema-container relative z-20 -mt-12 sm:-mt-14">
+        <div className="cinema-card mx-auto grid max-w-6xl gap-3 p-3 shadow-[0_22px_70px_rgba(0,0,0,0.34)] sm:gap-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_300px_200px] lg:items-center lg:gap-5">
+          <div className="relative min-w-0">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by movie, genre, or director"
-              className="h-12 w-full rounded-xl border border-[#252a32] bg-[#0f1217] pl-12 pr-4 text-sm text-white outline-none transition focus:border-[#e50914]"
+              className="h-14 w-full rounded-2xl border border-[#252a32] bg-[#0f1217] pl-12 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20"
             />
             {results.length > 0 && (
-              <div className="absolute left-0 right-0 top-14 z-30 overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/40">
+              <div className="absolute left-0 right-0 top-[4.25rem] z-30 max-h-[360px] overflow-y-auto rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/40">
                 {results.map((movie) => (
                   <Link key={movie.id} href={`/movies/${movie.id}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-[#1b1f26]">
                     <img src={movie.poster} alt={movie.title} className="h-14 w-10 rounded-md object-cover" />
-                    <div>
-                      <p className="font-medium text-white">{movie.title}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">{movie.title}</p>
                       <p className="text-xs text-slate-500">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).slice(0, 2).join(' / ')}</p>
                     </div>
                   </Link>
@@ -52,16 +52,16 @@ export default function Home() {
           <select
             value={selectedCity}
             onChange={(event) => setSelectedCity(event.target.value)}
-            className="h-12 rounded-xl border border-[#252a32] bg-[#0f1217] px-4 text-sm text-white outline-none transition focus:border-[#e50914]"
+            className="h-14 w-full rounded-2xl border border-[#252a32] bg-[#0f1217] px-4 text-sm font-medium text-white outline-none transition focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20"
           >
             {cities.map((city) => (
               <option key={city.id} value={city.name}>{city.name}</option>
             ))}
           </select>
 
-          <Link href="/movies" className="cinema-button-primary h-12">
+          <Link href="/movies" className="cinema-button-primary h-14 w-full rounded-2xl px-5 py-0">
             <Ticket className="h-4 w-4" />
-            Browse Movies
+            <span className="whitespace-nowrap">Browse Movies</span>
           </Link>
         </div>
       </section>
@@ -74,7 +74,7 @@ export default function Home() {
           </div>
           <Link href="/movies" className="text-sm font-semibold text-[#f23b43] hover:text-white">View all</Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
           {nowShowing.slice(0, 10).map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}
@@ -97,7 +97,7 @@ export default function Home() {
               <p className="cinema-muted mt-2">Top rated choices for your next cinema night.</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
             {recommended.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
@@ -109,7 +109,7 @@ export default function Home() {
                 <h2 className="cinema-section-title">Coming Soon</h2>
                 <p className="cinema-muted mt-2">Upcoming releases to keep on your watchlist.</p>
               </div>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
                 {comingSoon.slice(0, 4).map((movie) => (
                   <MovieCard key={movie.id} movie={movie} />
                 ))}

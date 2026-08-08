@@ -111,8 +111,8 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
           )}
         </div>
 
-        <div className="space-y-3 p-4">
-          <div className="min-h-[3.4rem]">
+        <div className="space-y-3.5 p-3.5 sm:p-4">
+          <div className="min-h-[3.6rem]">
             <h3 className="line-clamp-2 text-base font-semibold leading-snug text-white">{movie.title}</h3>
             <p className="mt-1 line-clamp-1 text-xs text-slate-500">{genres.slice(0, 2).join(' / ')}</p>
           </div>
