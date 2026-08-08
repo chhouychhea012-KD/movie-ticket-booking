@@ -1,27 +1,66 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import { AuthRequest } from '../middleware/auth';
 import Booking from '../models/Booking';
 import Showtime from '../models/Showtime';
 import Ticket from '../models/Ticket';
 import Coupon from '../models/Coupon';
+import Movie from '../models/Movie';
+import Cinema from '../models/Cinema';
+import sequelize from '../config/database';
+
+const activeBookingStatuses = ['pending', 'confirmed', 'completed', 'used'];
+
+const seatMultiplier = (seatType: string): number => {
+  switch (seatType) {
+    case 'vip':
+      return 1.5;
+    case 'couple':
+      return 1.3;
+    default:
+      return 1;
+  }
+};
 
 export const createBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { 
-      movieId, movieTitle, cinemaId, cinemaName, screenId, 
-      showtimeId, showtime, seats, ticketPrice, totalPrice, 
-      couponCode, paymentMethod, userId: bodyUserId 
+      movieId, cinemaId,
+      showtimeId, seats,
+      couponCode, paymentMethod
     } = req.body;
 
-    // Use userId from auth middleware or from request body (for demo/offline mode)
-    const userId = req.userId || bodyUserId || 'demo-user-id';
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Please log in before creating a booking',
+      });
+      return;
+    }
 
-    // Validate showtime
+    const userId = req.userId;
+
     const showtimeData = await Showtime.findByPk(showtimeId);
     if (!showtimeData) {
       res.status(404).json({
         success: false,
         message: 'Showtime not found',
+      });
+      return;
+    }
+
+    if (showtimeData.movieId !== movieId || showtimeData.cinemaId !== cinemaId) {
+      res.status(400).json({
+        success: false,
+        message: 'Showtime does not match the selected movie or cinema',
+      });
+      return;
+    }
+
+    if (showtimeData.status !== 'selling') {
+      res.status(400).json({
+        success: false,
+        message: 'Showtime is not available for booking',
       });
       return;
     }
@@ -34,67 +73,126 @@ export const createBooking = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Apply coupon if provided
+    const requestedSeatNumbers = seats.map((seat: any) => String(seat.seatNumber).trim().toUpperCase());
+    const uniqueSeatNumbers = new Set(requestedSeatNumbers);
+    if (uniqueSeatNumbers.size !== requestedSeatNumbers.length) {
+      res.status(400).json({
+        success: false,
+        message: 'Duplicate seats are not allowed in one booking',
+      });
+      return;
+    }
+
+    const existingBookings = await Booking.findAll({
+      where: {
+        showtimeId,
+        status: { [Op.in]: activeBookingStatuses },
+      },
+      attributes: ['seats'],
+    });
+
+    const bookedSeats = new Set<string>();
+    existingBookings.forEach((booking) => {
+      (booking.seats || []).forEach((seat: any) => bookedSeats.add(String(seat.seatNumber).trim().toUpperCase()));
+    });
+
+    const unavailableSeat = requestedSeatNumbers.find((seatNumber: string) => bookedSeats.has(seatNumber));
+    if (unavailableSeat) {
+      res.status(409).json({
+        success: false,
+        message: `Seat ${unavailableSeat} is already booked`,
+      });
+      return;
+    }
+
+    const movie = await Movie.findByPk(movieId);
+    const cinema = await Cinema.findByPk(cinemaId);
+    if (!movie || !cinema) {
+      res.status(404).json({
+        success: false,
+        message: !movie ? 'Movie not found' : 'Cinema not found',
+      });
+      return;
+    }
+
+    const basePrice = Number(showtimeData.price);
+    const normalizedSeats = seats.map((seat: any) => {
+      const seatType = seat.seatType || 'regular';
+      return {
+        seatId: String(seat.seatId).trim(),
+        seatNumber: String(seat.seatNumber).trim().toUpperCase(),
+        seatType,
+        price: Number((basePrice * seatMultiplier(seatType)).toFixed(2)),
+      };
+    });
+
+    const subtotal = Number(normalizedSeats.reduce((sum: number, seat: any) => sum + seat.price, 0).toFixed(2));
+
     let discount = 0;
     if (couponCode) {
       const coupon = await Coupon.findOne({ where: { code: couponCode } });
       if (coupon) {
-        const validation = coupon.isValid(totalPrice);
+        const validation = coupon.isValid(subtotal);
         if (validation.valid) {
-          discount = validation.discount;
-          // Increment coupon usage
+          discount = Math.min(Number(validation.discount), subtotal);
           await coupon.update({ usedCount: coupon.usedCount + 1 });
         }
       }
     }
 
-    // Generate ticket code
+    const finalTotal = Number(Math.max(subtotal - discount, 0).toFixed(2));
     const ticketCode = `TKT${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    // Create booking
-    const booking = await Booking.create({
-      userId,
-      movieId,
-      movieTitle,
-      cinemaId,
-      cinemaName,
-      screenId,
-      showtimeId,
-      showtime,
-      seats,
-      ticketPrice,
-      totalPrice: totalPrice - discount,
-      discount: discount > 0 ? discount : undefined,
-      couponCode,
-      paymentMethod,
-      paymentStatus: 'completed',
-      status: 'confirmed',
-      ticketCode,
-      bookingDate: new Date(),
+    const booking = await sequelize.transaction(async (transaction) => {
+      const createdBooking = await Booking.create({
+        userId,
+        movieId,
+        movieTitle: movie.title,
+        cinemaId,
+        cinemaName: cinema.name,
+        screenId: showtimeData.screenId,
+        showtimeId,
+        showtime: `${showtimeData.date} ${showtimeData.startTime}`,
+        seats: normalizedSeats,
+        ticketPrice: basePrice,
+        totalPrice: finalTotal,
+        discount: discount > 0 ? discount : undefined,
+        couponCode: couponCode || undefined,
+        paymentMethod,
+        paymentStatus: 'completed',
+        status: 'confirmed',
+        ticketCode,
+        bookingDate: new Date(),
+      }, { transaction });
+
+      await showtimeData.update({
+        availableSeats: Math.max(showtimeData.availableSeats - normalizedSeats.length, 0),
+        status: showtimeData.availableSeats - normalizedSeats.length <= 0 ? 'sold_out' : showtimeData.status,
+      }, { transaction });
+
+      for (const seat of normalizedSeats) {
+        await Ticket.create({
+          bookingId: createdBooking.id,
+          seatId: seat.seatId,
+          seatNumber: seat.seatNumber,
+          seatType: seat.seatType,
+          price: seat.price,
+          status: 'valid',
+          qrCode: `${ticketCode}-${seat.seatId}`,
+        }, { transaction });
+      }
+
+      return createdBooking;
     });
 
-    // Update available seats
-    await showtimeData.update({
-      availableSeats: showtimeData.availableSeats - seats.length,
+    const bookingWithTickets = await Booking.findByPk(booking.id, {
+      include: ['tickets'],
     });
-
-    // Create tickets
-    for (const seat of seats) {
-      await Ticket.create({
-        bookingId: booking.id,
-        seatId: seat.seatId,
-        seatNumber: seat.seatNumber,
-        seatType: seat.seatType,
-        price: seat.price,
-        status: 'valid',
-        qrCode: `${ticketCode}-${seat.seatId}`,
-      });
-    }
 
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
-      data: booking,
+      data: bookingWithTickets || booking,
     });
   } catch (error: any) {
     console.error('Create booking error:', error);
@@ -193,16 +291,23 @@ export const cancelBooking = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    // Update booking status
-    await booking.update({ status: 'cancelled', paymentStatus: 'refunded' });
+    await sequelize.transaction(async (transaction) => {
+      await booking.update({ status: 'cancelled', paymentStatus: 'refunded' }, { transaction });
 
-    // Restore available seats
-    const showtime = await Showtime.findByPk(booking.showtimeId);
-    if (showtime) {
-      await showtime.update({
-        availableSeats: showtime.availableSeats + booking.seats.length,
-      });
-    }
+      await Ticket.update(
+        { status: 'cancelled' },
+        { where: { bookingId: booking.id }, transaction }
+      );
+
+      const showtime = await Showtime.findByPk(booking.showtimeId, { transaction });
+      if (showtime) {
+        const restoredSeats = Math.min(showtime.availableSeats + booking.seats.length, showtime.totalSeats);
+        await showtime.update({
+          availableSeats: restoredSeats,
+          status: showtime.status === 'sold_out' && restoredSeats > 0 ? 'selling' : showtime.status,
+        }, { transaction });
+      }
+    });
 
     res.json({
       success: true,
@@ -231,6 +336,7 @@ export const getAllBookings = async (req: Request, res: Response): Promise<void>
       where,
       limit: Number(limit),
       offset,
+      include: ['tickets', 'user'],
       order: [['bookingDate', 'DESC']],
     });
 
@@ -286,7 +392,7 @@ export const getBookingByTicketCode = async (req: Request, res: Response): Promi
 export const updateBookingStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, paymentStatus } = req.body;
 
     const booking = await Booking.findByPk(id);
     if (!booking) {
@@ -297,7 +403,36 @@ export const updateBookingStatus = async (req: Request, res: Response): Promise<
       return;
     }
 
-    await booking.update({ status });
+    await sequelize.transaction(async (transaction) => {
+      const updates: any = { status };
+      if (paymentStatus) updates.paymentStatus = paymentStatus;
+      if (status === 'cancelled') updates.paymentStatus = 'refunded';
+
+      await booking.update(updates, { transaction });
+
+      if (status === 'cancelled') {
+        await Ticket.update(
+          { status: 'cancelled' },
+          { where: { bookingId: booking.id }, transaction }
+        );
+
+        const showtime = await Showtime.findByPk(booking.showtimeId, { transaction });
+        if (showtime) {
+          const restoredSeats = Math.min(showtime.availableSeats + booking.seats.length, showtime.totalSeats);
+          await showtime.update({
+            availableSeats: restoredSeats,
+            status: showtime.status === 'sold_out' && restoredSeats > 0 ? 'selling' : showtime.status,
+          }, { transaction });
+        }
+      }
+
+      if (status === 'used' || status === 'completed') {
+        await Ticket.update(
+          { status: 'used', validatedAt: new Date() },
+          { where: { bookingId: booking.id }, transaction }
+        );
+      }
+    });
 
     res.json({
       success: true,

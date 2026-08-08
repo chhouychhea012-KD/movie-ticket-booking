@@ -1,21 +1,14 @@
 import express from 'express';
 import * as paymentController from '../controllers/payment.controller';
-// import { authenticate, authorizeAdmin } from '../middleware/auth';
+import { authenticate, authorizeStaff } from '../middleware/auth';
+import { validateParams, idParamSchema } from '../validators/common.validator';
 
 const router = express.Router();
 
-// Public routes (for development)
-router.get('/', paymentController.getAllPayments);
-router.get('/stats', paymentController.getPaymentStats);
-router.get('/:id', paymentController.getPaymentById);
-router.put('/:id/status', paymentController.updatePaymentStatus);
-
-/*
-// Protected routes (for production)
-router.get('/', authenticate, authorizeAdmin, paymentController.getAllPayments);
-router.get('/stats', authenticate, authorizeAdmin, paymentController.getPaymentStats);
-router.get('/:id', authenticate, authorizeAdmin, paymentController.getPaymentById);
-router.put('/:id/status', authenticate, authorizeAdmin, paymentController.updatePaymentStatus);
-*/
+// Admin routes
+router.get('/', authenticate, authorizeStaff, paymentController.getAllPayments);
+router.get('/stats', authenticate, authorizeStaff, paymentController.getPaymentStats);
+router.get('/:id', authenticate, authorizeStaff, validateParams(idParamSchema), paymentController.getPaymentById);
+router.put('/:id/status', authenticate, authorizeStaff, validateParams(idParamSchema), paymentController.updatePaymentStatus);
 
 export default router;

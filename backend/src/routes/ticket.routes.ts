@@ -1,18 +1,14 @@
 import express from 'express';
 import * as ticketController from '../controllers/ticket.controller';
-// import { authenticate, authorizeAdmin } from '../middleware/auth';
+import { authenticate, authorizeStaff } from '../middleware/auth';
 
 const router = express.Router();
 
-// Public routes (for development)
-router.post('/validate', ticketController.validateTicket);
-router.get('/recent', ticketController.getRecentValidations);
-router.get('/stats', ticketController.getValidationStats);
+// Staff/admin ticket scanner route
+router.post('/validate', authenticate, authorizeStaff, ticketController.validateTicket);
 
-/*
-// Protected routes (for production)
-router.get('/recent', authenticate, authorizeAdmin, ticketController.getRecentValidations);
-router.get('/stats', authenticate, authorizeAdmin, ticketController.getValidationStats);
-*/
+// Admin routes
+router.get('/recent', authenticate, authorizeStaff, ticketController.getRecentValidations);
+router.get('/stats', authenticate, authorizeStaff, ticketController.getValidationStats);
 
 export default router;

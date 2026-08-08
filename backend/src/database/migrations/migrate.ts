@@ -1,37 +1,36 @@
 import sequelize from '../../config/database';
-import User from '../../models/User';
-import Movie from '../../models/Movie';
-import Cinema from '../../models/Cinema';
-import Showtime from '../../models/Showtime';
-import Booking from '../../models/Booking';
-import Ticket from '../../models/Ticket';
-import Coupon from '../../models/Coupon';
-import Notification from '../../models/Notification';
+import '../../models';
 
 export const runMigrations = async (): Promise<void> => {
   try {
-    console.log('🔄 Running database migrations...');
-    
-    // Create all tables
-    await sequelize.sync({ force: true });
-    console.log('✅ All tables created successfully');
-    
-    console.log('📊 Database migrations completed');
+    console.log('Running database migrations...');
+
+    const force = process.env.DB_SYNC_FORCE === 'true';
+    const alter = process.env.DB_SYNC_ALTER === 'true';
+
+    if (force) {
+      console.warn('DB_SYNC_FORCE=true: this will drop and recreate all tables.');
+    }
+
+    // Default behavior creates missing tables without deleting production data.
+    await sequelize.sync({ force, alter });
+
+    console.log('Database schema synchronized successfully');
+    console.log('Database migrations completed');
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed:', error);
     throw error;
   }
 };
 
-// Run migrations if called directly
 if (require.main === module) {
   runMigrations()
     .then(() => {
-      console.log('✅ Migration completed');
+      console.log('Migration completed');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('❌ Migration failed:', error);
+      console.error('Migration failed:', error);
       process.exit(1);
     });
 }

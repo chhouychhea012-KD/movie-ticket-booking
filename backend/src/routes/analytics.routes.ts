@@ -14,6 +14,11 @@ router.get('/dashboard', authenticate, authorizeAdmin, analyticsController.getDa
 // @access  Private (Admin)
 router.get('/revenue', authenticate, authorizeAdmin, analyticsController.getRevenueReport);
 
+// @route   GET /api/v1/analytics/bookings
+// @desc    Get booking analytics
+// @access  Private (Admin)
+router.get('/bookings', authenticate, authorizeAdmin, analyticsController.getBookingAnalytics);
+
 // @route   GET /api/v1/analytics/movies/:movieId
 // @desc    Get movie analytics
 // @access  Private (Admin)

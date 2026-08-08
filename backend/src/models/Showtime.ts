@@ -61,7 +61,7 @@ Showtime.init(
       },
     },
     screenId: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING(100),
       allowNull: false,
     },
     date: {

@@ -1,7 +1,9 @@
 import express from 'express';
 import * as authController from '../controllers/auth.controller';
-import { registerSchema, loginSchema, updateProfileSchema, validate } from '../validators/auth.validator';
+import { registerSchema, loginSchema, updateProfileSchema, changePasswordSchema, validate } from '../validators/auth.validator';
 import { authenticate } from '../middleware/auth';
+import { validateBody, validateParams } from '../validators/common.validator';
+import Joi from 'joi';
 
 const router = express.Router();
 
@@ -28,17 +30,17 @@ router.put('/profile', authenticate, validate(updateProfileSchema), authControll
 // @route   PUT /api/v1/auth/change-password
 // @desc    Change password
 // @access  Private
-router.put('/change-password', authenticate, authController.changePassword);
+router.put('/change-password', authenticate, validate(changePasswordSchema), authController.changePassword);
 
 // @route   POST /api/v1/auth/favorites
 // @desc    Add movie to favorites
 // @access  Private
-router.post('/favorites', authenticate, authController.addFavoriteMovie);
+router.post('/favorites', authenticate, validateBody(Joi.object({ movieId: Joi.string().uuid().required() })), authController.addFavoriteMovie);
 
 // @route   DELETE /api/v1/auth/favorites/:movieId
 // @desc    Remove movie from favorites
 // @access  Private
-router.delete('/favorites/:movieId', authenticate, authController.removeFavoriteMovie);
+router.delete('/favorites/:movieId', authenticate, validateParams(Joi.object({ movieId: Joi.string().uuid().required() })), authController.removeFavoriteMovie);
 
 // @route   POST /api/v1/auth/logout
 // @desc    Logout user

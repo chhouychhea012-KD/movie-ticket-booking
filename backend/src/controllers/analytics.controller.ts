@@ -199,3 +199,48 @@ export const getMovieAnalytics = async (req: Request, res: Response): Promise<vo
     });
   }
 };
+
+export const getBookingAnalytics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const where: any = {};
+
+    if (startDate && endDate) {
+      where.bookingDate = {
+        [Op.gte]: startDate,
+        [Op.lte]: endDate,
+      };
+    }
+
+    const totalBookings = await Booking.count({ where });
+    const confirmedBookings = await Booking.count({ where: { ...where, status: 'confirmed' } });
+    const cancelledBookings = await Booking.count({ where: { ...where, status: 'cancelled' } });
+    const completedPayments = await Booking.count({ where: { ...where, paymentStatus: 'completed' } });
+    const totalRevenue = await Booking.sum('totalPrice', {
+      where: {
+        ...where,
+        paymentStatus: 'completed',
+        status: { [Op.ne]: 'cancelled' },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalBookings,
+        confirmedBookings,
+        cancelledBookings,
+        completedPayments,
+        totalRevenue: totalRevenue || 0,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get booking analytics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get booking analytics',
+      error: error.message,
+    });
+  }
+};

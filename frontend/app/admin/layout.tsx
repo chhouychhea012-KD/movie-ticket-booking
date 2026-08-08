@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { user, logout } = useApp()
+  const { user } = useApp()
   const [isLoading, setIsLoading] = useState(true)
 
   // Force re-render when user changes
@@ -24,8 +24,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const checkAuth = () => {
     // Always read fresh from localStorage to ensure we have the latest
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
-    if (!storedUser && !user) {
+    if ((!storedUser && !user) || !storedToken) {
       // Not logged in, redirect to login
       router.push(`/auth/login?redirect=${pathname}`)
       return

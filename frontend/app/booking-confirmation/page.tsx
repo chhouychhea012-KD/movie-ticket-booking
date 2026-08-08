@@ -1,116 +1,169 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Booking } from '@/types/booking'
+import { useSearchParams } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
+import { CalendarClock, CheckCircle2, Download, MapPin, Ticket, Wallet } from 'lucide-react'
+
+interface StoredBooking {
+  id: string
+  movieTitle: string
+  moviePoster?: string
+  cinemaName?: string
+  hall?: string
+  showtime: string
+  seats: string[]
+  ticketPrice: number
+  totalPrice: number
+  bookingDate: string
+  status: 'confirmed' | 'cancelled' | 'used' | 'expired'
+}
 
 function BookingConfirmationPageContent() {
   const searchParams = useSearchParams()
   const bookingId = searchParams.get('bookingId')
-  const [booking, setBooking] = useState<Booking | null>(null)
+  const [booking, setBooking] = useState<StoredBooking | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const storedBookings = localStorage.getItem('bookings')
     if (storedBookings && bookingId) {
-      const bookings: Booking[] = JSON.parse(storedBookings)
-      const found = bookings.find(b => b.id === bookingId)
-      setBooking(found || null)
+      const bookings: StoredBooking[] = JSON.parse(storedBookings)
+      setBooking(bookings.find((item) => item.id === bookingId) || null)
     }
     setLoading(false)
   }, [bookingId])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      <div className="cinema-page flex items-center justify-center pt-20">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#252a32] border-t-[#e50914]" />
       </div>
     )
   }
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white text-xl mb-4">Booking not found</p>
-          <Link href="/" className="text-orange-500 hover:text-orange-600">
-            Go back to home
-          </Link>
+      <div className="cinema-page flex items-center justify-center pt-20">
+        <div className="cinema-card max-w-md p-8 text-center">
+          <Ticket className="mx-auto h-10 w-10 text-slate-600" />
+          <p className="mt-4 text-xl font-semibold text-white">Booking not found</p>
+          <p className="cinema-muted mt-2">The ticket may not have been saved in this browser.</p>
+          <Link href="/" className="cinema-button-primary mt-6 w-full">Back Home</Link>
         </div>
       </div>
     )
   }
 
+  const qrValue = JSON.stringify({
+    bookingId: booking.id,
+    movie: booking.movieTitle,
+    cinema: booking.cinemaName || 'Cinema',
+    showtime: booking.showtime,
+    seats: booking.seats,
+  })
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 py-12">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="bg-slate-800 rounded-lg p-12 border-2 border-green-500 text-center">
-          <div className="mb-6">
-            <svg className="w-16 h-16 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
+    <div className="cinema-page pt-20">
+      <div className="cinema-container max-w-5xl pb-16">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#122016] text-emerald-400">
+            <CheckCircle2 className="h-8 w-8" />
           </div>
+          <h1 className="text-3xl font-semibold text-white md:text-4xl">Booking Confirmed</h1>
+          <p className="cinema-muted mt-2">Your digital ticket is ready.</p>
+        </div>
 
-          <h1 className="text-4xl font-bold text-white mb-4">Booking Confirmed</h1>
-          <p className="text-slate-400 mb-8">Your movie ticket has been successfully booked!</p>
-
-          <div className="bg-slate-700 rounded p-6 mb-8 text-left">
-            <div className="mb-4">
-              <p className="text-slate-400 text-sm">Movie</p>
-              <p className="text-white text-lg font-semibold">{booking.movieTitle}</p>
+        <div className="cinema-card overflow-hidden">
+          <div className="grid lg:grid-cols-[280px_1fr]">
+            <div className="min-h-[380px] bg-[#101318]">
+              {booking.moviePoster ? (
+                <img src={booking.moviePoster} alt={booking.movieTitle} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full min-h-[380px] items-center justify-center text-slate-600">
+                  <Ticket className="h-16 w-16" />
+                </div>
+              )}
             </div>
 
-            <div className="mb-4">
-              <p className="text-slate-400 text-sm">Showtime</p>
-              <p className="text-white text-lg font-semibold">{booking.showtime}</p>
-            </div>
+            <div className="p-6 sm:p-8">
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <span className="cinema-chip border-emerald-500/40 text-emerald-300">Paid</span>
+                  <h2 className="mt-3 text-2xl font-semibold text-white md:text-3xl">{booking.movieTitle}</h2>
+                  <p className="mt-2 flex items-center gap-2 text-sm text-slate-400">
+                    <MapPin className="h-4 w-4 text-slate-500" />
+                    {booking.cinemaName || 'Cinema'}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white p-3">
+                  <QRCodeSVG value={qrValue} size={118} level="H" />
+                </div>
+              </div>
 
-            <div className="mb-4">
-              <p className="text-slate-400 text-sm">Seats</p>
-              <p className="text-white text-lg font-semibold">{booking.seats.join(', ')}</p>
-            </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TicketInfo label="Hall" value={booking.hall || 'Hall 1'} />
+                <TicketInfo label="Date & Time" value={booking.showtime} icon={<CalendarClock className="h-4 w-4" />} />
+                <TicketInfo label="Seats" value={booking.seats.join(', ')} />
+                <TicketInfo label="Booking ID" value={booking.id} mono />
+              </div>
 
-            <div className="border-t border-slate-600 pt-4">
-              <p className="text-slate-400 text-sm">Total Amount Paid</p>
-              <p className="text-orange-500 text-2xl font-bold">${booking.totalPrice.toFixed(2)}</p>
-            </div>
+              <div className="my-6 border-t border-dashed border-[#3a414d]" />
 
-            <div className="mt-4 p-4 bg-slate-800 rounded text-center">
-              <p className="text-slate-400 text-sm">Booking ID</p>
-              <p className="text-white font-mono text-sm">{booking.id}</p>
-            </div>
-          </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-slate-500">Total payment</p>
+                  <p className="text-3xl font-semibold text-[#f5c451]">${booking.totalPrice.toFixed(2)}</p>
+                </div>
 
-          <div className="flex gap-4">
-            <Link
-              href="/bookings"
-              className="flex-1 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold transition"
-            >
-              View All Bookings
-            </Link>
-            <Link
-              href="/"
-              className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-semibold transition"
-            >
-              Book More
-            </Link>
+                <div className="flex flex-wrap gap-3">
+                  <button onClick={() => window.print()} className="cinema-button-secondary">
+                    <Download className="h-4 w-4" />
+                    Download
+                  </button>
+                  <button className="cinema-button-secondary">
+                    <Wallet className="h-4 w-4" />
+                    Wallet
+                  </button>
+                  <Link href="/bookings" className="cinema-button-primary">View Booking</Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 bg-slate-800 rounded-lg p-6 border border-slate-700">
-          <h2 className="text-xl font-bold text-white mb-4">Important Information</h2>
-          <ul className="space-y-2 text-slate-300 text-sm">
-            <li>✓ Please arrive 15 minutes before the showtime</li>
-            <li>✓ Bring a valid ID for verification</li>
-            <li>✓ Your booking confirmation has been sent to your email</li>
-            <li>✓ Cancellations must be made at least 2 hours before showtime</li>
-          </ul>
+        <div className="mt-6 grid gap-3 text-sm text-slate-400 md:grid-cols-3">
+          <Info text="Arrive 15 minutes before showtime." />
+          <Info text="Bring a valid ID if required." />
+          <Info text="Show the QR code at the cinema gate." />
         </div>
       </div>
     </div>
   )
 }
+
+function TicketInfo({ label, value, icon, mono }: { label: string; value: string; icon?: ReactNode; mono?: boolean }) {
+  return (
+    <div className="rounded-2xl border border-[#252a32] bg-[#101318] p-4">
+      <p className="flex items-center gap-2 text-sm text-slate-500">
+        {icon}
+        {label}
+      </p>
+      <p className={`mt-2 break-words font-semibold text-white ${mono ? 'font-mono text-sm' : ''}`}>{value}</p>
+    </div>
+  )
+}
+
+function Info({ text }: { text: string }) {
+  return (
+    <div className="cinema-card-soft p-4">
+      {text}
+    </div>
+  )
+}
+
 export default function BookingConfirmationPage() {
   return (
     <Suspense fallback={null}>

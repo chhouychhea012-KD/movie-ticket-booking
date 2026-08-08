@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Cinema from '../models/Cinema';
 import { Op } from 'sequelize';
+import Booking from '../models/Booking';
+import Showtime from '../models/Showtime';
 
 export const getCinemas = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -125,6 +127,19 @@ export const deleteCinema = async (req: Request, res: Response): Promise<void> =
       res.status(404).json({
         success: false,
         message: 'Cinema not found',
+      });
+      return;
+    }
+
+    const relatedBookings = await Booking.count({ where: { cinemaId: id } });
+    const relatedShowtimes = await Showtime.count({ where: { cinemaId: id } });
+
+    if (relatedBookings > 0 || relatedShowtimes > 0) {
+      await cinema.update({ isActive: false });
+      res.json({
+        success: true,
+        message: 'Cinema has related records, so it was deactivated instead of deleted',
+        data: cinema,
       });
       return;
     }

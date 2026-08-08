@@ -1,12 +1,28 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
 import { Op } from 'sequelize';
 import User from '../models/User';
-import bcrypt from 'bcryptjs';
+import { AuthRequest } from '../middleware/auth';
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+const protectedRoles = ['admin', 'owner'];
+
+const canManageRole = (actorRole: string | undefined, targetRole: string): boolean => {
+  if (actorRole === 'owner') return true;
+  if (actorRole === 'admin') return ['user', 'staff'].includes(targetRole);
+  return false;
+};
+
+export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { email, password, firstName, lastName, phone, role } = req.body;
+    const requestedRole = role || 'user';
+
+    if (!canManageRole(req.userRole, requestedRole)) {
+      res.status(403).json({
+        success: false,
+        message: 'You do not have permission to create a user with this role',
+      });
+      return;
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
@@ -18,17 +34,15 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
+    // Password hashing is handled by the User model hook.
     const user = await User.create({
       email,
-      password: hashedPassword,
+      password,
       firstName,
       lastName,
       phone,
-      role: role || 'user',
+      role: requestedRole,
+      isActive: req.body.isActive ?? true,
     });
 
     res.status(201).json({
@@ -129,7 +143,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
+export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id);
@@ -142,8 +156,34 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Update allowed fields
-    const allowedFields = ['firstName', 'lastName', 'phone', 'role', 'isActive', 'notifications'];
+    if (req.body.role && !canManageRole(req.userRole, req.body.role)) {
+      res.status(403).json({
+        success: false,
+        message: 'You do not have permission to assign this role',
+      });
+      return;
+    }
+
+    if (protectedRoles.includes(user.role) && req.userRole !== 'owner') {
+      res.status(403).json({
+        success: false,
+        message: 'Only the owner can update admin or owner accounts',
+      });
+      return;
+    }
+
+    if (user.role === 'owner' && req.body.role && req.body.role !== 'owner') {
+      const ownerCount = await User.count({ where: { role: 'owner', isActive: true } });
+      if (ownerCount <= 1) {
+        res.status(400).json({
+          success: false,
+          message: 'Cannot demote the last active owner',
+        });
+        return;
+      }
+    }
+
+    const allowedFields = ['firstName', 'lastName', 'phone', 'role', 'isActive', 'emailVerified', 'notifications'];
     const updates: any = {};
     
     for (const field of allowedFields) {
@@ -183,7 +223,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const user = await User.findByPk(id);
@@ -196,11 +236,18 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Don't allow deleting admin users
-    if (user.role === 'admin' || user.role === 'owner') {
+    if (req.userId === user.id) {
+      res.status(400).json({
+        success: false,
+        message: 'You cannot delete your own account',
+      });
+      return;
+    }
+
+    if (user.role === 'owner') {
       res.status(403).json({
         success: false,
-        message: 'Cannot delete admin users',
+        message: 'Owner accounts cannot be deleted',
       });
       return;
     }

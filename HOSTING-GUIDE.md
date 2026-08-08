@@ -1,107 +1,27 @@
-# Movie Ticket Booking - Deployment Guide
+# Movie Ticket Booking Ubuntu/Nginx Hosting Guide
 
-## Server Information
-- **IP Address**: 52.62.180.96
-- **Domain**: movie-ticket-booking.online
-- **Clone Location**: /var/www/html
+Domain: movie-ticket-booking.online
+Server IP: 44.200.223.38
+App path: /var/www/html/movie-ticket-booking
 
----
-
-## Step 1: Connect to Server
+## 1. Pull The Latest Release
 
 ```bash
-ssh root@52.62.180.96
+cd /var/www/html/movie-ticket-booking
+git fetch origin main
+git reset --hard origin/main
+git log -1 --oneline
 ```
 
----
-
-## Step 2: Update System & Install Dependencies
+## 2. Backend Environment
 
 ```bash
-apt update && apt upgrade -y
-```
-
-### Install Node.js 18.x
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
-apt install -y nodejs
-node -v
-npm -v
-```
-
-### Install MySQL Server
-
-```bash
-apt install -y mysql-server
-systemctl enable mysql
-systemctl start mysql
-mysql_secure_installation
-```
-
----
-
-## Step 3: Configure MySQL Database
-
-```bash
-mysql -u root -p
-```
-
-In MySQL shell:
-
-```sql
-CREATE DATABASE cinemahub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'cinemahub'@'localhost' IDENTIFIED BY 'YourStrongPassword123!';
-GRANT ALL PRIVILEGES ON cinemahub.* TO 'cinemahub'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
-```
-
----
-
-## Step 4: Clone Project
-
-```bash
-cd /var/www/html
-rm -rf html
-git clone https://github.com/chhouychhea012-KD/movie-ticket-booking.git .
-```
-
----
-
-## Step 5: Install Frontend Dependencies & Build
-
-```bash
-cd /var/www/html/frontend
-npm install
-npm run build
-```
-
----
-
-## Step 6: Install Backend Dependencies
-
-```bash
-cd /var/www/html/backend
-npm install
-```
-
----
-
-## Step 7: Configure Backend Environment
-
-```bash
-cd /var/www/html/backend
+cd /var/www/html/movie-ticket-booking/backend
 cp .env.example .env
-```
-
-Edit `.env` file:
-
-```bash
 nano .env
 ```
 
-Update these values:
+Use production values:
 
 ```env
 PORT=3001
@@ -109,237 +29,111 @@ NODE_ENV=production
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=cinemahub
-DB_USER=cinemahub
-DB_PASSWORD=YourStrongPassword123!
-JWT_SECRET=YourSecureJWTSecretKey123456789
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+JWT_SECRET=change_this_to_a_long_random_secret
 JWT_EXPIRE=7d
-FRONTEND_URL=http://52.62.180.96
-ENCRYPTION_KEY=Your32CharacterEncryptionKey!
+FRONTEND_URL=https://movie-ticket-booking.online
+ENCRYPTION_KEY=change_this_32_character_key
+DB_SYNC_ALTER=false
+DB_SYNC_FORCE=false
 ```
 
----
-
-## Step 8: Run Database Migrations
+Create the database if needed:
 
 ```bash
-cd /var/www/html/backend
+sudo mysql
+CREATE DATABASE IF NOT EXISTS cinemahub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'cinema_user'@'localhost' IDENTIFIED BY 'strong_password_here';
+GRANT ALL PRIVILEGES ON cinemahub.* TO 'cinema_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+## 3. Frontend Environment
+
+```bash
+cd /var/www/html/movie-ticket-booking/frontend
+cp .env.local.example .env.local
+nano .env.local
+```
+
+Use:
+
+```env
+NEXT_PUBLIC_API_URL=https://movie-ticket-booking.online/api/v1
+```
+
+## 4. Install, Build, And Start
+
+```bash
+sudo chown -R ubuntu:ubuntu /var/www/html/movie-ticket-booking
+
+cd /var/www/html/movie-ticket-booking/backend
+rm -rf node_modules dist
+npm install --include=dev
 npm run migrate
+npm run seed
+npm run build
+pm2 delete movie-backend || true
+pm2 start npm --name movie-backend -- start
+
+cd /var/www/html/movie-ticket-booking/frontend
+rm -rf node_modules .next
+npm install --legacy-peer-deps --include=dev
+npm run build
+pm2 delete movie-frontend || true
+pm2 start npm --name movie-frontend -- start
+
+pm2 save
+pm2 status
 ```
 
----
+After the first deploy, do not run `npm run seed` every release unless you want to refresh demo data. `npm run migrate` is safe by default and will not drop tables unless `DB_SYNC_FORCE=true`.
 
-## Step 9: Install & Configure NGINX
-
-```bash
-apt install -y nginx
-```
-
-Create frontend config:
-
-```bash
-nano /etc/nginx/sites-available/movie-ticket-booking
-```
-
-Add this configuration:
+## 5. Nginx Config
 
 ```nginx
 server {
     listen 80;
-    server_name movie-ticket-booking.online www.movie-ticket-booking.online 52.62.180.96;
+    server_name movie-ticket-booking.online www.movie-ticket-booking.online;
 
-    # Frontend (Next.js)
+    location /api/v1/ {
+        proxy_pass http://127.0.0.1:3001/api/v1/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Backend API
-    location /api/ {
-        proxy_pass http://127.0.0.1:3001/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # WebSocket support if needed
-    location /socket.io/ {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-Enable the site:
+Enable and reload:
 
 ```bash
-ln -s /etc/nginx/sites-available/movie-ticket-booking /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
-nginx -t
-systemctl reload nginx
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
----
-
-## Step 10: Create Systemd Services
-
-### Backend Service
+## 6. Checks
 
 ```bash
-nano /etc/systemd/system/movie-backend.service
+curl http://127.0.0.1:3001/api/v1/health
+curl http://127.0.0.1:3000
+curl http://movie-ticket-booking.online/api/v1/health
+curl http://movie-ticket-booking.online
+pm2 logs movie-backend --lines 50
+pm2 logs movie-frontend --lines 50
 ```
-
-```ini
-[Unit]
-Description=Movie Ticket Booking Backend
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/html/backend
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/node src/index.js
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### Frontend Service
-
-```bash
-nano /etc/systemd/system/movie-frontend.service
-```
-
-```ini
-[Unit]
-Description=Movie Ticket Booking Frontend
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/var/www/html/frontend
-Environment=NODE_ENV=production
-Environment PORT=3000
-ExecStart=/usr/bin/npm start
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
----
-
-## Step 11: Start Services
-
-```bash
-systemctl daemon-reload
-systemctl enable movie-backend
-systemctl enable movie-frontend
-systemctl start movie-backend
-systemctl start movie-frontend
-systemctl status movie-backend
-systemctl status movie-frontend
-```
-
----
-
-## Step 12: Configure Firewall
-
-```bash
-ufw allow 22
-ufw allow 80
-ufw allow 443
-ufw enable
-ufw status
-```
-
----
-
-## Step 13: Domain Configuration (Hostinger)
-
-1. Login to Hostinger
-2. Go to DNS / Nameservers
-3. Add A record:
-   - Type: A
-   - Name: @
-   - Value: 52.62.180.96
-4. Add CNAME:
-   - Type: CNAME
-   - Name: www
-   - Value: movie-ticket-booking.online
-
-Wait 5-10 minutes for DNS propagation.
-
----
-
-## Step 14: Verify Installation
-
-```bash
-# Check backend
-curl http://localhost:3001
-
-# Check frontend
-curl http://localhost:3000
-
-# Check services
-systemctl status movie-backend
-systemctl status movie-frontend
-```
-
----
-
-## Important URLs After Deployment
-
-- **Frontend**: http://52.62.180.96 or http://movie-ticket-booking.online
-- **Backend API**: http://52.62.180.96/api/v1 or http://movie-ticket-booking.online/api/v1
-
----
-
-## Troubleshooting Commands
-
-```bash
-# View backend logs
-journalctl -u movie-backend -f
-
-# View frontend logs
-journalctl -u movie-frontend -f
-
-# Restart services
-systemctl restart movie-backend
-systemctl restart movie-frontend
-
-# Check NGINX errors
-tail -f /var/log/nginx/error.log
-
-# Check Node processes
-ps aux | grep node
-```
-
----
-
-## Quick Commands Reference
-
-| Action | Command |
-|--------|---------|
-| Restart Backend | `systemctl restart movie-backend` |
-| Restart Frontend | `systemctl restart movie-frontend` |
-| Restart Both | `systemctl restart movie-backend movie-frontend` |
-| View Backend Logs | `journalctl -u movie-backend -f` |
-| View Frontend Logs | `journalctl -u movie-frontend -f` |
-| Test Backend API | `curl http://localhost:3001` |
-| Restart NGINX | `systemctl restart nginx` |

@@ -7,7 +7,7 @@ export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 interface SeatInfo {
   seatId: string;
   seatNumber: string;
-  seatType: 'regular' | 'vip' | 'couple';
+  seatType: 'regular' | 'vip' | 'couple' | 'accessible';
   price: number;
 }
 
@@ -101,7 +101,7 @@ Booking.init(
       allowNull: false,
     },
     screenId: {
-      type: DataTypes.UUID,
+      type: DataTypes.STRING(100),
       allowNull: false,
     },
     showtimeId: {

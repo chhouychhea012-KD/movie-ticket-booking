@@ -1,29 +1,31 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { Check, CreditCard, Loader2, ShieldCheck } from 'lucide-react'
 import PaymentSummary from '@/components/payment-summary'
 import { dataStore } from '@/lib/data-store'
 
-// Dynamic import for PaymentForm to avoid SSR issues
 const PaymentForm = dynamic(() => import('@/components/payment-form'), {
   ssr: false,
   loading: () => (
-    <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
-      <div className="animate-pulse space-y-4">
-        <div className="h-4 bg-slate-700 rounded w-1/4"></div>
-        <div className="h-20 bg-slate-700 rounded"></div>
-        <div className="h-12 bg-slate-700 rounded"></div>
+    <div className="cinema-card p-8">
+      <div className="flex items-center gap-3 text-slate-400">
+        <Loader2 className="h-5 w-5 animate-spin text-[#e50914]" />
+        Loading payment methods
       </div>
     </div>
-  )
+  ),
 })
 
 type PaymentMethod = 'visa' | 'bakong' | 'abapayway'
 
 interface BookingData {
   movieTitle: string
+  moviePoster?: string
+  cinemaName: string
+  hall: string
   showtime: string
   seats: string[]
   totalAmount: number
@@ -34,87 +36,86 @@ function PaymentPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const isInitialized = useRef(false)
-  
-  // Check if we have a bookingId in the URL
   const bookingId = searchParams.get('bookingId')
-  
-  // State for booking data
+
   const [bookingData, setBookingData] = useState<BookingData>({
     movieTitle: 'Movie Ticket',
+    cinemaName: 'Cinema',
+    hall: 'Hall 1',
     showtime: '7:00 PM',
     seats: [],
     totalAmount: 0,
-    ticketPrice: 12.99
+    ticketPrice: 0,
   })
-  
-  // Try to get params from URL
-  const urlMovieTitle = searchParams.get('movie') || ''
-  const urlAmount = parseFloat(searchParams.get('amount') || '0')
-  const urlSeats = searchParams.get('seats')?.split(',').filter(Boolean) || []
-  const urlShowtime = searchParams.get('showtime') || ''
+  const [processing, setProcessing] = useState(false)
+  const [error, setError] = useState('')
 
-  // Helper function to extract seat numbers from various formats
-  const extractSeatNumbers = (seats: any[]): string[] => {
-    if (!seats || !Array.isArray(seats)) return []
-    return seats.map(seat => {
-      if (typeof seat === 'string') return seat
-      if (typeof seat === 'object' && seat !== null) {
-        return seat.seatNumber || seat.seat_id || 'Unknown'
-      }
-      return String(seat)
-    })
-  }
-
-  // Load booking data from localStorage if bookingId exists, otherwise use URL params
   useEffect(() => {
     if (isInitialized.current) return
     isInitialized.current = true
-    
+
+    const urlMovieTitle = searchParams.get('movie') || ''
+    const urlPoster = searchParams.get('poster') || ''
+    const urlCinema = searchParams.get('cinema') || ''
+    const urlHall = searchParams.get('hall') || ''
+    const urlAmount = Number.parseFloat(searchParams.get('amount') || '0')
+    const urlSeats = searchParams.get('seats')?.split(',').filter(Boolean) || []
+    const urlShowtime = searchParams.get('showtime') || ''
+
+    const pendingDraft = localStorage.getItem('pendingBookingPayment')
+    if (pendingDraft) {
+      const draft = JSON.parse(pendingDraft)
+      if (!bookingId || draft.id === bookingId) {
+        const draftSeats = Array.isArray(draft.seats) ? draft.seats : []
+        const draftTotal = Number(draft.totalPrice || draft.totalAmount || 0)
+        setBookingData({
+          movieTitle: draft.movieTitle || urlMovieTitle || 'Movie Ticket',
+          moviePoster: draft.moviePoster || urlPoster || undefined,
+          cinemaName: draft.cinemaName || urlCinema || 'Cinema',
+          hall: draft.hall || urlHall || 'Hall 1',
+          showtime: draft.showtime || urlShowtime || '7:00 PM',
+          seats: draftSeats.length ? draftSeats : urlSeats,
+          totalAmount: draftTotal || urlAmount,
+          ticketPrice: draft.ticketPrice || (draftSeats.length ? draftTotal / draftSeats.length : 0),
+        })
+        return
+      }
+    }
+
     if (bookingId) {
-      // Try to get booking from localStorage
       const existingBookings = localStorage.getItem('bookings')
       if (existingBookings) {
         const bookings = JSON.parse(existingBookings)
-        const booking = bookings.find((b: any) => b.id === bookingId)
-        
+        const booking = bookings.find((item: any) => item.id === bookingId)
+
         if (booking) {
-          // Handle seats - could be string[] or objects
-          const extractedSeats = extractSeatNumbers(booking.seats)
+          const seats = extractSeatNumbers(booking.seats)
           setBookingData({
             movieTitle: booking.movieTitle || 'Movie Ticket',
+            moviePoster: booking.moviePoster,
+            cinemaName: booking.cinemaName || urlCinema || 'Cinema',
+            hall: booking.hall || urlHall || 'Hall 1',
             showtime: booking.showtime || '7:00 PM',
-            seats: extractedSeats,
+            seats,
             totalAmount: booking.totalPrice || 0,
-            ticketPrice: booking.ticketPrice || 12.99
+            ticketPrice: booking.ticketPrice || (seats.length ? (booking.totalPrice || 0) / seats.length : 0),
           })
           return
         }
       }
     }
-    
-    // Use URL params if no booking found
-    if (urlMovieTitle || urlAmount > 0 || urlSeats.length > 0) {
-      setBookingData({
-        movieTitle: urlMovieTitle || 'Movie Ticket',
-        showtime: urlShowtime || '7:00 PM',
-        seats: urlSeats.length > 0 ? urlSeats : ['A3'],
-        totalAmount: urlAmount > 0 ? urlAmount : 19.48,
-        ticketPrice: urlAmount > 0 && urlSeats.length > 0 ? urlAmount / urlSeats.length : 12.99
-      })
-    } else {
-      // Default demo data
-      setBookingData({
-        movieTitle: 'The Quantum Paradox',
-        showtime: '7:00 PM',
-        seats: ['A3'],
-        totalAmount: 19.48,
-        ticketPrice: 19.48
-      })
-    }
-  }, [bookingId, urlMovieTitle, urlAmount, urlSeats, urlShowtime])
 
-  const [processing, setProcessing] = useState(false)
-  const [error, setError] = useState('')
+    setBookingData({
+      movieTitle: urlMovieTitle || 'Movie Ticket',
+      moviePoster: urlPoster || undefined,
+      cinemaName: urlCinema || 'Cinema',
+      hall: urlHall || 'Hall 1',
+      showtime: urlShowtime || '7:00 PM',
+      seats: urlSeats,
+      totalAmount: urlAmount,
+      ticketPrice: urlAmount > 0 && urlSeats.length > 0 ? urlAmount / urlSeats.length : 0,
+    })
+  }, [bookingId, searchParams])
 
   const handlePaymentSubmit = async (paymentData: {
     method: PaymentMethod
@@ -130,20 +131,13 @@ function PaymentPageContent() {
     setProcessing(true)
 
     try {
-      // Determine which API endpoint to call based on payment method
       let apiEndpoint = '/api/payments/visa'
-      if (paymentData.method === 'bakong') {
-        apiEndpoint = '/api/payments/bakong'
-      } else if (paymentData.method === 'abapayway') {
-        apiEndpoint = '/api/payments/abaPayway'
-      }
+      if (paymentData.method === 'bakong') apiEndpoint = '/api/payments/bakong'
+      if (paymentData.method === 'abapayway') apiEndpoint = '/api/payments/abaPayway'
 
-      // Make API call
       const response = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: paymentData.amount,
           orderId: `ORD_${Date.now()}`,
@@ -158,15 +152,14 @@ function PaymentPageContent() {
       })
 
       const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Payment failed')
 
-      if (!response.ok) {
-        throw new Error(result.error || 'Payment failed')
-      }
-
-      // Create booking
       const booking = {
-        id: Date.now().toString(),
+        id: bookingId || Date.now().toString(),
         movieTitle: bookingData.movieTitle,
+        moviePoster: bookingData.moviePoster,
+        cinemaName: bookingData.cinemaName,
+        hall: bookingData.hall,
         showtime: bookingData.showtime,
         seats: bookingData.seats,
         ticketPrice: bookingData.ticketPrice,
@@ -177,13 +170,12 @@ function PaymentPageContent() {
         paymentId: result.paymentId,
       }
 
-      // Save to localStorage
       const existingBookings = localStorage.getItem('bookings')
       const bookings = existingBookings ? JSON.parse(existingBookings) : []
-      bookings.push(booking)
-      localStorage.setItem('bookings', JSON.stringify(bookings))
+      const filteredBookings = bookings.filter((item: any) => item.id !== booking.id)
+      localStorage.setItem('bookings', JSON.stringify([...filteredBookings, booking]))
+      localStorage.removeItem('pendingBookingPayment')
 
-      // Also save to dataStore for admin panel visibility
       try {
         dataStore.initialize()
         dataStore.bookings.create({
@@ -191,121 +183,107 @@ function PaymentPageContent() {
           movieId: '1',
           movieTitle: bookingData.movieTitle,
           cinemaId: '1',
-          cinemaName: 'Cinema',
-          screenId: '1',
+          cinemaName: bookingData.cinemaName,
+          screenId: bookingData.hall,
           showtimeId: bookingId || '1',
           showtime: bookingData.showtime,
-          seats: bookingData.seats.map((seat: string) => ({
+          seats: bookingData.seats.map((seat) => ({
             seatId: seat,
             seatNumber: seat,
             seatType: 'regular' as const,
-            price: bookingData.ticketPrice
+            price: bookingData.ticketPrice,
           })),
           ticketPrice: bookingData.ticketPrice,
           totalPrice: bookingData.totalAmount,
-          paymentMethod: booking.paymentMethod as 'card' | 'wallet' | 'cash',
+          paymentMethod: 'card',
           paymentStatus: 'completed' as const,
-          status: 'confirmed' as const
+          status: 'confirmed' as const,
         })
-      } catch (e) {
-        console.warn('Failed to save to dataStore:', e)
+      } catch (storeError) {
+        console.warn('Failed to save to dataStore:', storeError)
       }
 
-      setProcessing(false)
       router.push(`/booking-confirmation?bookingId=${booking.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment failed. Please try again.')
+    } finally {
       setProcessing(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 py-8">
-      {/* Background Pattern */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}></div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 relative z-10">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">Payment</h1>
-          <p className="text-slate-400 text-lg">Complete your booking securely</p>
+    <div className="cinema-page pt-20">
+      <div className="cinema-container pb-16">
+        <div className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <span className="text-[#f5c451]">Seats</span>
+          <span>/</span>
+          <span className="text-[#f5c451]">Payment</span>
+          <span>/</span>
+          <span>Ticket</span>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex justify-center mb-10">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full">
-              <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-green-500 text-sm font-medium">Seats</span>
-            </div>
-            <div className="w-8 h-0.5 bg-slate-600"></div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-orange-500/20 rounded-full">
-              <span className="text-orange-500 text-sm font-medium">2</span>
-              <span className="text-orange-500 text-sm font-medium">Payment</span>
-            </div>
-            <div className="w-8 h-0.5 bg-slate-600"></div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 rounded-full">
-              <span className="text-slate-400 text-sm">3</span>
-              <span className="text-slate-400 text-sm">Confirmation</span>
-            </div>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-white md:text-4xl">Checkout</h1>
+            <p className="cinema-muted mt-2">Confirm your order and choose a secure payment method.</p>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-[#252a32] bg-[#14171c] px-4 py-3 text-sm text-slate-300">
+            <ShieldCheck className="h-4 w-4 text-[#f5c451]" />
+            Secure payment
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Payment Form */}
-          <div className="lg:col-span-2">
-            <PaymentForm 
-              onSubmit={handlePaymentSubmit} 
-              isProcessing={processing}
-              totalAmount={bookingData.totalAmount}
-            />
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <div>
+            <div className="cinema-card mb-4 flex items-center gap-3 p-4 text-sm text-slate-400">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#122016] text-emerald-400">
+                <Check className="h-4 w-4" />
+              </div>
+              <span>Seats selected. Complete payment to generate your digital ticket.</span>
+            </div>
+
+            <PaymentForm onSubmit={handlePaymentSubmit} isProcessing={processing} totalAmount={bookingData.totalAmount} />
+
             {error && (
-              <div className="mt-4 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>{error}</span>
+              <div className="mt-4 rounded-xl border border-[#e50914]/30 bg-[#e50914]/10 p-4 text-sm text-[#ff8f94]">
+                {error}
               </div>
             )}
           </div>
 
-          {/* Payment Summary */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <PaymentSummary
-                movieTitle={bookingData.movieTitle}
-                showtime={bookingData.showtime}
-                seats={bookingData.seats}
-                totalAmount={bookingData.totalAmount}
-              />
-              
-              {/* Security Info */}
-              <div className="mt-4 bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                <div className="flex items-center gap-3 text-slate-400 text-sm">
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white font-medium">Secure Payment</p>
-                    <p className="text-slate-500">256-bit SSL encryption</p>
-                  </div>
-                </div>
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:h-fit">
+            <PaymentSummary
+              movieTitle={bookingData.movieTitle}
+              moviePoster={bookingData.moviePoster}
+              cinemaName={bookingData.cinemaName}
+              hall={bookingData.hall}
+              showtime={bookingData.showtime}
+              seats={bookingData.seats}
+              totalAmount={bookingData.totalAmount}
+            />
+            <div className="cinema-card-soft p-4 text-sm text-slate-400">
+              <div className="mb-2 flex items-center gap-2 font-semibold text-white">
+                <CreditCard className="h-4 w-4 text-[#e50914]" />
+                Accepted Methods
               </div>
+              Visa, Bakong QR, and ABA PayWay are available.
             </div>
-          </div>
+          </aside>
         </div>
       </div>
     </div>
   )
 }
+
+function extractSeatNumbers(seats: any[]): string[] {
+  if (!seats || !Array.isArray(seats)) return []
+  return seats.map((seat) => {
+    if (typeof seat === 'string') return seat
+    if (typeof seat === 'object' && seat !== null) return seat.seatNumber || seat.seat_id || 'Unknown'
+    return String(seat)
+  })
+}
+
 export default function PaymentPage() {
   return (
     <Suspense fallback={null}>

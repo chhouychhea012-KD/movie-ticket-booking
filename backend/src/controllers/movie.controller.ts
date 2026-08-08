@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import Movie from '../models/Movie';
+import sequelize from '../config/database';
+import Booking from '../models/Booking';
+import Showtime from '../models/Showtime';
 
 export const getMovies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -13,7 +16,12 @@ export const getMovies = async (req: Request, res: Response): Promise<void> => {
     }
     
     if (genre) {
-      where.genre = { [Op.contains]: genre };
+      where[Op.and] = [
+        sequelize.where(
+          sequelize.cast(sequelize.col('genre'), 'CHAR'),
+          { [Op.like]: `%${genre}%` }
+        ),
+      ];
     }
     
     if (search) {
@@ -140,6 +148,19 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
+    const relatedBookings = await Booking.count({ where: { movieId: id } });
+    const relatedShowtimes = await Showtime.count({ where: { movieId: id } });
+
+    if (relatedBookings > 0 || relatedShowtimes > 0) {
+      await movie.update({ status: 'ended' });
+      res.json({
+        success: true,
+        message: 'Movie has related records, so it was marked as ended instead of deleted',
+        data: movie,
+      });
+      return;
+    }
+
     await movie.destroy();
 
     res.json({
@@ -226,16 +247,24 @@ export const searchMovies = async (req: Request, res: Response): Promise<void> =
     const where: any = {};
     
     if (q) {
-      where.$or = [
-        { title: { $ilike: `%${q}%` } },
-        { synopsis: { $ilike: `%${q}%` } },
-        { director: { $ilike: `%${q}%` } },
-        { cast: { $contains: [q as string] } },
+      where[Op.or] = [
+        { title: { [Op.like]: `%${q}%` } },
+        { synopsis: { [Op.like]: `%${q}%` } },
+        { director: { [Op.like]: `%${q}%` } },
+        sequelize.where(
+          sequelize.cast(sequelize.col('cast'), 'CHAR'),
+          { [Op.like]: `%${q}%` }
+        ),
       ];
     }
     
     if (genre) {
-      where.genre = { $contains: genre };
+      where[Op.and] = [
+        sequelize.where(
+          sequelize.cast(sequelize.col('genre'), 'CHAR'),
+          { [Op.like]: `%${genre}%` }
+        ),
+      ];
     }
     
     if (language) {

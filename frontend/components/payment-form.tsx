@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -60,7 +60,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
   
   // Bakong/ABA state
   const [phoneNumber, setPhoneNumber] = useState('')
-  const [accountName, setAccountName] = useState('')
+  const accountName = ''
   
   // Order info
   const orderId = `ORD_${Date.now()}`
@@ -221,7 +221,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
   ]
 
   return (
-    <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl">
+    <div className="cinema-card p-6 sm:p-8">
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-white mb-2">Select Payment Method</h2>
@@ -237,8 +237,8 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
             onClick={() => handleMethodChange(method.id)}
             className={`p-4 rounded-xl border-2 transition-all duration-300 ${
               activeMethod === method.id
-                ? 'border-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/20'
-                : 'border-slate-600 bg-slate-700/50 hover:border-slate-500 hover:bg-slate-700'
+                ? 'border-[#e50914] bg-[#e50914]/10 shadow-lg shadow-[#e50914]/15'
+                : 'border-[#252a32] bg-[#101318] hover:border-[#3a414d] hover:bg-[#1b1f26]'
             }`}
           >
             <div className="flex flex-col items-center gap-2">
@@ -255,9 +255,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
         {activeMethod === 'visa' && (
           <div className="space-y-6 animate-fadeIn">
             {/* Card Preview */}
-            <div className="relative h-48 rounded-2xl bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-6 shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+            <div className="relative h-48 overflow-hidden rounded-2xl border border-[#252a32] bg-[#101318] p-6 shadow-2xl">
               
               <div className="relative z-10 h-full flex flex-col justify-between">
                 <div className="flex justify-between items-start">
@@ -276,7 +274,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                 <div>
                   <div className="text-slate-400 text-xs mb-1">Card Number</div>
                   <div className="text-white text-xl font-mono tracking-wider">
-                    {cardNumber || '•••• •••• •••• ••••'}
+                    {cardNumber || '**** **** **** ****'}
                   </div>
                 </div>
                 
@@ -302,7 +300,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   value={cardholderName}
                   onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
                   placeholder="JOHN DOE"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] transition-colors"
                   disabled={isProcessing}
                 />
               </div>
@@ -315,7 +313,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                     value={cardNumber}
                     onChange={handleCardNumberChange}
                     placeholder="1234 5678 9012 3456"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 font-mono transition-colors"
+                    className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] font-mono transition-colors"
                     disabled={isProcessing}
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-8 bg-white rounded flex items-center justify-center overflow-hidden">
@@ -338,7 +336,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                     value={expiryDate}
                     onChange={handleExpiryChange}
                     placeholder="MM/YY"
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 font-mono transition-colors"
+                    className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] font-mono transition-colors"
                     disabled={isProcessing}
                   />
                 </div>
@@ -351,7 +349,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                       value={cvv}
                       onChange={handleCvvChange}
                       placeholder="123"
-                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 font-mono transition-colors"
+                      className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] font-mono transition-colors"
                       disabled={isProcessing}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -369,7 +367,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
         {/* Bakong Form */}
         {activeMethod === 'bakong' && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="bg-gradient-to-br from-red-500/10 to-red-600/10 border border-red-500/20 rounded-xl p-6">
+            <div className="rounded-xl border border-[#252a32] bg-[#101318] p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-white flex items-center justify-center">
                   <Image 
@@ -393,7 +391,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   placeholder="012 345 678"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-red-500 transition-colors"
+                  className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] transition-colors"
                   disabled={isProcessing}
                 />
               </div>
@@ -404,7 +402,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   type="button"
                   onClick={generateQRCode}
                   disabled={qrLoading || !phoneNumber || phoneNumber.length < 9}
-                  className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#e50914] py-3 font-bold text-white transition hover:bg-[#f23b43] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {qrLoading ? (
                     <>
@@ -454,14 +452,14 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   <div className="text-slate-400 text-sm mt-2 space-y-1">
                     <p>Amount: ${totalAmount.toFixed(2)} USD</p>
                     <p>or</p>
-                    <p className="text-white font-bold">{(totalAmount * 4100).toLocaleString()} KHR</p>
+                    <p className="text-white font-bold">{(totalAmount * USD_TO_KHR).toLocaleString()} KHR</p>
                   </div>
                   
                   <div className="mt-4 bg-slate-700/50 rounded-lg p-4 text-left">
-                    <p className="text-red-400 font-bold mb-2">Payment Instructions:</p>
+                    <p className="mb-2 font-bold text-[#f23b43]">Payment Instructions:</p>
                     <p className="text-slate-300 text-sm">1. Open Bakong app on your phone</p>
                     <p className="text-slate-300 text-sm">2. Tap "Scan QR" or enter amount manually</p>
-                    <p className="text-slate-300 text-sm">3. Enter: {(totalAmount * 4100).toLocaleString()} KHR</p>
+                    <p className="text-slate-300 text-sm">3. Enter: {(totalAmount * USD_TO_KHR).toLocaleString()} KHR</p>
                     <p className="text-slate-300 text-sm">4. Account: {BAKONG_ACCOUNT_NAME}</p>
                     <p className="text-slate-300 text-sm">5. Complete and confirm</p>
                   </div>
@@ -470,7 +468,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                     type="button"
                     onClick={handleConfirmPayment}
                     disabled={isProcessing}
-                    className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-all"
+                    className="mt-4 w-full rounded-xl bg-[#e50914] py-3 font-bold text-white transition hover:bg-[#f23b43]"
                   >
                     {isProcessing ? 'Processing...' : 'I Have Paid - Confirm'}
                   </button>
@@ -483,7 +481,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
         {/* ABA PayWay Form */}
         {activeMethod === 'abapayway' && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-6">
+            <div className="rounded-xl border border-[#252a32] bg-[#101318] p-6">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-white flex items-center justify-center">
                   <Image 
@@ -507,7 +505,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   value={phoneNumber}
                   onChange={handlePhoneChange}
                   placeholder="012 345 678"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  className="w-full px-4 py-3 bg-[#101318] border border-[#252a32] rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-[#e50914] transition-colors"
                   disabled={isProcessing}
                 />
                 <p className="text-slate-500 text-xs mt-2">Enter your ABA account phone number</p>
@@ -519,7 +517,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   type="button"
                   onClick={generateQRCode}
                   disabled={qrLoading || !phoneNumber || phoneNumber.length < 9}
-                  className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#e50914] py-3 font-bold text-white transition hover:bg-[#f23b43] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {qrLoading ? (
                     <>
@@ -546,7 +544,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   <div className="bg-white p-4 rounded-xl inline-block">
                     {qrLoading ? (
                       <div className="w-48 h-48 flex items-center justify-center">
-                        <svg className="animate-spin h-8 w-8 text-orange-500" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-8 w-8 text-[#e50914]" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -569,7 +567,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                   <p className="text-slate-400 text-sm mt-2">Amount: ${totalAmount.toFixed(2)}</p>
                   
                   <div className="mt-4 bg-slate-700/50 rounded-lg p-4 text-left">
-                    <p className="text-orange-500 font-bold mb-2">How to pay:</p>
+                    <p className="mb-2 font-bold text-[#f23b43]">How to pay:</p>
                     <p className="text-slate-300 text-sm">1. Open your ABA app</p>
                     <p className="text-slate-300 text-sm">2. Scan the QR code above</p>
                     <p className="text-slate-300 text-sm">3. Confirm payment of ${totalAmount.toFixed(2)}</p>
@@ -580,7 +578,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
                     type="button"
                     onClick={handleConfirmPayment}
                     disabled={isProcessing}
-                    className="mt-4 w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-all"
+                    className="mt-4 w-full rounded-xl bg-[#e50914] py-3 font-bold text-white transition hover:bg-[#f23b43]"
                   >
                     {isProcessing ? 'Processing...' : 'Confirm Payment'}
                   </button>
@@ -606,7 +604,7 @@ export default function PaymentForm({ onSubmit, isProcessing, totalAmount }: Pay
             className={`w-full py-4 rounded-xl font-bold text-lg text-white transition-all duration-300 shadow-lg ${
               isProcessing
                 ? 'bg-slate-600 cursor-not-allowed opacity-50'
-                : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 hover:shadow-orange-500/25'
+                : 'bg-[#e50914] hover:bg-[#f23b43] hover:shadow-[#e50914]/25'
             }`}
           >
             {isProcessing ? (

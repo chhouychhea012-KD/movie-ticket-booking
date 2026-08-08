@@ -9,7 +9,9 @@ export const getCoupons = async (req: Request, res: Response): Promise<void> => 
 
     res.json({
       success: true,
-      data: coupons,
+      data: {
+        coupons,
+      },
     });
   } catch (error: any) {
     console.error('Get coupons error:', error);

@@ -42,7 +42,7 @@ export const verifyToken = (token: string): JwtPayload | null => {
 };
 
 // Middleware to protect routes
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -65,16 +65,64 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 
   req.userId = decoded.id;
-  req.userRole = decoded.role;
-  next();
+  
+  try {
+    const user = await User.findByPk(decoded.id);
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        message: 'User no longer exists. Please log in again.',
+      });
+      return;
+    }
+
+    if (!user.isActive) {
+      res.status(403).json({
+        success: false,
+        message: 'Account is deactivated. Please contact support.',
+      });
+      return;
+    }
+
+    req.user = user;
+    req.userRole = user.role;
+    next();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Authentication failed',
+    });
+  }
 };
 
 // Middleware to check if user is admin
 export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  if (req.userRole && !['admin', 'owner'].includes(req.userRole)) {
+  if (!req.userRole || !['admin', 'owner'].includes(req.userRole)) {
     res.status(403).json({
       success: false,
       message: 'Access denied. Admin privileges required.',
+    });
+    return;
+  }
+  next();
+};
+
+export const authorizeStaff = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.userRole || !['staff', 'admin', 'owner'].includes(req.userRole)) {
+    res.status(403).json({
+      success: false,
+      message: 'Access denied. Staff privileges required.',
+    });
+    return;
+  }
+  next();
+};
+
+export const authorizeOwner = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (req.userRole !== 'owner') {
+    res.status(403).json({
+      success: false,
+      message: 'Access denied. Owner privileges required.',
     });
     return;
   }

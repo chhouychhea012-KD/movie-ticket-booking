@@ -30,7 +30,16 @@ const getHeaders = (): HeadersInit => {
 
 // Handle API response
 const handleResponse = async <T>(response: Response): Promise<ApiResponse<T>> => {
-  const data = await response.json()
+  const data = await response.json().catch(() => ({
+    success: false,
+    message: response.statusText || 'Request failed',
+  }))
+
+  if (response.status === 401 && typeof window !== 'undefined') {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
+
   return data
 }
 
@@ -395,7 +404,7 @@ export const ticketsAPI = {
   validate: async (ticketCode: string) => {
     const response = await fetch(`${API_BASE_URL}/tickets/validate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ ticketCode }),
     })
     return handleResponse<any>(response)

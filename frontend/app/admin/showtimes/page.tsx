@@ -92,7 +92,7 @@ export default function AdminShowtimesPage() {
   }, [])
 
   useEffect(() => {
-    let filtered = showtimes.filter(showtime => {
+    const filtered = showtimes.filter(showtime => {
       const matchesSearch = !searchTerm || 
         showtime.movieTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         showtime.cinemaName?.toLowerCase().includes(searchTerm.toLowerCase())

@@ -40,6 +40,11 @@ const api = {
       })
 
       const data = await response.json()
+      if (response.status === 401 && typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        setUser(null)
+      }
       return data
     } catch (error: any) {
       return {
@@ -176,14 +181,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Check if backend is available and load data
   useEffect(() => {
-    // Load user from localStorage if exists
+    // Load user from localStorage if exists, then revalidate when a token is available.
     const storedUser = localStorage.getItem('user')
+    const storedToken = localStorage.getItem('token')
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser))
       } catch (e) {
         console.error('Failed to parse user from localStorage')
       }
+    }
+    
+    if (storedToken) {
+      refreshProfile()
     }
     
     checkBackendConnection()
@@ -208,6 +218,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     } catch {
       setIsOnline(false)
+    }
+  }
+
+  const refreshProfile = async () => {
+    try {
+      const response = await api.get<User>('/auth/profile')
+      if (response.success && response.data) {
+        localStorage.setItem('user', JSON.stringify(response.data))
+        setUser(response.data)
+        return
+      }
+
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      setUser(null)
+    } catch {
+      // Keep cached user data while offline so installed PWA screens can still open.
     }
   }
 
@@ -284,7 +311,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           phone: '+85512345678',
           firstName: email.split('@')[0],
           lastName: 'User',
-          role: email.includes('admin') ? 'admin' : 'user',
+          role: 'user',
           createdAt: new Date().toISOString(),
           favoriteMovies: [],
           favoriteCinemas: [],
@@ -453,7 +480,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return showtimes.filter(s => {
       if (s.movieId !== movieId) return false
       if (cinemaId && s.cinemaId !== cinemaId) return false
-      if (date && s.date !== date) return true
+      if (date && s.date !== date) return false
       return true
     })
   }
@@ -471,16 +498,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const createBooking = async (booking: Partial<Booking>): Promise<Booking> => {
     setIsLoading(true)
 
-    // Ensure we have a userId
     if (!user?.id) {
-      // Create a mock user ID for demo purposes or throw error
-      console.warn('No user logged in, using demo user ID')
+      setIsLoading(false)
+      throw new Error('Please log in before creating a booking')
     }
 
     try {
       const response = await api.post<Booking>('/bookings', {
         ...booking,
-        userId: user?.id || 'demo-user-id', // Fallback for demo
       })
       
       if (response.success && response.data) {

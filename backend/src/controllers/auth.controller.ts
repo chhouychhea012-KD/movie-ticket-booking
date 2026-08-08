@@ -2,9 +2,9 @@ import { Request, Response } from 'express';
 import { ValidationError } from 'sequelize';
 import User from '../models/User';
 import { generateToken } from '../middleware/auth';
+import Movie from '../models/Movie';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
-  console.log('Register attempt - body:', JSON.stringify(req.body, null, 2));
   try {
     const { email, password, firstName, lastName, phone } = req.body;
 
@@ -164,13 +164,14 @@ export const updateProfile = async (req: any, res: Response): Promise<void> => {
 
     const { firstName, lastName, phone, avatar, notifications } = req.body;
 
-    await user.update({
-      firstName: firstName || user.firstName,
-      lastName: lastName || user.lastName,
-      phone: phone || user.phone,
-      avatar: avatar || user.avatar,
-      notifications: notifications || user.notifications,
-    });
+    const updates: any = {};
+    if (firstName !== undefined) updates.firstName = firstName;
+    if (lastName !== undefined) updates.lastName = lastName;
+    if (phone !== undefined) updates.phone = phone;
+    if (avatar !== undefined) updates.avatar = avatar;
+    if (notifications !== undefined) updates.notifications = { ...user.notifications, ...notifications };
+
+    await user.update(updates);
 
     res.json({
       success: true,
@@ -240,6 +241,15 @@ export const addFavoriteMovie = async (req: any, res: Response): Promise<void> =
     }
 
     const { movieId } = req.body;
+    const movie = await Movie.findByPk(movieId);
+    if (!movie) {
+      res.status(404).json({
+        success: false,
+        message: 'Movie not found',
+      });
+      return;
+    }
+
     const favoriteMovies = user.favoriteMovies || [];
 
     if (!favoriteMovies.includes(movieId)) {

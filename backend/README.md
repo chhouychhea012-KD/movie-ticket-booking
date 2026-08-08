@@ -1,257 +1,157 @@
-# Movie Ticket Booking System - Backend API
+# Movie Ticket Booking Backend API
 
-A professional Node.js/Express REST API for a movie ticket booking system with MySQL database.
+Express/TypeScript REST API for the movie ticket booking system.
 
-## 📁 Project Structure
+## Features
 
-```
-backend/
-├── src/
-│   ├── config/           # Database and app configuration
-│   ├── controllers/      # Request handlers
-│   ├── database/
-│   │   ├── migrations/   # Database migrations
-│   │   └── seeders/     # Seed data
-│   ├── middleware/       # Auth & error handling
-│   ├── models/           # Sequelize models
-│   ├── routes/          # API routes
-│   ├── validators/      # Request validation
-│   ├── services/        # Business logic
-│   ├── utils/           # Utility functions
-│   └── index.ts         # App entry point
-├── package.json
-├── tsconfig.json
-└── .env
-```
+- JWT authentication
+- Role-based access for user, staff, admin, and owner
+- Movie CRUD and public movie browsing
+- Cinema CRUD and public cinema browsing
+- Showtime CRUD and public showtime browsing
+- Booking creation, listing, cancellation, and status updates
+- Ticket validation and validation statistics
+- Payment listing, status updates, and payment statistics
+- Coupon CRUD and coupon validation
+- Notification CRUD and notification statistics
+- User/customer CRUD and user statistics
+- Dashboard analytics, revenue reports, movie analytics, and booking analytics
+- MySQL persistence through Sequelize
 
-## 🚀 Features
+## API Base
 
-### Authentication & Authorization
-- JWT-based authentication
-- Secure password hashing with bcrypt
-- Role-based access control (user, admin, staff, owner)
-- Token validation middleware
-
-### Movies Management
-- CRUD operations for movies
-- Search and filter functionality
-- Now showing / Coming soon categories
-- Featured movies
-
-### Cinema Management
-- CRUD operations for cinemas
-- City-based filtering
-- Screen management
-
-### Showtimes Management
-- CRUD operations for showtimes
-- Date-based filtering
-- Available seats tracking
-
-### Bookings
-- Create new bookings with seat selection
-- Apply coupon discounts
-- View booking history
-- Cancel bookings (restore seats)
-
-### Coupons
-- Create and manage discount codes
-- Percentage and fixed discounts
-- Validation with minimum purchase requirements
-
-### Analytics (Admin)
-- Dashboard statistics
-- Revenue reports
-- Movie analytics
-
-## 🔧 Installation & Setup
-
-### Prerequisites
-- Node.js 18+
-- MySQL 8.0+
-- npm or yarn
-
-### Installation
-
-1. Navigate to backend directory:
-```bash
-cd backend
+```txt
+/api/v1
 ```
 
-2. Install dependencies:
+Health check:
+
+```txt
+GET /api/v1/health
+```
+
+## Setup
+
 ```bash
 npm install
-```
-
-3. Configure environment variables:
-```bash
-# Copy .env.example to .env and update values
 cp .env.example .env
-```
-
-Update `.env` with your database credentials:
-```
-PORT=3001
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=cinemahub
-DB_USER=root
-DB_PASSWORD=your_password
-JWT_SECRET=your_secret_key
-```
-
-4. Run migrations to create tables:
-```bash
 npm run migrate
-```
-
-5. Seed initial data:
-```bash
 npm run seed
-```
-
-6. Start the development server:
-```bash
 npm run dev
 ```
 
-The API will be available at `http://localhost:3001/api/v1`
+Production:
 
-## 📡 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| POST | `/auth/register` | Register new user | Public |
-| POST | `/auth/login` | Login user | Public |
-| GET | `/auth/profile` | Get user profile | Private |
-| PUT | `/auth/profile` | Update profile | Private |
-| PUT | `/auth/change-password` | Change password | Private |
-| POST | `/auth/favorites` | Add favorite movie | Private |
-| DELETE | `/auth/favorites/:id` | Remove favorite | Private |
-
-### Movies
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/movies` | Get all movies | Public |
-| GET | `/movies/now-showing` | Get now showing | Public |
-| GET | `/movies/coming-soon` | Get coming soon | Public |
-| GET | `/movies/featured` | Get featured | Public |
-| GET | `/movies/search` | Search movies | Public |
-| GET | `/movies/:id` | Get movie by ID | Public |
-| POST | `/movies` | Create movie | Admin |
-| PUT | `/movies/:id` | Update movie | Admin |
-| DELETE | `/movies/:id` | Delete movie | Admin |
-
-### Cinemas
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/cinemas` | Get all cinemas | Public |
-| GET | `/cinemas/cities` | Get all cities | Public |
-| GET | `/cinemas/:id` | Get cinema by ID | Public |
-| GET | `/cinemas/city/:city` | Get by city | Public |
-| POST | `/cinemas` | Create cinema | Admin |
-| PUT | `/cinemas/:id` | Update cinema | Admin |
-| DELETE | `/cinemas/:id` | Delete cinema | Admin |
-
-### Showtimes
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/showtimes` | Get all showtimes | Public |
-| GET | `/showtimes/available` | Get available | Public |
-| GET | `/showtimes/:id` | Get by ID | Public |
-| POST | `/showtimes` | Create showtime | Admin |
-| PUT | `/showtimes/:id` | Update showtime | Admin |
-| DELETE | `/showtimes/:id` | Delete showtime | Admin |
-
-### Bookings
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| POST | `/bookings` | Create booking | Private |
-| GET | `/bookings` | Get user bookings | Private |
-| GET | `/bookings/:id` | Get booking by ID | Private |
-| DELETE | `/bookings/:id` | Cancel booking | Private |
-| GET | `/bookings/all` | Get all bookings | Admin |
-| GET | `/bookings/ticket/:code` | Get by ticket code | Public |
-| PUT | `/bookings/:id/status` | Update status | Admin |
-
-### Coupons
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/coupons` | Get all coupons | Admin |
-| GET | `/coupons/:code` | Get by code | Public |
-| POST | `/coupons/validate` | Validate coupon | Public |
-| POST | `/coupons` | Create coupon | Admin |
-| PUT | `/coupons/:id` | Update coupon | Admin |
-| DELETE | `/coupons/:id` | Delete coupon | Admin |
-
-### Analytics
-| Method | Endpoint | Description | Access |
-|--------|----------|-------------|--------|
-| GET | `/analytics/dashboard` | Dashboard stats | Admin |
-| GET | `/analytics/revenue` | Revenue report | Admin |
-| GET | `/analytics/movies/:id` | Movie analytics | Admin |
-
-## 🔐 Authentication
-
-All private endpoints require a JWT token in the Authorization header:
-```
-Authorization: Bearer <your_token>
-```
-
-### Example Login Request
 ```bash
-curl -X POST http://localhost:3001/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@cinemahub.com", "password": "admin123"}'
+npm install --include=dev
+npm run migrate
+npm run build
+npm run start
 ```
 
-### Example Authenticated Request
-```bash
-curl -X GET http://localhost:3001/api/v1/movies \
-  -H "Authorization: Bearer <your_token>"
+## Environment
+
+```env
+PORT=3001
+NODE_ENV=production
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=cinemahub
+DB_USER=cinema_user
+DB_PASSWORD=strong_password_here
+JWT_SECRET=change_this_to_a_long_random_secret
+JWT_EXPIRE=7d
+FRONTEND_URL=https://movie-ticket-booking.online
+ENCRYPTION_KEY=change_this_32_character_key
+DB_SYNC_ALTER=false
+DB_SYNC_FORCE=false
 ```
 
-## 🧪 Testing Default Users
+## Migration Safety
 
-After seeding, you can test with these credentials:
+By default, `npm run migrate` creates missing tables without dropping data.
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@cinemahub.com | admin123 |
-| User | john.doe@example.com | user123 |
-| User | jane.smith@example.com | user123 |
+Set `DB_SYNC_ALTER=true` only when you intentionally want Sequelize to alter existing tables.
 
-## 📝 API Response Format
+Set `DB_SYNC_FORCE=true` only when you intentionally want to drop and recreate all tables.
 
-### Success Response
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": { ... }
-}
+## Main Endpoints
+
+```txt
+POST   /auth/register
+POST   /auth/login
+GET    /auth/profile
+PUT    /auth/profile
+PUT    /auth/change-password
+POST   /auth/favorites
+DELETE /auth/favorites/:movieId
+
+GET    /movies
+GET    /movies/now-showing
+GET    /movies/coming-soon
+GET    /movies/featured
+GET    /movies/search
+GET    /movies/:id
+POST   /movies
+PUT    /movies/:id
+DELETE /movies/:id
+
+GET    /cinemas
+GET    /cinemas/cities
+GET    /cinemas/city/:city
+GET    /cinemas/:id
+POST   /cinemas
+PUT    /cinemas/:id
+DELETE /cinemas/:id
+
+GET    /showtimes
+GET    /showtimes/available
+GET    /showtimes/:id
+POST   /showtimes
+PUT    /showtimes/:id
+DELETE /showtimes/:id
+
+POST   /bookings
+GET    /bookings
+GET    /bookings/all
+GET    /bookings/ticket/:ticketCode
+GET    /bookings/:id
+PUT    /bookings/:id/status
+DELETE /bookings/:id
+
+GET    /payments
+GET    /payments/stats
+GET    /payments/:id
+PUT    /payments/:id/status
+
+POST   /tickets/validate
+GET    /tickets/recent
+GET    /tickets/stats
+
+GET    /notifications
+GET    /notifications/stats
+POST   /notifications
+PUT    /notifications/read-all
+PUT    /notifications/:id/read
+DELETE /notifications/:id
+DELETE /notifications
+
+POST   /coupons/validate
+GET    /coupons/:code
+GET    /coupons
+POST   /coupons
+PUT    /coupons/:id
+DELETE /coupons/:id
+
+GET    /analytics/dashboard
+GET    /analytics/revenue
+GET    /analytics/bookings
+GET    /analytics/movies/:movieId
+
+GET    /users
+GET    /users/stats
+GET    /users/:id
+POST   /users
+PUT    /users/:id
+DELETE /users/:id
 ```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Error message",
-  "errors": [ ... ]
-}
-```
-
-## 🛠️ Technologies
-
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MySQL with Sequelize ORM
-- **Authentication:** JWT (jsonwebtoken)
-- **Password Hashing:** bcryptjs
-- **Validation:** Joi
-- **Security:** Helmet, CORS
-
-## 📄 License
-
-MIT License

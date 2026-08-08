@@ -8,7 +8,7 @@ interface TicketAttributes {
   bookingId: string;
   seatId: string;
   seatNumber: string;
-  seatType: 'regular' | 'vip' | 'couple';
+  seatType: 'regular' | 'vip' | 'couple' | 'accessible';
   price: number;
   status: TicketStatus;
   qrCode: string;
@@ -24,7 +24,7 @@ class Ticket extends Model<TicketAttributes, TicketCreationAttributes> implement
   public bookingId!: string;
   public seatId!: string;
   public seatNumber!: string;
-  public seatType!: 'regular' | 'vip' | 'couple';
+  public seatType!: 'regular' | 'vip' | 'couple' | 'accessible';
   public price!: number;
   public status!: TicketStatus;
   public qrCode!: string;
@@ -57,7 +57,7 @@ Ticket.init(
       allowNull: false,
     },
     seatType: {
-      type: DataTypes.ENUM('regular', 'vip', 'couple'),
+      type: DataTypes.STRING(30),
       defaultValue: 'regular',
     },
     price: {

@@ -17,8 +17,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     // Check if user is authenticated and has admin role
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
-    if (!storedUser && !user) {
+    if ((!storedUser && !user) || !storedToken) {
       // Not logged in, redirect to login
       router.push(`/auth/login?redirect=${pathname}`)
       return

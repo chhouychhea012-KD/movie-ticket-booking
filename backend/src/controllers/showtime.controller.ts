@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import Showtime from '../models/Showtime';
+import Movie from '../models/Movie';
+import Cinema from '../models/Cinema';
+import Booking from '../models/Booking';
+
+const hasValidSeatCounts = (availableSeats: number, totalSeats: number): boolean => {
+  return availableSeats >= 0 && totalSeats > 0 && availableSeats <= totalSeats;
+};
 
 export const getShowtimes = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -68,7 +75,33 @@ export const getShowtimeById = async (req: Request, res: Response): Promise<void
 
 export const createShowtime = async (req: Request, res: Response): Promise<void> => {
   try {
-    const showtime = await Showtime.create(req.body);
+    const [movie, cinema] = await Promise.all([
+      Movie.findByPk(req.body.movieId),
+      Cinema.findByPk(req.body.cinemaId),
+    ]);
+
+    if (!movie || !cinema) {
+      res.status(404).json({
+        success: false,
+        message: !movie ? 'Movie not found' : 'Cinema not found',
+      });
+      return;
+    }
+
+    const availableSeats = req.body.availableSeats ?? req.body.totalSeats;
+    if (!hasValidSeatCounts(availableSeats, req.body.totalSeats)) {
+      res.status(400).json({
+        success: false,
+        message: 'Available seats must be between 0 and total seats',
+      });
+      return;
+    }
+
+    const showtime = await Showtime.create({
+      ...req.body,
+      availableSeats,
+      status: availableSeats === 0 ? 'sold_out' : req.body.status,
+    });
     
     res.status(201).json({
       success: true,
@@ -98,7 +131,37 @@ export const updateShowtime = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    await showtime.update(req.body);
+    if (req.body.movieId || req.body.cinemaId) {
+      const [movie, cinema] = await Promise.all([
+        req.body.movieId ? Movie.findByPk(req.body.movieId) : Promise.resolve(true),
+        req.body.cinemaId ? Cinema.findByPk(req.body.cinemaId) : Promise.resolve(true),
+      ]);
+
+      if (!movie || !cinema) {
+        res.status(404).json({
+          success: false,
+          message: !movie ? 'Movie not found' : 'Cinema not found',
+        });
+        return;
+      }
+    }
+
+    const totalSeats = req.body.totalSeats ?? showtime.totalSeats;
+    const availableSeats = req.body.availableSeats ?? showtime.availableSeats;
+    if (!hasValidSeatCounts(Number(availableSeats), Number(totalSeats))) {
+      res.status(400).json({
+        success: false,
+        message: 'Available seats must be between 0 and total seats',
+      });
+      return;
+    }
+
+    await showtime.update({
+      ...req.body,
+      totalSeats,
+      availableSeats,
+      status: availableSeats === 0 ? 'sold_out' : (req.body.status ?? showtime.status),
+    });
 
     res.json({
       success: true,
@@ -124,6 +187,16 @@ export const deleteShowtime = async (req: Request, res: Response): Promise<void>
       res.status(404).json({
         success: false,
         message: 'Showtime not found',
+      });
+      return;
+    }
+
+    const bookingCount = await Booking.count({ where: { showtimeId: id } });
+    if (bookingCount > 0) {
+      await showtime.update({ status: 'cancelled' });
+      res.json({
+        success: true,
+        message: 'Showtime has bookings, so it was cancelled instead of deleted',
       });
       return;
     }
