@@ -117,8 +117,8 @@ const createSampleBooking = async (
   couponCode?: string
 ) => {
   const basePrice = Number(showtime.price);
-  const seats: SeatSeed[] = seatNumbers.map((seat) => ({
-    seatId: `${showtime.id}-${seat.seatNumber}`,
+  const seats: SeatSeed[] = seatNumbers.map((seat, index) => ({
+    seatId: `${seat.seatNumber}-${index + 1}`,
     seatNumber: seat.seatNumber,
     seatType: seat.seatType,
     price: seatPrice(basePrice, seat.seatType),
@@ -126,6 +126,10 @@ const createSampleBooking = async (
   const ticketPrice = seats.reduce((sum, seat) => sum + seat.price, 0);
   const discount = couponCode ? Number((ticketPrice * 0.1).toFixed(2)) : 0;
   const totalPrice = Number((ticketPrice - discount).toFixed(2));
+  const existingBooking = await Booking.findOne({ where: { ticketCode } });
+  const previousSeatCount = existingBooking && existingBooking.showtimeId === showtime.id
+    ? (existingBooking.seats || []).length
+    : 0;
 
   const booking = await upsertBy(
     Booking,
@@ -167,7 +171,17 @@ const createSampleBooking = async (
     )
   );
 
-  await showtime.decrement('availableSeats', { by: seats.length });
+  const seatDelta = seats.length - previousSeatCount;
+  if (seatDelta !== 0) {
+    const nextAvailableSeats = Math.max(
+      0,
+      Math.min(Number(showtime.totalSeats), Number(showtime.availableSeats) - seatDelta)
+    );
+    await showtime.update({
+      availableSeats: nextAvailableSeats,
+      status: nextAvailableSeats === 0 ? 'sold_out' : 'selling',
+    });
+  }
 
   return booking;
 };
