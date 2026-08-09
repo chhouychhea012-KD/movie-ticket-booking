@@ -51,7 +51,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
 
   return (
     <>
-      <section className="relative min-h-[650px] overflow-hidden bg-[#0b0d10] pt-16">
+      <section className="relative min-h-[570px] overflow-hidden bg-[#0b0d10] pt-12 sm:min-h-[650px] sm:pt-16">
         <div className="absolute inset-0">
           <img
             src={currentMovie.backdrop || currentMovie.poster}
@@ -62,7 +62,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
           <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(0deg,#0b0d10_0%,rgba(11,13,16,0)_100%)]" />
         </div>
 
-        <div className="cinema-container relative z-10 flex min-h-[590px] items-center">
+        <div className="cinema-container relative z-10 flex min-h-[520px] items-center sm:min-h-[590px]">
           <div className="grid w-full items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="max-w-2xl">
               <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -74,7 +74,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                 </span>
               </div>
 
-              <h1 className="max-w-3xl text-5xl font-semibold leading-tight tracking-tight text-white md:text-7xl">
+              <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
                 {currentMovie.title}
               </h1>
 
@@ -90,7 +90,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                 <span>{genres.join(' / ')}</span>
               </div>
 
-              <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 md:text-lg">
+              <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base md:text-lg">
                 {currentMovie.synopsis}
               </p>
 
@@ -116,7 +116,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
         </div>
 
         {movies.length > 1 && (
-          <div className="cinema-container absolute inset-x-0 bottom-9 z-20 flex items-center justify-between">
+          <div className="cinema-container absolute inset-x-0 bottom-5 z-20 flex items-center justify-between sm:bottom-9">
             <div className="flex items-center gap-2">
               {movies.slice(0, 5).map((movie, index) => (
                 <button
@@ -127,7 +127,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                 />
               ))}
             </div>
-            <div className="flex gap-2">
+            <div className="hidden gap-2 sm:flex">
               <button onClick={previous} className="rounded-xl border border-[#252a32] bg-[#14171c]/90 p-3 text-white transition hover:bg-[#1b1f26]" aria-label="Previous movie">
                 <ChevronLeft className="h-5 w-5" />
               </button>

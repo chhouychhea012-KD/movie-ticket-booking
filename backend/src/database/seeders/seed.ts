@@ -9,6 +9,15 @@ interface SeatSeed {
   price: number;
 }
 
+const demoPasswords = {
+  owner: 'CamboCine-Owner!2026#A9',
+  admin: 'CamboCine-Admin!2026#B7',
+  staff: 'CamboCine-Staff!2026#C5',
+  john: 'CamboCine-Customer!2026#D3',
+  jane: 'CamboCine-Member!2026#E8',
+  vip: 'CamboCine-VIP!2026#F2',
+};
+
 const trailerLinks = {
   superman: 'https://www.youtube.com/watch?v=Ox8ZLF6cGM0',
   fantasticFour: 'https://www.youtube.com/watch?v=AzMo-FgRp64',
@@ -198,7 +207,7 @@ const seedDatabase = async (): Promise<void> => {
     const users = await Promise.all([
       upsertBy(User, { email: 'owner@cambocine.online' }, {
         email: 'owner@cambocine.online',
-        password: 'owner123',
+        password: demoPasswords.owner,
         firstName: 'System',
         lastName: 'Owner',
         phone: '+85512888001',
@@ -212,7 +221,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
       upsertBy(User, { email: 'admin@cambocine.online' }, {
         email: 'admin@cambocine.online',
-        password: 'admin123',
+        password: demoPasswords.admin,
         firstName: 'Cinema',
         lastName: 'Admin',
         phone: '+85512888002',
@@ -226,7 +235,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
       upsertBy(User, { email: 'staff@cambocine.online' }, {
         email: 'staff@cambocine.online',
-        password: 'staff123',
+        password: demoPasswords.staff,
         firstName: 'Sokha',
         lastName: 'Staff',
         phone: '+85512888003',
@@ -240,7 +249,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
       upsertBy(User, { email: 'john.doe@example.com' }, {
         email: 'john.doe@example.com',
-        password: 'user123',
+        password: demoPasswords.john,
         firstName: 'John',
         lastName: 'Doe',
         phone: '+85512888004',
@@ -254,7 +263,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
       upsertBy(User, { email: 'jane.smith@example.com' }, {
         email: 'jane.smith@example.com',
-        password: 'user123',
+        password: demoPasswords.jane,
         firstName: 'Jane',
         lastName: 'Smith',
         phone: '+85512888005',
@@ -268,7 +277,7 @@ const seedDatabase = async (): Promise<void> => {
       }),
       upsertBy(User, { email: 'vip.customer@example.com' }, {
         email: 'vip.customer@example.com',
-        password: 'user123',
+        password: demoPasswords.vip,
         firstName: 'Dara',
         lastName: 'VIP',
         phone: '+85512888006',
@@ -716,11 +725,12 @@ const seedDatabase = async (): Promise<void> => {
     console.log('');
     console.log('Seed data completed successfully.');
     console.log('Demo logins:');
-    console.log('Owner: owner@cambocine.online / owner123');
-    console.log('Admin: admin@cambocine.online / admin123');
-    console.log('Staff: staff@cambocine.online / staff123');
-    console.log('Customer: john.doe@example.com / user123');
-    console.log('Customer: jane.smith@example.com / user123');
+    console.log(`Owner: owner@cambocine.online / ${demoPasswords.owner}`);
+    console.log(`Admin: admin@cambocine.online / ${demoPasswords.admin}`);
+    console.log(`Staff: staff@cambocine.online / ${demoPasswords.staff}`);
+    console.log(`Customer: john.doe@example.com / ${demoPasswords.john}`);
+    console.log(`Customer: jane.smith@example.com / ${demoPasswords.jane}`);
+    console.log(`Customer VIP: vip.customer@example.com / ${demoPasswords.vip}`);
   } catch (error) {
     console.error('Seed failed:', error);
     process.exit(1);

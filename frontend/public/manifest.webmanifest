@@ -1,7 +1,7 @@
 {
-  "name": "CamboCine Movie Ticket Booking",
+  "name": "CamboCine - Cambodia Movie Ticket Booking",
   "short_name": "CamboCine",
-  "description": "Book movie tickets online in Cambodia, choose seats, pay securely, and keep digital tickets on your device.",
+  "description": "Book Cambodia movie tickets online with CamboCine, browse showtimes, watch trailers, choose seats, pay securely, and keep digital tickets.",
   "id": "/",
   "start_url": "/?source=pwa",
   "scope": "/",

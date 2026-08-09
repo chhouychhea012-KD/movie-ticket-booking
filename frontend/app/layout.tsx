@@ -5,33 +5,50 @@ import { AppProvider } from '@/context/AppContext'
 
 const siteUrl = 'https://cambocine.online'
 const siteName = 'CamboCine'
-const siteDescription = 'Book movie tickets online with CamboCine, browse cinema showtimes, choose seats, pay securely, and save digital tickets for local cinemas in Cambodia.'
+const siteDescription = 'CamboCine is a modern Cambodia movie ticket booking platform for browsing cinema showtimes, watching trailers, choosing seats, paying securely, and saving digital tickets.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'CamboCine - Movie Ticket Booking Online in Cambodia',
+    default: 'CamboCine - Cambodia Movie Ticket Booking, Showtimes & Digital Tickets',
     template: '%s | CamboCine',
   },
   description: siteDescription,
   keywords: [
+    'CamboCine',
+    'Cambo Cine',
+    'CamboCine online',
+    'CamboCine movie booking',
+    'Cambodia movie ticket booking',
     'movie ticket booking',
     'cinema tickets',
     'book movie tickets online',
     'movie showtimes',
+    'watch movie trailers online',
     'cinema seat booking',
     'Cambodia cinema',
     'Phnom Penh cinema',
+    'Phnom Penh movie tickets',
+    'Siem Reap cinema',
+    'Battambang cinema',
+    'online cinema booking Cambodia',
     'digital movie tickets',
+    'movie booking app Cambodia',
   ],
   authors: [{ name: 'CamboCine' }],
   creator: 'CamboCine',
   publisher: 'CamboCine',
   category: 'entertainment',
+  classification: 'Movie ticket booking, cinema showtimes, entertainment',
+  referrer: 'origin-when-cross-origin',
   manifest: '/manifest.webmanifest',
   applicationName: siteName,
   alternates: {
     canonical: '/',
+    languages: {
+      en: '/',
+      'en-KH': '/',
+    },
   },
   robots: {
     index: true,
@@ -61,12 +78,12 @@ export const metadata: Metadata = {
     apple: [{ url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' }],
   },
   openGraph: {
-    title: 'CamboCine - Movie Ticket Booking Online in Cambodia',
+    title: 'CamboCine - Cambodia Movie Ticket Booking',
     description: siteDescription,
     url: '/',
     siteName,
     type: 'website',
-    locale: 'en_US',
+    locale: 'en_KH',
     images: [
       {
         url: '/pwa-icon-512.png',
@@ -78,9 +95,19 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CamboCine - Movie Ticket Booking Online in Cambodia',
+    title: 'CamboCine - Cambodia Movie Ticket Booking',
     description: siteDescription,
     images: ['/pwa-icon-512.png'],
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-title': siteName,
+    'application-name': siteName,
+    'msapplication-TileColor': '#0b0d10',
+    'geo.region': 'KH',
+    'geo.placename': 'Phnom Penh, Cambodia',
+    'ICBM': '11.5564,104.9282',
   },
 }
 
@@ -99,21 +126,55 @@ export default function RootLayout({
 }) {
   const structuredData = {
     '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: siteName,
-    url: siteUrl,
-    description: siteDescription,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${siteUrl}/movies?search={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: siteName,
-      url: siteUrl,
-      logo: `${siteUrl}/pwa-icon-512.png`,
-    },
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
+        name: siteName,
+        alternateName: ['Cambo Cine', 'CamboCine Movie Time'],
+        url: siteUrl,
+        logo: `${siteUrl}/pwa-icon-512.png`,
+        email: 'support@cambocine.online',
+        sameAs: [siteUrl],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
+        name: siteName,
+        alternateName: ['Cambo Cine', 'CamboCine Movie Booking'],
+        url: siteUrl,
+        description: siteDescription,
+        inLanguage: 'en-KH',
+        publisher: {
+          '@id': `${siteUrl}/#organization`,
+        },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${siteUrl}/movies?search={search_term_string}`,
+          'query-input': 'required name=search_term_string',
+        },
+      },
+      {
+        '@type': 'EntertainmentBusiness',
+        '@id': `${siteUrl}/#cinema-booking`,
+        name: siteName,
+        url: siteUrl,
+        image: `${siteUrl}/pwa-icon-512.png`,
+        description: siteDescription,
+        areaServed: {
+          '@type': 'Country',
+          name: 'Cambodia',
+        },
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: 'Phnom Penh',
+          addressCountry: 'KH',
+        },
+        parentOrganization: {
+          '@id': `${siteUrl}/#organization`,
+        },
+      },
+    ],
   }
 
   return (
