@@ -24,6 +24,16 @@ const normalizeUser = (user: User): User => ({
   role: (user.role as string) === 'user' ? 'customer' : user.role,
 })
 
+const posterReplacements: Record<string, string> = {
+  'https://www.impawards.com/2025/posters/f_one.jpg': 'https://image.tmdb.org/t/p/original/8ugT2453ERFxgczNodLxtZudkuG.jpg',
+}
+
+const normalizeMovie = (movie: Movie): Movie => ({
+  ...movie,
+  poster: posterReplacements[movie.poster] || movie.poster,
+  backdrop: movie.backdrop ? posterReplacements[movie.backdrop] || movie.backdrop : movie.backdrop,
+})
+
 // API Helper
 const api = {
   async request<T>(
@@ -252,7 +262,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.get<{ movies: Movie[] }>('/movies')
       if (response.success && response.data?.movies) {
-        setMovies(response.data.movies)
+        setMovies(response.data.movies.map(normalizeMovie))
       }
     } catch {
       console.error('Failed to fetch movies from API')
@@ -477,7 +487,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.post<Movie>('/movies', movie)
       if (response.success && response.data) {
-        setMovies([...movies, response.data])
+        setMovies([...movies, normalizeMovie(response.data)])
       }
     } catch {
       console.error('Failed to add movie')
@@ -488,7 +498,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.put<Movie>(`/movies/${id}`, data)
       if (response.success && response.data) {
-        setMovies(movies.map(m => m.id === id ? response.data! : m))
+        setMovies(movies.map(m => m.id === id ? normalizeMovie(response.data!) : m))
       }
     } catch {
       console.error('Failed to update movie')

@@ -37,7 +37,7 @@ const posterLinks = {
   fantasticFour: 'https://fr.web.img4.acsta.net/img/1f/cc/1fcc1f3c574cab5e9db8e6a427ba040a.jpg',
   jurassicWorld: 'https://m.media-amazon.com/images/M/MV5BMTU0MDM1YmMtODZjNS00ZDYzLTllZmMtOGNiZmVhYTQyNGYwXkEyXkFqcGc@._V1_.jpg',
   missionImpossible: 'https://images.squarespace-cdn.com/content/v1/61d3a1dc960d41134f8ac264/3888e9d9-2085-460b-a6e1-9de27d737b3a/Tom%2BCruise%2B-%2B%2522Ethan%2BHunt%2522%2BMission%2BImpossible%2BThe%2BFinal%2BReckoning%2BEntertainment%2BInterviews%2BVS%2BBrands%2BCharacter%2BPoster%2B3.jpg',
-  f1: 'https://www.impawards.com/2025/posters/f_one.jpg',
+  f1: 'https://image.tmdb.org/t/p/original/8ugT2453ERFxgczNodLxtZudkuG.jpg',
   liloStitch: 'https://m.media-amazon.com/images/M/MV5BYTBmMDBhNWYtNTk4MS00NzBmLTk5ZWItM2ZlZjY4NTYxNWQzXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
   dragon: 'https://cdn.7days.ru/pic/2d7/1018635/1712385/88.jpg',
   wicked: 'https://posters.onesheet.org/posters/current/2025/wicked-for-good-2025-us-teaser.jpg',
