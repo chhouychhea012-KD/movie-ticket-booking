@@ -266,11 +266,11 @@ export const bookingsAPI = {
     return handleResponse<Booking>(response)
   },
 
-  updateStatus: async (id: string, status: string) => {
+  updateStatus: async (id: string, status: string, paymentStatus?: string) => {
     const response = await fetch(`${API_BASE_URL}/bookings/${id}/status`, {
       method: 'PUT',
       headers: getHeaders(),
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, ...(paymentStatus ? { paymentStatus } : {}) }),
     })
     return handleResponse<Booking>(response)
   },

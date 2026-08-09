@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { bookingsAPI } from '@/lib/api'
-import { Search, Download, Plus, X, Edit2, Trash2, Eye, Check, Ticket, Clock, DollarSign, Calendar, Loader2 } from 'lucide-react'
+import { Search, Download, X, Trash2, Eye, Check, Ticket, Clock, DollarSign, Loader2, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -35,41 +35,44 @@ export default function AdminBookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [editingBooking, setEditingBooking] = useState<BookingData | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [viewBooking, setViewBooking] = useState<BookingData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
-  const loadBookings = async () => {
+  const parseBooking = (booking: any): BookingData => ({
+    ...booking,
+    seats: typeof booking.seats === 'string' ? JSON.parse(booking.seats || '[]') : booking.seats || []
+  })
+
+  const loadBookings = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/bookings/all?limit=100`, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
+      const response = await bookingsAPI.getAdminAll({
+        limit: 100,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
       })
-      const data = await response.json()
-      
-      if (data.success && data.data?.bookings) {
-        const parsedBookings = data.data.bookings.map((b: any) => ({
-          ...b,
-          seats: typeof b.seats === 'string' ? JSON.parse(b.seats || '[]') : b.seats || []
-        }))
+
+      if (response.success && response.data?.bookings) {
+        const parsedBookings = response.data.bookings.map(parseBooking)
         setBookings(parsedBookings)
         setFilteredBookings(parsedBookings)
+      } else {
+        setBookings([])
+        setFilteredBookings([])
+        setError(response.message || 'Failed to load bookings')
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load bookings')
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter])
 
   useEffect(() => {
     loadBookings()
-  }, [])
+  }, [loadBookings])
 
   useEffect(() => {
     let filtered = bookings.filter(booking =>
@@ -85,39 +88,39 @@ export default function AdminBookingsPage() {
     setFilteredBookings(filtered)
   }, [searchTerm, statusFilter, bookings])
 
-  const handleCancelBooking = async (id: string) => {
+  const applyBookingUpdate = (id: string, update: Partial<BookingData>) => {
+    setBookings((current) => current.map((booking) => (
+      booking.id === id ? { ...booking, ...update } : booking
+    )))
+    setViewBooking((current) => current?.id === id ? { ...current, ...update } : current)
+  }
+
+  const handleUpdateStatus = async (id: string, status: string, paymentStatus?: string) => {
     try {
-      const response = await bookingsAPI.updateStatus(id, 'cancelled')
+      setIsSubmitting(true)
+      setError(null)
+      setSuccess(null)
+      const response = await bookingsAPI.updateStatus(id, status, paymentStatus)
       if (response.success) {
-        setBookings(bookings.map(b => b.id === id ? { ...b, status: 'cancelled' } : b))
-        setViewBooking(null)
+        const paymentUpdate = paymentStatus || (status === 'cancelled' ? 'refunded' : undefined)
+        applyBookingUpdate(id, { status, ...(paymentUpdate ? { paymentStatus: paymentUpdate } : {}) })
+        setSuccess(`Booking marked as ${getStatusLabel(status)}`)
+      } else {
+        setError(response.message || 'Failed to update booking status')
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to cancel booking')
+      setError(err.message || 'Failed to update booking status')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await bookingsAPI.cancel(id)
-      if (response.success) {
-        setBookings(bookings.filter(b => b.id !== id))
-        setDeleteConfirm(null)
-      }
+      setDeleteConfirm(null)
+      await handleUpdateStatus(id, 'cancelled')
     } catch (err: any) {
-      setError(err.message || 'Failed to delete booking')
-    }
-  }
-
-  const handleUpdateStatus = async (id: string, status: string) => {
-    try {
-      const response = await bookingsAPI.updateStatus(id, status)
-      if (response.success) {
-        setBookings(bookings.map(b => b.id === id ? { ...b, status } : b))
-        setViewBooking(null)
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to update status')
+      setError(err.message || 'Failed to cancel booking')
     }
   }
 
@@ -129,6 +132,8 @@ export default function AdminBookingsPage() {
       case 'completed': return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
       case 'used': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
       case 'expired': return 'bg-slate-500/20 text-slate-400 border-slate-500/30'
+      case 'refunded': return 'bg-red-500/20 text-red-400 border-red-500/30'
+      case 'failed': return 'bg-red-500/20 text-red-400 border-red-500/30'
       default: return 'bg-slate-500/20 text-slate-400 border-slate-500/30'
     }
   }
@@ -138,14 +143,15 @@ export default function AdminBookingsPage() {
   }
 
   const exportToCSV = () => {
-    const headers = ['Movie', 'Cinema', 'Showtime', 'Seats', 'Total', 'Status', 'Date', 'Ticket Code']
-    const rows = bookings.map(b => [
+    const headers = ['Movie', 'Cinema', 'Showtime', 'Seats', 'Total', 'Booking Status', 'Payment Status', 'Date', 'Ticket Code']
+    const rows = filteredBookings.map(b => [
       b.movieTitle,
       b.cinemaName,
       b.showtime,
       Array.isArray(b.seats) ? b.seats.map((s: any) => s.seatNumber || s).join(', ') : '',
       b.totalPrice,
       b.status,
+      b.paymentStatus,
       b.bookingDate,
       b.ticketCode
     ])
@@ -159,7 +165,9 @@ export default function AdminBookingsPage() {
     a.click()
   }
 
-  const totalRevenue = bookings.reduce((s, b) => s + (Number(b.totalPrice) || 0), 0)
+  const totalRevenue = bookings.reduce((s, b) => (
+    b.status !== 'cancelled' && b.paymentStatus === 'completed' ? s + (Number(b.totalPrice) || 0) : s
+  ), 0)
   const confirmedCount = bookings.filter(b => b.status === 'confirmed').length
   const pendingCount = bookings.filter(b => b.status === 'pending').length
 
@@ -181,6 +189,14 @@ export default function AdminBookingsPage() {
           </button>
         </div>
       )}
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-300 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess(null)} className="text-emerald-300 hover:text-emerald-200">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
@@ -188,9 +204,19 @@ export default function AdminBookingsPage() {
           <p className="text-slate-400 mt-1">Search and manage all customer bookings</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={loadBookings}
+            disabled={loading}
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button 
             onClick={exportToCSV}
+            disabled={filteredBookings.length === 0}
             variant="outline" 
             className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
           >
@@ -259,9 +285,9 @@ export default function AdminBookingsPage() {
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <DollarSign className="w-5 h-5 text-blue-500" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-slate-400 text-xs">Total Revenue</p>
-                <p className="text-xl font-bold text-white">${totalRevenue.toFixed(2)}</p>
+                <p className="truncate text-xl font-bold text-white">${totalRevenue.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -298,6 +324,7 @@ export default function AdminBookingsPage() {
                     <th className="text-left text-slate-400 font-medium px-4 py-3">Seats</th>
                     <th className="text-left text-slate-400 font-medium px-4 py-3">Total</th>
                     <th className="text-left text-slate-400 font-medium px-4 py-3">Status</th>
+                    <th className="text-left text-slate-400 font-medium px-4 py-3">Payment</th>
                     <th className="text-right text-slate-400 font-medium px-4 py-3">Actions</th>
                   </tr>
                 </thead>
@@ -322,6 +349,11 @@ export default function AdminBookingsPage() {
                           </Badge>
                         </td>
                         <td className="px-4 py-4">
+                          <Badge className={getStatusColor(booking.paymentStatus)}>
+                            {getStatusLabel(booking.paymentStatus || 'pending')}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4">
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               variant="ghost"
@@ -337,6 +369,7 @@ export default function AdminBookingsPage() {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleDelete(booking.id)}
+                                  disabled={isSubmitting || booking.status === 'cancelled'}
                                   className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                                 >
                                   <Check className="w-4 h-4" />
@@ -355,6 +388,7 @@ export default function AdminBookingsPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDeleteConfirm(booking.id)}
+                                disabled={booking.status === 'cancelled' || isSubmitting}
                                 className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -426,40 +460,58 @@ export default function AdminBookingsPage() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs">Payment Method</p>
-                  <p className="text-white font-medium">{viewBooking.paymentMethod || '-'}</p>
+                  <p className="text-white font-medium capitalize">{viewBooking.paymentMethod || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-xs">Status</p>
+                  <p className="text-slate-400 text-xs">Booking Status</p>
                   <Badge className={getStatusColor(viewBooking.status)}>
                     {getStatusLabel(viewBooking.status)}
                   </Badge>
                 </div>
+                <div>
+                  <p className="text-slate-400 text-xs">Payment Status</p>
+                  <Badge className={getStatusColor(viewBooking.paymentStatus)}>
+                    {getStatusLabel(viewBooking.paymentStatus || 'pending')}
+                  </Badge>
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-slate-700">
-                {viewBooking.status === 'confirmed' && (
+              <div className="grid gap-2 pt-4 border-t border-slate-700 sm:grid-cols-2">
+                {['pending', 'confirmed'].includes(viewBooking.status) && (
                   <Button
                     variant="outline"
-                    onClick={() => handleCancelBooking(viewBooking.id)}
-                    className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                    disabled={isSubmitting}
+                    onClick={() => handleUpdateStatus(viewBooking.id, 'cancelled')}
+                    className="border-red-500/50 text-red-400 hover:bg-red-500/10"
                   >
                     Cancel Booking
                   </Button>
                 )}
                 {viewBooking.status === 'pending' && (
                   <Button
-                    onClick={() => handleUpdateStatus(viewBooking.id, 'confirmed')}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                    disabled={isSubmitting}
+                    onClick={() => handleUpdateStatus(viewBooking.id, 'confirmed', 'completed')}
+                    className="bg-green-500 hover:bg-green-600 text-white"
                   >
                     Confirm Booking
                   </Button>
                 )}
                 {viewBooking.status === 'confirmed' && (
                   <Button
-                    onClick={() => handleUpdateStatus(viewBooking.id, 'completed')}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
+                    disabled={isSubmitting}
+                    onClick={() => handleUpdateStatus(viewBooking.id, 'used')}
+                    className="bg-orange-500 hover:bg-orange-600 text-white"
                   >
-                    Mark Completed
+                    Mark Used
+                  </Button>
+                )}
+                {viewBooking.status === 'completed' && (
+                  <Button
+                    disabled={isSubmitting}
+                    onClick={() => handleUpdateStatus(viewBooking.id, 'used')}
+                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    Mark Used
                   </Button>
                 )}
               </div>
