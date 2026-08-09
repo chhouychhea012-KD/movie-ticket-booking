@@ -51,7 +51,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
 
   return (
     <>
-      <section className="relative min-h-[570px] overflow-hidden bg-[#0b0d10] pt-12 sm:min-h-[650px] sm:pt-16">
+      <section className="relative min-h-[590px] overflow-hidden bg-[#0b0d10] pt-12 sm:min-h-[680px] sm:pt-16">
         <div className="absolute inset-0">
           <img
             src={currentMovie.backdrop || currentMovie.poster}
@@ -62,7 +62,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
           <div className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(0deg,#0b0d10_0%,rgba(11,13,16,0)_100%)]" />
         </div>
 
-        <div className="cinema-container relative z-10 flex min-h-[520px] items-center sm:min-h-[590px]">
+        <div className="cinema-container relative z-10 flex min-h-[520px] items-center sm:min-h-[600px]">
           <div className="grid w-full items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="max-w-2xl">
               <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -116,22 +116,22 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
         </div>
 
         {movies.length > 1 && (
-          <div className="cinema-container absolute inset-x-0 bottom-5 z-20 flex items-center justify-between sm:bottom-9">
-            <div className="flex items-center gap-2">
+          <div className="cinema-container absolute inset-x-0 bottom-20 z-20 flex items-center justify-center sm:bottom-28 sm:justify-between lg:bottom-32">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-2.5 py-2 backdrop-blur-md">
               {movies.slice(0, 5).map((movie, index) => (
                 <button
                   key={movie.id}
                   onClick={() => goTo(index)}
-                  className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'w-10 bg-[#e50914]' : 'w-5 bg-white/25 hover:bg-white/50'}`}
+                  className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'w-10 bg-[#e50914]' : 'w-5 bg-white/30 hover:bg-white/55'}`}
                   aria-label={`Show ${movie.title}`}
                 />
               ))}
             </div>
-            <div className="hidden gap-2 sm:flex">
-              <button onClick={previous} className="rounded-xl border border-[#252a32] bg-[#14171c]/90 p-3 text-white transition hover:bg-[#1b1f26]" aria-label="Previous movie">
+            <div className="hidden gap-3 sm:flex">
+              <button onClick={previous} className="rounded-2xl border border-white/10 bg-black/35 p-3.5 text-white backdrop-blur-md transition hover:bg-[#1b1f26]" aria-label="Previous movie">
                 <ChevronLeft className="h-5 w-5" />
               </button>
-              <button onClick={next} className="rounded-xl border border-[#252a32] bg-[#14171c]/90 p-3 text-white transition hover:bg-[#1b1f26]" aria-label="Next movie">
+              <button onClick={next} className="rounded-2xl border border-white/10 bg-black/35 p-3.5 text-white backdrop-blur-md transition hover:bg-[#1b1f26]" aria-label="Next movie">
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>

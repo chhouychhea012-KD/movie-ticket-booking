@@ -25,15 +25,15 @@ export default function Home() {
       <h1 className="sr-only">CamboCine movie ticket booking online in Cambodia</h1>
       <MovieSlideshow movies={nowShowing.slice(0, 5)} />
 
-      <section className="cinema-container relative z-20 -mt-8 sm:-mt-14">
-        <div className="cinema-card mx-auto grid max-w-6xl gap-2.5 p-3 shadow-[0_22px_70px_rgba(0,0,0,0.34)] sm:gap-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_300px_200px] lg:items-center lg:gap-5">
+      <section className="cinema-container relative z-20 -mt-12 sm:-mt-20">
+        <div className="cinema-card mx-auto grid max-w-6xl gap-3 p-4 shadow-[0_26px_80px_rgba(0,0,0,0.38)] sm:gap-4 sm:p-5 lg:grid-cols-[minmax(360px,1fr)_300px_220px] lg:items-center lg:gap-6 xl:max-w-7xl">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 sm:h-5 sm:w-5" />
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by movie, genre, or director"
-              className="h-12 w-full rounded-xl border border-[#252a32] bg-[#0f1217] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20 sm:h-14 sm:rounded-2xl sm:pl-12"
+              className="h-[52px] w-full rounded-xl border border-[#252a32] bg-[#0f1217] pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20 sm:h-14 sm:rounded-2xl sm:pl-12"
             />
             {results.length > 0 && (
               <div className="absolute left-0 right-0 top-14 z-30 max-h-[320px] overflow-y-auto rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/40 sm:top-[4.25rem] sm:max-h-[360px]">
@@ -53,14 +53,14 @@ export default function Home() {
           <select
             value={selectedCity}
             onChange={(event) => setSelectedCity(event.target.value)}
-            className="h-12 w-full rounded-xl border border-[#252a32] bg-[#0f1217] px-4 text-sm font-medium text-white outline-none transition focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20 sm:h-14 sm:rounded-2xl"
+            className="h-[52px] w-full rounded-xl border border-[#252a32] bg-[#0f1217] px-4 text-sm font-medium text-white outline-none transition focus:border-[#e50914] focus:ring-2 focus:ring-[#e50914]/20 sm:h-14 sm:rounded-2xl"
           >
             {cities.map((city) => (
               <option key={city.id} value={city.name}>{city.name}</option>
             ))}
           </select>
 
-          <Link href="/movies" className="cinema-button-primary h-12 w-full rounded-xl px-5 py-0 sm:h-14 sm:rounded-2xl">
+          <Link href="/movies" className="cinema-button-primary h-[52px] w-full rounded-xl px-5 py-0 sm:h-14 sm:rounded-2xl">
             <Ticket className="h-4 w-4" />
             <span className="whitespace-nowrap">Browse Movies</span>
           </Link>
