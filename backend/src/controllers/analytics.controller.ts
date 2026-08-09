@@ -7,11 +7,20 @@ import Cinema from '../models/Cinema';
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const revenueWhere = {
+    const rawDays = Number(req.query.days || 30);
+    const days = Number.isFinite(rawDays) ? Math.min(Math.max(Math.floor(rawDays), 1), 365) : 30;
+    const today = new Date();
+    const periodStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days + 1, 0, 0, 0);
+
+    const revenueWhere: any = {
       paymentStatus: 'completed',
-      status: { [Op.ne]: 'cancelled' }
+      status: { [Op.ne]: 'cancelled' },
+      bookingDate: { [Op.gte]: periodStart },
     };
-    const activeBookingWhere = { status: { [Op.ne]: 'cancelled' } };
+    const activeBookingWhere: any = {
+      status: { [Op.ne]: 'cancelled' },
+      bookingDate: { [Op.gte]: periodStart },
+    };
 
     const totalRevenue = await Booking.sum('totalPrice', { where: revenueWhere });
 
@@ -27,19 +36,21 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     }) as any;
     const averageRating = Number(averageRatingResult?.averageRating || 0);
 
-    const today = new Date();
-    const last7Days: Array<{ date: string; day: string }> = [];
-    for (let i = 6; i >= 0; i--) {
+    const chartDays = Math.min(days, 30);
+    const trendDays: Array<{ date: string; day: string }> = [];
+    for (let i = chartDays - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      last7Days.push({
+      trendDays.push({
         date: date.toISOString().split('T')[0],
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        day: chartDays <= 10
+          ? date.toLocaleDateString('en-US', { weekday: 'short' })
+          : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       });
     }
 
     const weeklyRevenue = await Promise.all(
-      last7Days.map(async ({ date, day }) => {
+      trendDays.map(async ({ date, day }) => {
         const revenue = await Booking.sum('totalPrice', {
           where: {
             bookingDate: {
@@ -95,7 +106,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const bookingsByStatus = await Promise.all(
       statusLabels.map(async (status) => ({
         name: status.charAt(0).toUpperCase() + status.slice(1),
-        value: await Booking.count({ where: { status } }),
+        value: await Booking.count({ where: { ...activeBookingWhere, status } }),
         color: statusColors[status],
       }))
     );
@@ -107,10 +118,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         [Booking.sequelize!.fn('SUM', Booking.sequelize!.col('totalPrice')), 'revenue'],
         [Booking.sequelize!.fn('COUNT', Booking.sequelize!.col('id')), 'bookings'],
       ],
-      where: { 
-        paymentStatus: 'completed',
-        status: { [Op.ne]: 'cancelled' }
-      },
+      where: revenueWhere,
       group: ['movieId', 'movieTitle'],
       order: [[Booking.sequelize!.literal('revenue'), 'DESC']],
       limit: 5,

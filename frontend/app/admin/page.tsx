@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Filter, TrendingUp, Ticket, DollarSign, Activity, BarChart3 } from 'lucide-react'
+import { Calendar, Clock, RefreshCw, TrendingUp, Ticket, DollarSign, Activity, BarChart3 } from 'lucide-react'
 import AdminStats from '@/components/admin-stats'
 import AdminBookingsList from '@/components/admin-bookings-list'
 import { Booking } from '@/types/booking'
@@ -11,8 +11,6 @@ import { analyticsAPI, bookingsAPI } from '@/lib/api'
 import { 
   LineChart, 
   Line, 
-  AreaChart, 
-  Area, 
   BarChart, 
   Bar, 
   XAxis, 
@@ -100,15 +98,19 @@ const defaultData: DashboardData = {
 export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [rangeDays, setRangeDays] = useState(30)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [dashboardData, setDashboardData] = useState<DashboardData>(defaultData)
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true)
+        setError('')
         
         const [analyticsRes, bookingsRes] = await Promise.all([
-          analyticsAPI.getDashboard(),
+          analyticsAPI.getDashboard({ days: rangeDays }),
           bookingsAPI.getAdminAll({ limit: 100 })
         ])
 
@@ -144,6 +146,7 @@ export default function AdminPage() {
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err)
+        setError('Dashboard data could not be loaded. Check the backend API and your admin permissions.')
         const storedBookings = localStorage.getItem('bookings')
         if (storedBookings) {
           setBookings(JSON.parse(storedBookings))
@@ -154,7 +157,7 @@ export default function AdminPage() {
     }
 
     fetchDashboardData()
-  }, [])
+  }, [rangeDays, refreshKey])
 
   const { weeklyRevenue, hourlyBookings, bookingsByStatus, revenueByGenre, topMovies, topGenres, monthlyTrend } = dashboardData
   const totalRevenue = dashboardData.totalRevenue
@@ -163,24 +166,48 @@ export default function AdminPage() {
   return (
     <div className="space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl lg:text-4xl font-bold text-white">Dashboard</h1>
-          <p className="text-slate-400 mt-1">Welcome back! Here's what's happening with your cinema.</p>
+          <p className="text-slate-400 mt-1">Live cinema performance from backend data.</p>
         </div>
         
         {/* Quick Actions */}
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-lg text-slate-300 text-sm transition">
-            <Calendar className="w-4 h-4" />
-            <span>Last 30 days</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-lg text-slate-300 text-sm transition">
-            <Filter className="w-4 h-4" />
-            <span>Filter</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center rounded-xl border border-slate-700/70 bg-slate-800/70 p-1">
+            <Calendar className="ml-2 h-4 w-4 text-slate-400" />
+            {[7, 30, 90].map((days) => (
+              <button
+                key={days}
+                type="button"
+                onClick={() => setRangeDays(days)}
+                className={`ml-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                  rangeDays === days
+                    ? 'bg-orange-500 text-white'
+                    : 'text-slate-400 hover:bg-slate-700/70 hover:text-white'
+                }`}
+              >
+                {days}d
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setRefreshKey((value) => value + 1)}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-800/70 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-slate-600 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <AdminStats
@@ -199,19 +226,13 @@ export default function AdminPage() {
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-500" />
-              Weekly Performance
+              {rangeDays} Day Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={weeklyRevenue}>
-                  <defs>
-                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis 
                     dataKey="day" 
@@ -239,14 +260,13 @@ export default function AdminPage() {
                     }}
                   />
                   <Legend />
-                  <Area 
+                  <Line 
                     yAxisId="left"
                     type="monotone" 
                     dataKey="revenue" 
                     stroke="#10b981" 
                     strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorRevenue)"
+                    dot={false}
                     name="Revenue ($)"
                   />
                   <Bar 

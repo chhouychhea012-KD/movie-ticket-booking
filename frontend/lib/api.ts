@@ -380,8 +380,11 @@ export const couponsAPI = {
 
 // ============ ANALYTICS API ============
 export const analyticsAPI = {
-  getDashboard: async () => {
-    const response = await fetch(`${API_BASE_URL}/analytics/dashboard`, {
+  getDashboard: async (params?: { days?: number }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.days) searchParams.set('days', params.days.toString())
+
+    const response = await fetch(`${API_BASE_URL}/analytics/dashboard?${searchParams.toString()}`, {
       headers: getHeaders(),
     })
     return handleResponse<any>(response)
