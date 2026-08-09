@@ -5,36 +5,80 @@ import Movie from '../models/Movie';
 import User from '../models/User';
 import Cinema from '../models/Cinema';
 
+const toNumber = (value: unknown): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toDate = (value: unknown): Date => {
+  if (value instanceof Date) return value;
+  const parsed = new Date(String(value));
+  return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
+};
+
+const formatDateKey = (date: Date): string => date.toISOString().split('T')[0];
+
+const parseGenres = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    const genres = value.map((genre) => String(genre).trim()).filter(Boolean);
+    return genres.length > 0 ? genres : ['Other'];
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        const genres = parsed.map((genre) => String(genre).trim()).filter(Boolean);
+        return genres.length > 0 ? genres : ['Other'];
+      }
+    } catch {
+      const genres = value.split(',').map((genre) => genre.trim()).filter(Boolean);
+      return genres.length > 0 ? genres : ['Other'];
+    }
+  }
+
+  return ['Other'];
+};
+
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const rawDays = Number(req.query.days || 30);
     const days = Number.isFinite(rawDays) ? Math.min(Math.max(Math.floor(rawDays), 1), 365) : 30;
     const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const tomorrowStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
     const periodStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days + 1, 0, 0, 0);
+    const sixMonthStart = new Date(today.getFullYear(), today.getMonth() - 5, 1);
 
-    const revenueWhere: any = {
-      paymentStatus: 'completed',
-      status: { [Op.ne]: 'cancelled' },
-      bookingDate: { [Op.gte]: periodStart },
-    };
     const activeBookingWhere: any = {
       status: { [Op.ne]: 'cancelled' },
-      bookingDate: { [Op.gte]: periodStart },
+      bookingDate: { [Op.gte]: sixMonthStart },
     };
 
-    const totalRevenue = await Booking.sum('totalPrice', { where: revenueWhere });
+    const [analyticsBookings, movies, totalUsers, activeCinemas] = await Promise.all([
+      Booking.findAll({
+        where: activeBookingWhere,
+        attributes: ['id', 'movieId', 'movieTitle', 'totalPrice', 'paymentStatus', 'status', 'bookingDate'],
+        raw: true,
+      }) as Promise<any[]>,
+      Movie.findAll({
+        attributes: ['id', 'title', 'genre', 'rating', 'status'],
+        raw: true,
+      }) as Promise<any[]>,
+      User.count({ where: { role: 'customer' } }),
+      Cinema.count({ where: { isActive: true } }),
+    ]);
 
-    const totalBookings = await Booking.count({ where: activeBookingWhere });
-
-    const totalUsers = await User.count({ where: { role: 'customer' } });
-    const activeMovies = await Movie.count({ where: { status: 'now_showing' } });
-    const activeCinemas = await Cinema.count({ where: { isActive: true } });
-
-    const averageRatingResult = await Movie.findOne({
-      attributes: [[Movie.sequelize!.fn('AVG', Movie.sequelize!.col('rating')), 'averageRating']],
-      raw: true,
-    }) as any;
-    const averageRating = Number(averageRatingResult?.averageRating || 0);
+    const movieById = new Map(movies.map((movie) => [movie.id, movie]));
+    const periodBookings = analyticsBookings.filter((booking) => toDate(booking.bookingDate) >= periodStart);
+    const paidBookings = periodBookings.filter((booking) => booking.paymentStatus === 'completed');
+    const totalRevenue = paidBookings.reduce((sum, booking) => sum + toNumber(booking.totalPrice), 0);
+    const totalBookings = periodBookings.length;
+    const activeMovies = movies.filter((movie) => movie.status === 'now_showing').length;
+    const movieRatings = movies.map((movie) => toNumber(movie.rating)).filter((rating) => rating > 0);
+    const averageRating = movieRatings.length > 0
+      ? movieRatings.reduce((sum, rating) => sum + rating, 0) / movieRatings.length
+      : 0;
 
     const chartDays = Math.min(days, 30);
     const trendDays: Array<{ date: string; day: string }> = [];
@@ -42,57 +86,43 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       trendDays.push({
-        date: date.toISOString().split('T')[0],
+        date: formatDateKey(date),
         day: chartDays <= 10
           ? date.toLocaleDateString('en-US', { weekday: 'short' })
           : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       });
     }
 
-    const weeklyRevenue = await Promise.all(
-      trendDays.map(async ({ date, day }) => {
-        const revenue = await Booking.sum('totalPrice', {
-          where: {
-            bookingDate: {
-              [Op.gte]: `${date}T00:00:00`,
-              [Op.lt]: `${date}T23:59:59`,
-            },
-            paymentStatus: 'completed',
-            status: { [Op.ne]: 'cancelled' },
-          },
-        });
+    const bookingsByDate = new Map<string, { revenue: number; bookings: number }>();
+    periodBookings.forEach((booking) => {
+      const dateKey = formatDateKey(toDate(booking.bookingDate));
+      const current = bookingsByDate.get(dateKey) || { revenue: 0, bookings: 0 };
+      current.bookings += 1;
+      if (booking.paymentStatus === 'completed') {
+        current.revenue += toNumber(booking.totalPrice);
+      }
+      bookingsByDate.set(dateKey, current);
+    });
 
-        const bookings = await Booking.count({
-          where: {
-            bookingDate: {
-              [Op.gte]: `${date}T00:00:00`,
-              [Op.lt]: `${date}T23:59:59`,
-            },
-            status: { [Op.ne]: 'cancelled' },
-          },
-        });
-
-        return { day, date, revenue: Number(revenue || 0), bookings, expenses: 0 };
-      })
-    );
+    const weeklyRevenue = trendDays.map(({ date, day }) => {
+      const totals = bookingsByDate.get(date) || { revenue: 0, bookings: 0 };
+      return { day, date, revenue: totals.revenue, bookings: totals.bookings, expenses: 0 };
+    });
 
     const hourLabels = Array.from({ length: 14 }, (_, index) => index + 10);
-    const hourlyBookings = await Promise.all(
-      hourLabels.map(async (hour) => {
-        const bookings = await Booking.count({
-          where: {
-            bookingDate: {
-              [Op.gte]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, 0, 0),
-              [Op.lt]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour + 1, 0, 0),
-            },
-            status: { [Op.ne]: 'cancelled' },
-          },
-        });
-
-        const labelHour = hour > 12 ? hour - 12 : hour;
-        return { hour: `${labelHour} ${hour >= 12 ? 'PM' : 'AM'}`, bookings };
-      })
-    );
+    const todayBookingsList = periodBookings.filter((booking) => {
+      const bookingDate = toDate(booking.bookingDate);
+      return bookingDate >= todayStart && bookingDate < tomorrowStart;
+    });
+    const bookingsByHour = new Map<number, number>();
+    todayBookingsList.forEach((booking) => {
+      const hour = toDate(booking.bookingDate).getHours();
+      bookingsByHour.set(hour, (bookingsByHour.get(hour) || 0) + 1);
+    });
+    const hourlyBookings = hourLabels.map((hour) => {
+      const labelHour = hour > 12 ? hour - 12 : hour;
+      return { hour: `${labelHour} ${hour >= 12 ? 'PM' : 'AM'}`, bookings: bookingsByHour.get(hour) || 0 };
+    });
 
     const statusColors: Record<string, string> = {
       confirmed: '#22c55e',
@@ -103,55 +133,42 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       expired: '#64748b',
     };
     const statusLabels = ['confirmed', 'pending', 'cancelled', 'completed', 'used', 'expired'];
-    const bookingsByStatus = await Promise.all(
-      statusLabels.map(async (status) => ({
+    const bookingsByStatus = statusLabels.map((status) => ({
         name: status.charAt(0).toUpperCase() + status.slice(1),
-        value: await Booking.count({ where: { ...activeBookingWhere, status } }),
+        value: periodBookings.filter((booking) => booking.status === status).length,
         color: statusColors[status],
-      }))
-    );
+      }));
 
-    const topMoviesData = await Booking.findAll({
-      attributes: [
-        'movieId',
-        'movieTitle',
-        [Booking.sequelize!.fn('SUM', Booking.sequelize!.col('totalPrice')), 'revenue'],
-        [Booking.sequelize!.fn('COUNT', Booking.sequelize!.col('id')), 'bookings'],
-      ],
-      where: revenueWhere,
-      group: ['movieId', 'movieTitle'],
-      order: [[Booking.sequelize!.literal('revenue'), 'DESC']],
-      limit: 5,
+    const topMovieMap = new Map<string, { movieId: string; title: string; revenue: number; bookings: number }>();
+    paidBookings.forEach((booking) => {
+      const movieId = booking.movieId || 'unknown';
+      const current = topMovieMap.get(movieId) || {
+        movieId,
+        title: booking.movieTitle || movieById.get(movieId)?.title || 'Unknown Movie',
+        revenue: 0,
+        bookings: 0,
+      };
+      current.revenue += toNumber(booking.totalPrice);
+      current.bookings += 1;
+      topMovieMap.set(movieId, current);
     });
-
-    const topMovieIds = topMoviesData.map((m: any) => m.movieId);
-    const topMovieRows = topMovieIds.length > 0
-      ? await Movie.findAll({ where: { id: { [Op.in]: topMovieIds } }, attributes: ['id', 'rating'] })
-      : [];
-    const ratingByMovieId = new Map(topMovieRows.map((movie: any) => [movie.id, Number(movie.rating || 0)]));
-
-    const topMovies = topMoviesData.map((m: any) => ({
-      movieId: m.movieId,
-      title: m.movieTitle,
-      movieTitle: m.movieTitle,
-      revenue: parseFloat(m.dataValues.revenue) || 0,
-      bookings: parseInt(m.dataValues.bookings) || 0,
-      rating: ratingByMovieId.get(m.movieId) || 0,
-      occupancyRate: 0,
-    }));
-
-    const paidBookings = await Booking.findAll({
-      where: revenueWhere,
-      include: [{ model: Movie, as: 'movie', attributes: ['genre', 'rating'] }],
-    });
+    const topMovies = Array.from(topMovieMap.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5)
+      .map((movie) => ({
+        ...movie,
+        movieTitle: movie.title,
+        rating: toNumber(movieById.get(movie.movieId)?.rating),
+        occupancyRate: 0,
+      }));
 
     const genreRevenue = new Map<string, number>();
     const genreBookings = new Map<string, number>();
     paidBookings.forEach((booking: any) => {
-      const movie = booking.get('movie') as any;
-      const genres = Array.isArray(movie?.genre) && movie.genre.length > 0 ? movie.genre : ['Other'];
+      const movie = movieById.get(booking.movieId);
+      const genres = parseGenres(movie?.genre);
       genres.forEach((genre: string) => {
-        genreRevenue.set(genre, (genreRevenue.get(genre) || 0) + Number(booking.totalPrice || 0));
+        genreRevenue.set(genre, (genreRevenue.get(genre) || 0) + toNumber(booking.totalPrice));
         genreBookings.set(genre, (genreBookings.get(genre) || 0) + 1);
       });
     });
@@ -181,44 +198,28 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       }).map(async (monthDate) => {
         const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
         const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
-
-        const revenue = await Booking.sum('totalPrice', {
-          where: {
-            ...revenueWhere,
-            bookingDate: { [Op.gte]: monthStart, [Op.lt]: monthEnd },
-          },
+        const monthBookings = analyticsBookings.filter((booking) => {
+          const bookingDate = toDate(booking.bookingDate);
+          return bookingDate >= monthStart && bookingDate < monthEnd;
         });
-        const bookings = await Booking.count({
-          where: {
-            ...activeBookingWhere,
-            bookingDate: { [Op.gte]: monthStart, [Op.lt]: monthEnd },
-          },
-        });
+        const revenue = monthBookings
+          .filter((booking) => booking.paymentStatus === 'completed')
+          .reduce((sum, booking) => sum + toNumber(booking.totalPrice), 0);
 
-        return { month: monthFormatter.format(monthDate), revenue: Number(revenue || 0), bookings };
+        return { month: monthFormatter.format(monthDate), revenue, bookings: monthBookings.length };
       })
     );
-
-    const todayBookings = await Booking.count({
-      where: {
-        ...activeBookingWhere,
-        bookingDate: {
-          [Op.gte]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0),
-          [Op.lt]: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0),
-        },
-      },
-    });
 
     res.json({
       success: true,
       data: {
-        totalRevenue: Number(totalRevenue || 0),
+        totalRevenue,
         totalBookings,
         totalUsers,
         activeMovies,
         activeCinemas,
         averageRating: Number(averageRating.toFixed(1)),
-        todayBookings,
+        todayBookings: todayBookingsList.length,
         occupancyRate: 0,
         weeklyRevenue,
         hourlyBookings,

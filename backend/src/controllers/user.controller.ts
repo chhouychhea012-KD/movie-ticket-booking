@@ -3,11 +3,11 @@ import { Op } from 'sequelize';
 import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
 
-const protectedRoles = ['admin', 'owner'];
+const protectedRoles = ['owner'];
 
 const canManageRole = (actorRole: string | undefined, targetRole: string): boolean => {
   if (actorRole === 'owner') return true;
-  if (actorRole === 'admin') return ['customer', 'staff'].includes(targetRole);
+  if (actorRole === 'admin') return targetRole !== 'owner';
   return false;
 };
 
@@ -167,7 +167,7 @@ export const updateUser = async (req: AuthRequest, res: Response): Promise<void>
     if (protectedRoles.includes(user.role) && req.userRole !== 'owner') {
       res.status(403).json({
         success: false,
-        message: 'Only the owner can update admin or owner accounts',
+        message: 'Only the owner can update owner accounts',
       });
       return;
     }

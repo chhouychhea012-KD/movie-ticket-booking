@@ -235,7 +235,7 @@ export default function CustomersPage() {
   }
 
   const allowedRoleOptions = roleOptions.filter((role) => (
-    currentUser?.role === 'owner' ? true : ['customer', 'staff'].includes(role.value)
+    currentUser?.role === 'owner' ? true : role.value !== 'owner'
   ))
 
   const canDeleteUser = (targetUser: User) => {

@@ -27,4 +27,4 @@ export const canAccessAdmin = (role: string | undefined, pathname = '/admin') =>
   return match ? match.roles.includes(role as UserRole) : false
 }
 
-export const canManageAdminUsers = (role: string | undefined) => role === 'owner'
+export const canManageAdminUsers = (role: string | undefined) => role === 'admin' || role === 'owner'
