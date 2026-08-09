@@ -48,6 +48,7 @@ export default function NotificationsPage() {
   const [showModal, setShowModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     type: 'system' as string,
@@ -103,49 +104,69 @@ export default function NotificationsPage() {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await notificationsAPI.markAsRead(id)
-      setNotifications(notifications.map(n => 
-        n.id === id ? { ...n, read: true } : n
-      ))
-      loadStats()
+      const response = await notificationsAPI.markAsRead(id)
+      if (response.success) {
+        setNotifications(notifications.map(n => 
+          n.id === id ? { ...n, read: true } : n
+        ))
+        loadStats()
+      } else {
+        setError(response.message || 'Failed to mark notification as read')
+      }
     } catch (err: any) {
-      console.error('Failed to mark as read:', err)
+      setError(err.message || 'Failed to mark notification as read')
     }
   }
 
   const handleMarkAllAsRead = async () => {
     try {
-      await notificationsAPI.markAllAsRead()
-      setNotifications(notifications.map(n => ({ ...n, read: true })))
-      loadStats()
+      const response = await notificationsAPI.markAllAsRead()
+      if (response.success) {
+        setNotifications(notifications.map(n => ({ ...n, read: true })))
+        setSuccess('All notifications marked as read')
+        loadStats()
+      } else {
+        setError(response.message || 'Failed to mark all as read')
+      }
     } catch (err: any) {
-      console.error('Failed to mark all as read:', err)
+      setError(err.message || 'Failed to mark all as read')
     }
   }
 
   const handleDelete = async (id: string) => {
     try {
-      await notificationsAPI.delete(id)
-      setNotifications(notifications.filter(n => n.id !== id))
-      loadStats()
+      const response = await notificationsAPI.delete(id)
+      if (response.success) {
+        setNotifications(notifications.filter(n => n.id !== id))
+        loadStats()
+      } else {
+        setError(response.message || 'Failed to delete notification')
+      }
     } catch (err: any) {
-      console.error('Failed to delete notification:', err)
+      setError(err.message || 'Failed to delete notification')
     }
   }
 
   const handleDeleteAll = async () => {
+    if (!window.confirm('Delete all notifications? This cannot be undone.')) return
     try {
-      await notificationsAPI.deleteAll()
-      setNotifications([])
-      loadStats()
+      const response = await notificationsAPI.deleteAll()
+      if (response.success) {
+        setNotifications([])
+        setSuccess('All notifications deleted')
+        loadStats()
+      } else {
+        setError(response.message || 'Failed to delete all notifications')
+      }
     } catch (err: any) {
-      console.error('Failed to delete all:', err)
+      setError(err.message || 'Failed to delete all notifications')
     }
   }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError(null)
     try {
       const response = await notificationsAPI.create({
         type: formData.type,
@@ -156,10 +177,13 @@ export default function NotificationsPage() {
         setNotifications([response.data, ...notifications])
         setShowModal(false)
         setFormData({ type: 'system', title: '', message: '' })
+        setSuccess('Notification created')
         loadStats()
+      } else {
+        setError(response.message || 'Failed to create notification')
       }
     } catch (err: any) {
-      console.error('Failed to create notification:', err)
+      setError(err.message || 'Failed to create notification')
     } finally {
       setIsSubmitting(false)
     }
@@ -198,6 +222,15 @@ export default function NotificationsPage() {
         <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-3 rounded-lg flex items-center justify-between">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-red-500 hover:text-red-400">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-500/10 border border-green-500/50 text-green-400 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{success}</span>
+          <button onClick={() => setSuccess(null)} className="text-green-400 hover:text-green-300">
             <X className="w-4 h-4" />
           </button>
         </div>

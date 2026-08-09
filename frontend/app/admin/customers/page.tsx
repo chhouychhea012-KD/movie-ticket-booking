@@ -132,9 +132,10 @@ export default function CustomersPage() {
         }
         const response = await usersAPI.update(editingUser.id, updateData)
         if (response.success) {
+          const updatedUser = response.data ? response.data as User : { ...editingUser, ...updateData }
           setUsers(users.map(user => 
             user.id === editingUser.id 
-              ? { ...user, ...updateData }
+              ? { ...user, ...updatedUser }
               : user
           ))
           setShowModal(false)
@@ -190,11 +191,14 @@ export default function CustomersPage() {
     try {
       const response = await usersAPI.update(user.id, { isActive: !user.isActive })
       if (response.success) {
+        const updatedUser = response.data ? response.data as User : { ...user, isActive: !user.isActive }
         setUsers(users.map(u => 
           u.id === user.id 
-            ? { ...u, isActive: !u.isActive }
+            ? { ...u, ...updatedUser }
             : u
         ))
+      } else {
+        setError(response.message || 'Failed to update user status')
       }
     } catch (err: any) {
       setError(err.message || 'Failed to update user status')
@@ -215,7 +219,7 @@ export default function CustomersPage() {
     
     const csvContent = [
       headers.join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ...rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
     ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv' })
@@ -224,6 +228,7 @@ export default function CustomersPage() {
     a.href = url
     a.download = 'users.csv'
     a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   const getRoleBadgeClass = (role: string) => {

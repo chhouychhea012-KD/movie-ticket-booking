@@ -66,6 +66,37 @@ const defaultAnalytics: AnalyticsData = {
   revenueByGenre: []
 }
 
+const rangeToDays: Record<string, number> = {
+  '7d': 7,
+  '30d': 30,
+  '6m': 180,
+  '1y': 365,
+}
+
+const normalizeAnalytics = (data: any): AnalyticsData => {
+  const revenueByMonth = (data.monthlyTrend || data.revenueByMonth || data.weeklyRevenue || []).map((item: any) => ({
+    month: item.month || item.day || item.date,
+    revenue: Number(item.revenue || 0),
+    bookings: Number(item.bookings || 0),
+    expenses: Number(item.expenses || 0),
+  }))
+
+  const totalUsers = Number(data.totalUsers || 0)
+
+  return {
+    totalRevenue: Number(data.totalRevenue || 0),
+    totalBookings: Number(data.totalBookings || 0),
+    totalUsers,
+    occupancyRate: Number(data.occupancyRate || 0),
+    revenueByMonth,
+    topMovies: data.topMovies || [],
+    peakHours: data.peakHours || data.hourlyBookings || [],
+    userDemographics: data.userDemographics || [{ name: 'Users', value: totalUsers, color: '#22c55e' }],
+    bookingStatus: data.bookingStatus || data.bookingsByStatus || [],
+    revenueByGenre: data.revenueByGenre || [],
+  }
+}
+
 // Chart configurations
 const revenueChartConfig = {
   revenue: {
@@ -89,18 +120,22 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('6m')
   const [isLoading, setIsLoading] = useState(true)
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>(defaultAnalytics)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
         setIsLoading(true)
-        const response = await analyticsAPI.getDashboard()
+        setError(null)
+        const response = await analyticsAPI.getDashboard({ days: rangeToDays[timeRange] || 30 })
         
         if (response.success && response.data) {
-          setAnalyticsData(response.data)
+          setAnalyticsData(normalizeAnalytics(response.data))
+        } else {
+          setError(response.message || 'Failed to load analytics')
         }
-      } catch (err) {
-        console.error('Failed to fetch analytics:', err)
+      } catch (err: any) {
+        setError(err.message || 'Failed to load analytics')
       } finally {
         setIsLoading(false)
       }
@@ -118,6 +153,27 @@ export default function AnalyticsPage() {
   }
 
   const { totalRevenue, totalBookings, totalUsers, occupancyRate, revenueByMonth, topMovies, peakHours, userDemographics, bookingStatus, revenueByGenre } = analyticsData
+
+  const exportAnalytics = () => {
+    const rows = [
+      ['Metric', 'Value'],
+      ['Total Revenue', totalRevenue],
+      ['Total Bookings', totalBookings],
+      ['Total Users', totalUsers],
+      ['Occupancy Rate', `${occupancyRate}%`],
+      [],
+      ['Month', 'Revenue', 'Bookings'],
+      ...revenueByMonth.map((item) => [item.month, item.revenue, item.bookings]),
+    ]
+    const csv = rows.map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'analytics.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="space-y-8">
@@ -140,12 +196,18 @@ export default function AnalyticsPage() {
             <option value="6m">Last 6 months</option>
             <option value="1y">Last year</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm transition">
+          <button onClick={exportAnalytics} className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm transition">
             <Download className="w-4 h-4" />
             <span>Export</span>
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-red-400">
+          {error}
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

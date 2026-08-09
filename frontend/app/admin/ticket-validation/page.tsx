@@ -2,42 +2,78 @@
 
 import { useState, useEffect } from 'react'
 import { ticketsAPI } from '@/lib/api'
-import { QrCode, Search, Check, X, Clock, AlertTriangle, Camera, RefreshCw, User, Calendar, Ticket } from 'lucide-react'
+import { QrCode, Check, X, AlertTriangle, Camera, RefreshCw, Ticket, Loader2 } from 'lucide-react'
 
 export default function TicketValidationPage() {
   const [scanInput, setScanInput] = useState('')
   const [scannedTickets, setScannedTickets] = useState<any[]>([])
+  const [stats, setStats] = useState<any>({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [isValidating, setIsValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<{
     status: 'success' | 'error' | 'warning' | null
     message: string
     ticket: any
   }>({ status: null, message: '', ticket: null })
 
-  // In a real app, this would use a camera-based QR scanner
+  const getSeatsText = (ticket: any) => {
+    const seats = Array.isArray(ticket?.seats) ? ticket.seats : []
+    if (seats.length === 0) return '-'
+    return seats.map((seat: any) => typeof seat === 'string' ? seat : seat.seatNumber).filter(Boolean).join(', ')
+  }
+
+  const loadValidationData = async () => {
+    try {
+      setIsLoading(true)
+      const [recentRes, statsRes] = await Promise.all([
+        ticketsAPI.getRecent(20),
+        ticketsAPI.getStats(),
+      ])
+
+      if (recentRes.success && recentRes.data?.validations) {
+        setScannedTickets(recentRes.data.validations)
+      }
+
+      if (statsRes.success && statsRes.data) {
+        setStats(statsRes.data)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadValidationData()
+  }, [])
+
   const handleManualScan = async () => {
-    if (!scanInput.trim()) return
+    if (!scanInput.trim() || isValidating) return
 
     const ticketCode = scanInput.trim().toUpperCase()
     
     try {
-      // Call the API to validate the ticket
+      setIsValidating(true)
       const response = await ticketsAPI.validate(ticketCode)
+      const result = response.data || response
       
-      if (response.success && response.data) {
+      if (response.success) {
         setValidationResult({
-          status: response.data.status,
-          message: response.data.message,
-          ticket: response.data.ticket
+          status: result.status || 'success',
+          message: result.message || response.message || 'Ticket validated successfully.',
+          ticket: result.ticket
         })
         
-        if (response.data.status === 'success') {
-          setScannedTickets([...scannedTickets, response.data.ticket])
+        if ((result.status || 'success') === 'success' && result.ticket) {
+          setScannedTickets([{ ...result.ticket, validatedAt: new Date().toISOString() }, ...scannedTickets])
+          ticketsAPI.getStats().then((statsRes) => {
+            if (statsRes.success && statsRes.data) setStats(statsRes.data)
+          })
         }
       } else {
         setValidationResult({
-          status: 'error',
+          status: (result.status as any) || 'error',
           message: response.message || 'Ticket not found. Please check the ticket code.',
-          ticket: null
+          ticket: result.ticket || null
         })
       }
     } catch (error) {
@@ -46,6 +82,8 @@ export default function TicketValidationPage() {
         message: 'Failed to validate ticket. Please try again.',
         ticket: null
       })
+    } finally {
+      setIsValidating(false)
     }
     
     setScanInput('')
@@ -76,6 +114,20 @@ export default function TicketValidationPage() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {[
+          ['Valid Tickets', stats.validTickets || 0],
+          ['Used Tickets', stats.usedTicketCount || stats.usedTickets || 0],
+          ['Confirmed Bookings', stats.confirmedBookings || 0],
+          ['Validation Rate', `${stats.validationRate || 0}%`],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-2xl border border-slate-700/50 bg-slate-800/60 p-4">
+            <p className="text-sm text-slate-400">{label}</p>
+            <p className="mt-1 text-2xl font-bold text-white">{value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Scanner Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Scanner Input */}
@@ -102,9 +154,10 @@ export default function TicketValidationPage() {
                 />
                 <button
                   onClick={handleManualScan}
+                  disabled={isValidating}
                   className="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition flex items-center gap-2"
                 >
-                  <QrCode className="w-5 h-5" />
+                  {isValidating ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
                   Validate
                 </button>
               </div>
@@ -172,7 +225,7 @@ export default function TicketValidationPage() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Seats</span>
                     <span className="text-white">
-                      {validationResult.ticket.seats.map((s: any) => s.seatNumber).join(', ')}
+                      {getSeatsText(validationResult.ticket)}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -202,7 +255,11 @@ export default function TicketValidationPage() {
           <h2 className="text-xl font-bold text-white">Recent Validations</h2>
         </div>
         
-        {scannedTickets.length > 0 ? (
+        {isLoading ? (
+          <div className="flex h-48 items-center justify-center">
+            <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+          </div>
+        ) : scannedTickets.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -240,7 +297,7 @@ export default function TicketValidationPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-slate-400 text-sm">
-                        {new Date().toLocaleString()}
+                        {new Date(ticket.validatedAt || ticket.updatedAt || ticket.createdAt || Date.now()).toLocaleString()}
                       </span>
                     </td>
                   </tr>
