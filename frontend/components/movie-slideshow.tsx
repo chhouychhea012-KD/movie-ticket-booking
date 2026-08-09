@@ -105,6 +105,19 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                   </button>
                 )}
               </div>
+
+              {movies.length > 1 && (
+                <div className="mt-6 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-2 backdrop-blur-md">
+                  {movies.slice(0, 5).map((movie, index) => (
+                    <button
+                      key={movie.id}
+                      onClick={() => goTo(index)}
+                      className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'w-10 bg-[#e50914]' : 'w-5 bg-white/30 hover:bg-white/55'}`}
+                      aria-label={`Show ${movie.title}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="hidden justify-end lg:flex">
@@ -116,18 +129,8 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
         </div>
 
         {movies.length > 1 && (
-          <div className="cinema-container absolute inset-x-0 bottom-20 z-20 flex items-center justify-center sm:bottom-28 sm:justify-between lg:bottom-32">
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-2.5 py-2 backdrop-blur-md">
-              {movies.slice(0, 5).map((movie, index) => (
-                <button
-                  key={movie.id}
-                  onClick={() => goTo(index)}
-                  className={`h-1.5 rounded-full transition-all ${index === currentIndex ? 'w-10 bg-[#e50914]' : 'w-5 bg-white/30 hover:bg-white/55'}`}
-                  aria-label={`Show ${movie.title}`}
-                />
-              ))}
-            </div>
-            <div className="hidden gap-3 sm:flex">
+          <div className="cinema-container absolute inset-x-0 bottom-24 z-20 hidden justify-end sm:flex lg:bottom-32">
+            <div className="flex gap-3">
               <button onClick={previous} className="rounded-2xl border border-white/10 bg-black/35 p-3.5 text-white backdrop-blur-md transition hover:bg-[#1b1f26]" aria-label="Previous movie">
                 <ChevronLeft className="h-5 w-5" />
               </button>
