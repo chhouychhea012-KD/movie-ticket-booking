@@ -1,137 +1,151 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { paymentsAPI } from '@/lib/api'
-import { CreditCard, Search, Filter, Download, DollarSign, CheckCircle, Clock, XCircle, Wallet, Banknote } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Banknote,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Download,
+  Eye,
+  Loader2,
+  RefreshCw,
+  Search,
+  Wallet,
+  X,
+  XCircle,
+} from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+
+type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded'
 
 interface PaymentRecord {
   id: string
   bookingId?: string
   movieTitle: string
   showtime: string
-  seats: string[]
+  seats: Array<string | { seatNumber?: string }>
   ticketPrice: number
   totalPrice: number
   bookingDate: string
-  status: string
+  status: PaymentStatus
   paymentMethod: string
   paymentId?: string
 }
 
+interface PaymentStats {
+  totalRevenue: number
+  totalTransactions: number
+  completedPayments: number
+  pendingPayments: number
+  failedPayments: number
+  methodCounts: Record<string, number>
+}
+
+const defaultStats: PaymentStats = {
+  totalRevenue: 0,
+  totalTransactions: 0,
+  completedPayments: 0,
+  pendingPayments: 0,
+  failedPayments: 0,
+  methodCounts: {},
+}
+
+const statusOptions: PaymentStatus[] = ['pending', 'completed', 'failed', 'refunded']
+
+const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+}).format(value)
+
+const getSeatNumbers = (seats: PaymentRecord['seats']) => {
+  if (!Array.isArray(seats) || seats.length === 0) return 'N/A'
+  return seats.map((seat) => typeof seat === 'string' ? seat : seat.seatNumber || '').filter(Boolean).join(', ')
+}
+
+const getStatusLabel = (status: string) => status.charAt(0).toUpperCase() + status.slice(1)
+
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = useState<PaymentRecord[]>([])
-  const [filteredPayments, setFilteredPayments] = useState<PaymentRecord[]>([])
+  const [stats, setStats] = useState<PaymentStats>(defaultStats)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [selectedMethod, setSelectedMethod] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submittingStatus, setSubmittingStatus] = useState<PaymentStatus | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null)
 
-  useEffect(() => {
-    loadPayments()
-  }, [])
-
-  useEffect(() => {
-    let filtered = payments
-
-    if (searchTerm) {
-      filtered = filtered.filter(p => 
-        p.movieTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.paymentId?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    if (selectedStatus) {
-      filtered = filtered.filter(p => p.status === selectedStatus)
-    }
-
-    if (selectedMethod) {
-      filtered = filtered.filter(p => p.paymentMethod === selectedMethod)
-    }
-
-    setFilteredPayments(filtered)
-  }, [searchTerm, selectedStatus, selectedMethod, payments])
-
-  const loadPayments = async () => {
+  const loadPayments = useCallback(async () => {
     try {
-      const response = await paymentsAPI.getAll({ limit: 100 })
-      if (response.success && response.data?.payments) {
-        setPayments(response.data.payments)
-        setFilteredPayments(response.data.payments)
+      setLoading(true)
+      setError(null)
+
+      const [paymentsRes, statsRes] = await Promise.all([
+        paymentsAPI.getAll({
+          limit: 100,
+          status: selectedStatus || undefined,
+          method: selectedMethod || undefined,
+        }),
+        paymentsAPI.getStats(),
+      ])
+
+      if (paymentsRes.success && paymentsRes.data?.payments) {
+        setPayments(paymentsRes.data.payments)
       } else {
-        // Fallback to localStorage
-        loadFromLocalStorage()
+        setPayments([])
+        setError(paymentsRes.message || 'Failed to load payments')
       }
-    } catch (error) {
-      // Fallback to localStorage on error
-      loadFromLocalStorage()
+
+      if (statsRes.success && statsRes.data) {
+        setStats({ ...defaultStats, ...statsRes.data })
+      }
+    } catch (err: any) {
+      setPayments([])
+      setError(err.message || 'Failed to load payments')
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedMethod, selectedStatus])
 
-  const loadFromLocalStorage = () => {
-    const storedBookings = localStorage.getItem('bookings')
-    const bookings = storedBookings ? JSON.parse(storedBookings) : []
-    
-    const dataStoreBookings = localStorage.getItem('cambocine_bookings')
-    const dsBookings = dataStoreBookings ? JSON.parse(dataStoreBookings) : []
+  useEffect(() => {
+    loadPayments()
+  }, [loadPayments])
 
-    const allPayments: PaymentRecord[] = [
-      ...bookings.map((b: any) => ({
-        id: b.id,
-        bookingId: b.id,
-        movieTitle: b.movieTitle || 'Unknown',
-        showtime: b.showtime || 'N/A',
-        seats: Array.isArray(b.seats) ? b.seats : [],
-        ticketPrice: b.ticketPrice || 0,
-        totalPrice: b.totalPrice || 0,
-        bookingDate: b.bookingDate || new Date().toISOString(),
-        status: b.paymentStatus === 'completed' ? 'completed' : (b.status || 'pending'),
-        paymentMethod: b.paymentMethod || 'unknown',
-        paymentId: b.paymentId || b.transactionId
-      })),
-      ...dsBookings.map((b: any) => ({
-        id: b.id,
-        bookingId: b.id,
-        movieTitle: b.movieTitle || 'Unknown',
-        showtime: b.showtime || 'N/A',
-        seats: Array.isArray(b.seats) ? b.seats.map((s: any) => s.seatNumber || s) : [],
-        ticketPrice: b.ticketPrice || 0,
-        totalPrice: b.totalPrice || 0,
-        bookingDate: b.bookingDate || new Date().toISOString(),
-        status: b.paymentStatus === 'completed' ? 'completed' : (b.status || 'pending'),
-        paymentMethod: b.paymentMethod || 'unknown',
-        paymentId: b.paymentId || b.transactionId
-      }))
-    ]
+  const filteredPayments = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return payments
 
-    const uniquePayments = allPayments.reduce((acc: PaymentRecord[], p) => {
-      if (!acc.find(existing => existing.id === p.id)) {
-        acc.push(p)
-      }
-      return acc
-    }, [])
+    return payments.filter((payment) => (
+      payment.movieTitle?.toLowerCase().includes(query) ||
+      payment.id?.toLowerCase().includes(query) ||
+      payment.bookingId?.toLowerCase().includes(query) ||
+      payment.paymentId?.toLowerCase().includes(query)
+    ))
+  }, [payments, searchTerm])
 
-    uniquePayments.sort((a, b) => 
-      new Date(b.bookingDate).getTime() - new Date(a.bookingDate).getTime()
-    )
-
-    setPayments(uniquePayments)
-    setFilteredPayments(uniquePayments)
-  }
+  const methodOptions = useMemo(() => {
+    const methods = new Set(payments.map((payment) => payment.paymentMethod).filter(Boolean))
+    Object.keys(stats.methodCounts || {}).forEach((method) => methods.add(method))
+    return Array.from(methods)
+  }, [payments, stats.methodCounts])
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-      case 'confirmed':
-        return 'bg-green-500/20 text-green-400 border-green-500/30'
+        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
       case 'pending':
         return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       case 'failed':
-      case 'cancelled':
         return 'bg-red-500/20 text-red-400 border-red-500/30'
+      case 'refunded':
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
       default:
         return 'bg-slate-500/20 text-slate-400 border-slate-500/30'
     }
@@ -140,227 +154,275 @@ export default function AdminPaymentsPage() {
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'visa':
-        return <CreditCard className="w-4 h-4" />
+      case 'card':
+        return <CreditCard className="h-4 w-4" />
       case 'bakong':
-        return <Wallet className="w-4 h-4" />
+      case 'wallet':
+        return <Wallet className="h-4 w-4" />
       case 'abapayway':
-        return <Banknote className="w-4 h-4" />
+      case 'cash':
+        return <Banknote className="h-4 w-4" />
       default:
-        return <DollarSign className="w-4 h-4" />
+        return <DollarSign className="h-4 w-4" />
     }
   }
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '-'
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
   }
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Movie', 'Seats', 'Amount', 'Payment Method', 'Status', 'Date']
-    const rows = filteredPayments.map(p => [
-      p.id,
-      p.movieTitle,
-      Array.isArray(p.seats) ? p.seats.join(', ') : '',
-      Number(p.totalPrice),
-      p.paymentMethod,
-      p.status,
-      p.bookingDate
+    const headers = ['Payment ID', 'Booking ID', 'Movie', 'Seats', 'Amount', 'Payment Method', 'Status', 'Date']
+    const rows = filteredPayments.map((payment) => [
+      payment.id,
+      payment.bookingId || '',
+      payment.movieTitle,
+      getSeatNumbers(payment.seats),
+      Number(payment.totalPrice || 0),
+      payment.paymentMethod,
+      payment.status,
+      payment.bookingDate,
     ])
 
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const csv = [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'payments.csv'
     a.click()
+    URL.revokeObjectURL(url)
   }
 
-  const totalRevenue = payments.reduce((sum, p) => sum + (Number(p.totalPrice) || 0), 0)
-  const completedPayments = payments.filter(p => p.status === 'completed' || p.status === 'confirmed')
-  const pendingPayments = payments.filter(p => p.status === 'pending')
+  const updatePaymentStatus = async (payment: PaymentRecord, status: PaymentStatus) => {
+    try {
+      setIsSubmitting(true)
+      setSubmittingStatus(status)
+      setError(null)
+      setSuccess(null)
+
+      const response = await paymentsAPI.updateStatus(payment.id, status)
+      if (response.success) {
+        setPayments((current) => current.map((item) => (
+          item.id === payment.id ? { ...item, status } : item
+        )))
+        setSelectedPayment((current) => current?.id === payment.id ? { ...current, status } : current)
+        setSuccess(`Payment marked as ${getStatusLabel(status)}`)
+        await loadPayments()
+      } else {
+        setError(response.message || 'Failed to update payment')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to update payment')
+    } finally {
+      setIsSubmitting(false)
+      setSubmittingStatus(null)
+    }
+  }
+
+  const statCards = [
+    {
+      label: 'Total Revenue',
+      value: formatCurrency(Number(stats.totalRevenue || 0)),
+      icon: DollarSign,
+      tone: 'text-orange-400 bg-orange-500/10',
+    },
+    {
+      label: 'Transactions',
+      value: stats.totalTransactions,
+      icon: CreditCard,
+      tone: 'text-blue-400 bg-blue-500/10',
+    },
+    {
+      label: 'Completed',
+      value: stats.completedPayments,
+      icon: CheckCircle,
+      tone: 'text-emerald-400 bg-emerald-500/10',
+    },
+    {
+      label: 'Pending',
+      value: stats.pendingPayments,
+      icon: Clock,
+      tone: 'text-yellow-400 bg-yellow-500/10',
+    },
+    {
+      label: 'Failed',
+      value: stats.failedPayments,
+      icon: XCircle,
+      tone: 'text-red-400 bg-red-500/10',
+    },
+  ]
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white">Payments</h1>
-          <p className="text-slate-400 mt-1">Track and manage all payment transactions</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={exportToCSV} 
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-700 border border-slate-600/50 rounded-xl text-slate-300 text-sm transition"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export</span>
+      {error && (
+        <div className="flex items-center justify-between rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-3 text-red-300">
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="hover:text-red-200">
+            <X className="h-4 w-4" />
           </button>
         </div>
+      )}
+
+      {success && (
+        <div className="flex items-center justify-between rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-emerald-300">
+          <span>{success}</span>
+          <button onClick={() => setSuccess(null)} className="hover:text-emerald-200">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white lg:text-4xl">Payments</h1>
+          <p className="mt-1 text-slate-400">Track and manage payment transactions from customer bookings.</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            onClick={loadPayments}
+            disabled={loading}
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button
+            onClick={exportToCSV}
+            disabled={filteredPayments.length === 0}
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-slate-800/50 border-slate-700/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-500/20 rounded-lg">
-                <DollarSign className="w-5 h-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs">Total Revenue</p>
-                <p className="text-xl font-bold text-white">${totalRevenue.toFixed(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-800/50 border-slate-700/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <CreditCard className="w-5 h-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs">Total Transactions</p>
-                <p className="text-xl font-bold text-white">{payments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-800/50 border-slate-700/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs">Completed</p>
-                <p className="text-xl font-bold text-white">{completedPayments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-slate-800/50 border-slate-700/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-500/20 rounded-lg">
-                <Clock className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-slate-400 text-xs">Pending</p>
-                <p className="text-xl font-bold text-white">{pendingPayments.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {statCards.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.label} className="border-slate-700/50 bg-slate-800/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`rounded-lg p-2 ${stat.tone}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-400">{stat.label}</p>
+                    <p className="truncate text-xl font-bold text-white">{stat.value}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
-      {/* Filters */}
-      <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-700/50">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="rounded-2xl border border-slate-700/50 bg-slate-800/80 p-6 backdrop-blur-xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by movie or payment ID..."
+              placeholder="Search by movie, booking, or payment ID..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="w-full rounded-xl border border-slate-600/50 bg-slate-700/50 py-2.5 pl-10 pr-4 text-white placeholder-slate-500 outline-none transition focus:border-orange-500"
             />
           </div>
-          
-          <div>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500 transition"
-            >
-              <option value="">All Status</option>
-              <option value="completed">Completed</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-            </select>
-          </div>
 
-          <div>
-            <select
-              value={selectedMethod}
-              onChange={(e) => setSelectedMethod(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:border-orange-500 transition"
-            >
-              <option value="">All Methods</option>
-              <option value="visa">Visa</option>
-              <option value="bakong">Bakong</option>
-              <option value="abapayway">ABA Payway</option>
-            </select>
-          </div>
+          <select
+            value={selectedStatus}
+            onChange={(event) => setSelectedStatus(event.target.value)}
+            className="w-full rounded-xl border border-slate-600/50 bg-slate-700/50 px-4 py-2.5 text-white outline-none transition focus:border-orange-500"
+          >
+            <option value="">All Status</option>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>{getStatusLabel(status)}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedMethod}
+            onChange={(event) => setSelectedMethod(event.target.value)}
+            className="w-full rounded-xl border border-slate-600/50 bg-slate-700/50 px-4 py-2.5 text-white outline-none transition focus:border-orange-500"
+          >
+            <option value="">All Methods</option>
+            {methodOptions.map((method) => (
+              <option key={method} value={method}>{method}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Payments Table */}
       {loading ? (
-        <div className="flex justify-center items-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+        <div className="flex h-96 items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
         </div>
       ) : (
-        <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-800/80 backdrop-blur-xl">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-700/50 bg-slate-700/20">
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Payment ID</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Movie</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Seats</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Amount</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Method</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Status</th>
-                  <th className="px-6 py-4 text-left text-slate-400 font-semibold text-sm">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Payment</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Movie</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Seats</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Method</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">Date</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-slate-400">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPayments.map((payment, index) => (
-                  <tr 
+                  <tr
                     key={payment.id}
-                    className={`${index % 2 === 0 ? "bg-slate-800/40" : "bg-slate-800/20"} border-b border-slate-700/30 hover:bg-slate-700/30 transition`}
+                    className={`${index % 2 === 0 ? 'bg-slate-800/40' : 'bg-slate-800/20'} border-b border-slate-700/30 transition hover:bg-slate-700/30`}
                   >
                     <td className="px-6 py-4">
-                      <p className="text-slate-400 text-sm font-mono">{payment.id.substring(0, 8)}...</p>
-                      {payment.paymentId && (
-                        <p className="text-slate-500 text-xs">Ref: {payment.paymentId.substring(0, 12)}...</p>
-                      )}
+                      <p className="font-mono text-sm text-slate-300">{payment.id}</p>
+                      {payment.paymentId && <p className="text-xs text-slate-500">Ticket: {payment.paymentId}</p>}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-white font-medium">{payment.movieTitle}</p>
-                      <p className="text-slate-500 text-sm">{payment.showtime}</p>
+                      <p className="font-medium text-white">{payment.movieTitle}</p>
+                      <p className="text-sm text-slate-500">{payment.showtime}</p>
                     </td>
+                    <td className="px-6 py-4 text-slate-300">{getSeatNumbers(payment.seats)}</td>
+                    <td className="px-6 py-4 font-semibold text-orange-400">{formatCurrency(Number(payment.totalPrice || 0))}</td>
                     <td className="px-6 py-4">
-                      <p className="text-slate-300">
-{Array.isArray(payment.seats) && payment.seats.length > 0 ? payment.seats.join(', ') : 'N/A'}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
-${Number(payment.totalPrice).toFixed(2)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 text-slate-300">
                         {getMethodIcon(payment.paymentMethod)}
-                        <span className="text-slate-300 capitalize">{payment.paymentMethod}</span>
+                        <span className="capitalize">{payment.paymentMethod}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(payment.status)}`}>
-                        {payment.status}
-                      </span>
+                      <Badge className={getStatusColor(payment.status)}>{getStatusLabel(payment.status)}</Badge>
                     </td>
+                    <td className="px-6 py-4 text-sm text-slate-400">{formatDate(payment.bookingDate)}</td>
                     <td className="px-6 py-4">
-                      <p className="text-slate-400 text-sm">{formatDate(payment.bookingDate)}</p>
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setSelectedPayment(payment)}
+                          className="text-slate-400 hover:bg-slate-700 hover:text-white"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -370,11 +432,85 @@ ${Number(payment.totalPrice).toFixed(2)}
 
           {filteredPayments.length === 0 && (
             <div className="p-12 text-center">
-              <CreditCard className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400 text-lg font-medium">No payments found</p>
-              <p className="text-slate-500 text-sm mt-1">Try adjusting your filters</p>
+              <CreditCard className="mx-auto mb-4 h-16 w-16 text-slate-600" />
+              <p className="text-lg font-medium text-slate-400">No payments found</p>
+              <p className="mt-1 text-sm text-slate-500">Try adjusting your filters.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {selectedPayment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+          <Card className="w-full max-w-lg border-slate-700 bg-slate-800">
+            <CardContent className="space-y-5 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Payment Details</h2>
+                  <p className="text-sm text-slate-400">{selectedPayment.id}</p>
+                </div>
+                <button onClick={() => setSelectedPayment(null)} className="text-slate-400 hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-400">Movie</p>
+                  <p className="font-medium text-white">{selectedPayment.movieTitle}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Showtime</p>
+                  <p className="font-medium text-white">{selectedPayment.showtime}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Seats</p>
+                  <p className="font-medium text-white">{getSeatNumbers(selectedPayment.seats)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Amount</p>
+                  <p className="font-medium text-orange-400">{formatCurrency(Number(selectedPayment.totalPrice || 0))}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Method</p>
+                  <p className="font-medium capitalize text-white">{selectedPayment.paymentMethod}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Status</p>
+                  <Badge className={getStatusColor(selectedPayment.status)}>{getStatusLabel(selectedPayment.status)}</Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Booking ID</p>
+                  <p className="break-all font-mono text-sm text-white">{selectedPayment.bookingId || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-400">Date</p>
+                  <p className="font-medium text-white">{formatDate(selectedPayment.bookingDate)}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-2 border-t border-slate-700 pt-4 sm:grid-cols-2">
+                {statusOptions.map((status) => (
+                  <Button
+                    key={status}
+                    disabled={isSubmitting || selectedPayment.status === status}
+                    onClick={() => updatePaymentStatus(selectedPayment, status)}
+                    variant={status === 'completed' ? 'default' : 'outline'}
+                    className={
+                      status === 'completed'
+                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                        : 'border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white'
+                    }
+                  >
+                    {submittingStatus === status ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Mark {getStatusLabel(status)}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
