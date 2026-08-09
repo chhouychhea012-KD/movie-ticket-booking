@@ -6,11 +6,13 @@ import { AppProvider } from '@/context/AppContext'
 const siteUrl = 'https://cambocine.online'
 const siteName = 'CamboCine'
 const siteDescription = 'CamboCine is a modern Cambodia movie ticket booking platform for browsing cinema showtimes, watching trailers, choosing seats, paying securely, and saving digital tickets.'
+const siteIcon = '/favicon-192x192.png'
+const siteLogo = `${siteUrl}${siteIcon}`
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'CamboCine - Cambodia Movie Ticket Booking, Showtimes & Digital Tickets',
+    default: 'CamboCine Official Site - Cambodia Movie Ticket Booking',
     template: '%s | CamboCine',
   },
   description: siteDescription,
@@ -71,14 +73,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: siteIcon, sizes: '192x192', type: 'image/png' },
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' },
       { url: '/pwa-icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: [{ url: '/pwa-icon-192.png', sizes: '192x192', type: 'image/png' }],
+    shortcut: [siteIcon],
+    apple: [{ url: siteIcon, sizes: '192x192', type: 'image/png' }],
   },
   openGraph: {
-    title: 'CamboCine - Cambodia Movie Ticket Booking',
+    title: 'CamboCine Official Site - Cambodia Movie Ticket Booking',
     description: siteDescription,
     url: '/',
     siteName,
@@ -95,7 +99,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CamboCine - Cambodia Movie Ticket Booking',
+    title: 'CamboCine Official Site - Cambodia Movie Ticket Booking',
     description: siteDescription,
     images: ['/pwa-icon-512.png'],
   },
@@ -133,7 +137,13 @@ export default function RootLayout({
         name: siteName,
         alternateName: ['Cambo Cine', 'CamboCine Movie Time'],
         url: siteUrl,
-        logo: `${siteUrl}/pwa-icon-512.png`,
+        logo: {
+          '@type': 'ImageObject',
+          url: siteLogo,
+          width: 192,
+          height: 192,
+        },
+        image: siteLogo,
         email: 'support@cambocine.online',
         sameAs: [siteUrl],
       },
@@ -141,7 +151,7 @@ export default function RootLayout({
         '@type': 'WebSite',
         '@id': `${siteUrl}/#website`,
         name: siteName,
-        alternateName: ['Cambo Cine', 'CamboCine Movie Booking'],
+        alternateName: ['Cambo Cine', 'CamboCine Movie Time', 'CamboCine Movie Booking'],
         url: siteUrl,
         description: siteDescription,
         inLanguage: 'en-KH',

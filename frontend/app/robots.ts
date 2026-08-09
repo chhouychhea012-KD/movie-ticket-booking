@@ -18,6 +18,12 @@ export default function robots(): MetadataRoute.Robots {
           '/partners',
           '/press',
           '/careers',
+          '/favicon-192x192.png',
+          '/favicon-32x32.png',
+          '/pwa-icon-192.png',
+          '/pwa-icon-512.png',
+          '/logo.png',
+          '/logo-nav.png',
         ],
         disallow: [
           '/admin',

@@ -23,6 +23,9 @@ export default function Home() {
   return (
     <div className="cinema-page">
       <h1 className="sr-only">CamboCine movie ticket booking online in Cambodia</h1>
+      <p className="sr-only">
+        CamboCine is the official Cambodia cinema booking website for movie showtimes, trailers, seat selection, secure checkout, and digital tickets.
+      </p>
       <MovieSlideshow movies={nowShowing.slice(0, 5)} />
 
       <section className="cinema-container relative z-20 -mt-12 sm:-mt-20">
