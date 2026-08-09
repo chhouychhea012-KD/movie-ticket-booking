@@ -1,10 +1,11 @@
 'use client'
 
-import { Bell, Search, LogOut, Home, User, Settings, CreditCard, Shield, Ticket, AlertCircle, CheckCircle, Info } from 'lucide-react'
+import { Bell, Search, LogOut, Home, User, Settings, Shield, Ticket, AlertCircle, CheckCircle, Info } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import { useApp } from '@/context/AppContext'
 import { notificationsAPI } from '@/lib/api'
+import { canAccessAdmin } from '@/lib/admin-permissions'
 
 const roleLabels: Record<string, string> = {
   customer: 'Customer',
@@ -31,8 +32,10 @@ export default function AdminHeader() {
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const profileDropdownRef = useRef<HTMLDivElement>(null)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const canUseNotifications = canAccessAdmin(user?.role, '/admin/notifications')
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
+    if (!canUseNotifications) return
     try {
       setLoadingNotifications(true)
       const response = await notificationsAPI.getAll({ limit: 10 })
@@ -44,7 +47,7 @@ export default function AdminHeader() {
     } finally {
       setLoadingNotifications(false)
     }
-  }
+  }, [canUseNotifications])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -87,7 +90,7 @@ export default function AdminHeader() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [showNotifications])
+  }, [loadNotifications, showNotifications])
 
   const handleToggleProfileDropdown = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -106,6 +109,7 @@ export default function AdminHeader() {
   }
 
   const handleMarkAllRead = async () => {
+    if (!canUseNotifications) return
     try {
       await notificationsAPI.markAllAsRead()
       setNotifications(notifications.map(n => ({ ...n, read: true })))
@@ -115,6 +119,7 @@ export default function AdminHeader() {
   }
 
   const handleMarkAsRead = async (id: string) => {
+    if (!canUseNotifications) return
     try {
       await notificationsAPI.markAsRead(id)
       setNotifications(notifications.map(n => 
@@ -168,8 +173,7 @@ export default function AdminHeader() {
     { icon: User, label: 'My Profile', href: '/admin/profile' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' },
     { icon: Shield, label: 'Security', href: '/admin/settings?tab=security' },
-    { icon: CreditCard, label: 'Billing', href: '/admin/settings?tab=billing' },
-  ]
+  ].filter((item) => canAccessAdmin(user?.role, item.href.split('?')[0]))
 
   return (
     <header className="fixed left-0 right-0 top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-800/90 px-4 py-3 backdrop-blur-lg lg:left-72 lg:px-6">
@@ -199,7 +203,7 @@ export default function AdminHeader() {
         </Link>
 
         {/* Notifications with Dropdown */}
-        <div className="relative" ref={notificationRef}>
+        {canUseNotifications && <div className="relative" ref={notificationRef}>
           <button 
             onClick={handleToggleNotifications}
             className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition"
@@ -277,7 +281,7 @@ export default function AdminHeader() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Admin Profile with Dropdown */}
         <div className="relative" ref={profileDropdownRef}>

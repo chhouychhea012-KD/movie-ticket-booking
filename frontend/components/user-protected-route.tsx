@@ -16,18 +16,19 @@ export default function UserProtectedRoute({ children }: UserProtectedRouteProps
 
   useEffect(() => {
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
     let userData = user
     
     if (!userData && storedUser) {
       try {
         userData = JSON.parse(storedUser)
-      } catch (e) {
+      } catch {
         console.error('Failed to parse user from localStorage')
       }
     }
 
-    if (!userData) {
+    if (!userData || !storedToken) {
       router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`)
       return
     }

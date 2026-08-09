@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
+import { canAccessAdmin } from '@/lib/admin-permissions'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -30,13 +31,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (!userData && storedUser) {
       try {
         userData = JSON.parse(storedUser)
-      } catch (e) {
+      } catch {
         console.error('Failed to parse user from localStorage')
       }
     }
 
-    // Check if user has admin role
-    if (!userData || !['admin', 'owner', 'staff'].includes(userData.role)) {
+    if (!canAccessAdmin(userData?.role, pathname)) {
       // Not authorized, redirect to home
       router.push('/')
       return

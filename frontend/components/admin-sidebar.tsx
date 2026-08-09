@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useApp } from '@/context/AppContext'
+import { canAccessAdmin } from '@/lib/admin-permissions'
 
 interface SidebarItem {
   label: string
@@ -42,7 +44,18 @@ const sidebarItems: SidebarItem[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname()
+  const { user } = useApp()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+  const storedRole = storedUser ? (() => {
+    try {
+      return JSON.parse(storedUser).role as string | undefined
+    } catch {
+      return undefined
+    }
+  })() : undefined
+  const activeRole = user?.role || storedRole
+  const visibleItems = sidebarItems.filter((item) => canAccessAdmin(activeRole, item.href))
 
   const isActive = (path: string) => {
     if (path === '/admin') {
@@ -98,7 +111,7 @@ export default function AdminSidebar() {
 
         {/* Navigation */}
         <nav className="h-[calc(100vh-109px)] space-y-2 overflow-y-auto p-4">
-          {sidebarItems.map((item) => (
+          {visibleItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

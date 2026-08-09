@@ -76,7 +76,7 @@ export default function TicketValidationPage() {
           ticket: result.ticket || null
         })
       }
-    } catch (error) {
+    } catch {
       setValidationResult({
         status: 'error',
         message: 'Failed to validate ticket. Please try again.',

@@ -14,8 +14,9 @@ export default function BookingsPage() {
 
   useEffect(() => {
     const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     
-    if (!storedUser && !user) {
+    if ((!storedUser && !user) || !storedToken) {
       router.push(`/auth/login?redirect=/bookings`)
       return
     }

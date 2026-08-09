@@ -26,6 +26,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { User, UserRole } from '@/types/index'
+import { useApp } from '@/context/AppContext'
+import { canManageAdminUsers } from '@/lib/admin-permissions'
 
 const roleOptions: Array<{ value: UserRole; label: string }> = [
   { value: 'customer', label: 'Customer' },
@@ -42,6 +44,7 @@ const roleLabels: Record<UserRole, string> = {
 }
 
 export default function CustomersPage() {
+  const { user: currentUser } = useApp()
   const [users, setUsers] = useState<User[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -229,6 +232,14 @@ export default function CustomersPage() {
     a.download = 'users.csv'
     a.click()
     window.URL.revokeObjectURL(url)
+  }
+
+  const allowedRoleOptions = roleOptions.filter((role) => (
+    currentUser?.role === 'owner' ? true : ['customer', 'staff'].includes(role.value)
+  ))
+
+  const canDeleteUser = (targetUser: User) => {
+    return canManageAdminUsers(currentUser?.role) && targetUser.id !== currentUser?.id && targetUser.role !== 'owner'
   }
 
   const getRoleBadgeClass = (role: string) => {
@@ -460,7 +471,7 @@ export default function CustomersPage() {
                         >
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        {deleteConfirm === user.id ? (
+                        {canDeleteUser(user) && deleteConfirm === user.id ? (
                           <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
@@ -479,7 +490,7 @@ export default function CustomersPage() {
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
-                        ) : (
+                        ) : canDeleteUser(user) ? (
                           <Button
                             variant="ghost"
                             size="icon"
@@ -488,7 +499,7 @@ export default function CustomersPage() {
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -590,7 +601,7 @@ export default function CustomersPage() {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                     className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
                   >
-                    {roleOptions.map((role) => (
+                    {allowedRoleOptions.map((role) => (
                       <option key={role.value} value={role.value}>{role.label}</option>
                     ))}
                   </select>

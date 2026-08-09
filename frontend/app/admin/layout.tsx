@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
 import AdminSidebar from '@/components/admin-sidebar'
 import AdminHeader from '@/components/admin-header'
+import { canAccessAdmin } from '@/lib/admin-permissions'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -39,8 +40,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       }
     }
 
-    // Check if user has admin role
-    if (!userData || !['admin', 'owner', 'staff'].includes(userData.role)) {
+    if (!canAccessAdmin(userData?.role, pathname)) {
       // Not authorized, redirect to home
       router.push('/')
       return
