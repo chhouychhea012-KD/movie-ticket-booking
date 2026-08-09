@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext';
+import AuthBrand from '@/components/auth-brand';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Loader2, Check } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -63,12 +64,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="text-4xl font-bold text-orange-500">
-            CamboCine
-          </Link>
-          <p className="text-slate-400 mt-2">Create your account to start booking</p>
-        </div>
+        <AuthBrand />
 
         <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8 shadow-2xl hover:shadow-orange-500/25 transition-shadow">
           <h1 className="text-2xl font-bold text-white mb-6 text-center">Register</h1>

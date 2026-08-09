@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext';
+import AuthBrand from '@/components/auth-brand';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '900896751182-351tedmbt8jq69acpbip5fmvir10092h.apps.googleusercontent.com'
@@ -97,7 +98,7 @@ function LoginPageContent() {
         shape: 'pill',
         text: 'continue_with',
         logo_alignment: 'left',
-        width: Math.min(360, googleButtonRef.current.offsetWidth || 360),
+        width: Math.min(400, Math.max(280, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 360))),
       })
       setIsGoogleReady(true)
     }
@@ -143,12 +144,7 @@ function LoginPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="text-4xl font-bold text-orange-500">
-            CamboCine
-          </Link>
-          <p className="text-slate-400 mt-2">Welcome back! Please login to continue</p>
-        </div>
+        <AuthBrand />
 
         <div className="bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-8">
           <h1 className="text-2xl font-bold text-white mb-6 text-center">Login</h1>
@@ -235,8 +231,8 @@ function LoginPageContent() {
           <div className="mt-8 pt-6 border-t border-slate-700/50">
             <p className="text-slate-400 text-sm text-center mb-4">Or continue with</p>
             <div className="flex justify-center">
-              <div className="min-h-11 w-full max-w-[360px] rounded-full bg-white">
-                <div ref={googleButtonRef} className="flex justify-center" />
+              <div className="min-h-11 w-full max-w-[400px] overflow-hidden rounded-full">
+                <div ref={googleButtonRef} className="flex w-full justify-center [&>div]:!mx-auto [&>div]:!max-w-full" />
                 {!isGoogleReady && (
                   <div className="flex h-11 items-center justify-center gap-2 rounded-full border border-slate-600/50 bg-slate-700/50 text-sm font-medium text-white">
                     <Loader2 className="h-4 w-4 animate-spin" />
