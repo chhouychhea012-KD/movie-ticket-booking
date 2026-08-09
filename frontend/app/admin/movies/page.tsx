@@ -13,6 +13,23 @@ const genres = ['Action', 'Comedy', 'Drama', 'Horror', 'Romance', 'Sci-Fi', 'Thr
 const languages = ['English', 'Thai', 'Japanese', 'Korean', 'Chinese', 'Hindi', 'French', 'Spanish']
 const ageRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17']
 
+const safeJsonArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[]
+  if (typeof value !== 'string') return []
+  try {
+    const parsed = JSON.parse(value || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const normalizeMovie = (movie: any): Movie => ({
+  ...movie,
+  genre: safeJsonArray<string>(movie.genre),
+  cast: safeJsonArray<string>(movie.cast),
+})
+
 export default function AdminMoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([])
   const [filteredMovies, setFilteredMovies] = useState<Movie[]>([])
@@ -47,13 +64,9 @@ export default function AdminMoviesPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await moviesAPI.getAll({})
+      const response = await moviesAPI.getAll({ limit: 100 })
       if (response.success && response.data?.movies) {
-        const parsedMovies = response.data.movies.map((m: any) => ({
-          ...m,
-          genre: typeof m.genre === 'string' ? JSON.parse(m.genre || '[]') : m.genre || [],
-          cast: typeof m.cast === 'string' ? JSON.parse(m.cast || '[]') : m.cast || []
-        }))
+        const parsedMovies = response.data.movies.map(normalizeMovie)
         setMovies(parsedMovies)
         setFilteredMovies(parsedMovies)
       }
@@ -112,11 +125,7 @@ export default function AdminMoviesPage() {
       if (editingMovie) {
         const response = await moviesAPI.update(editingMovie.id, movieData)
         if (response.success && response.data) {
-          const parsed = {
-            ...response.data,
-            genre: typeof response.data.genre === 'string' ? JSON.parse(response.data.genre) : response.data.genre,
-            cast: typeof response.data.cast === 'string' ? JSON.parse(response.data.cast) : response.data.cast
-          }
+          const parsed = normalizeMovie(response.data)
           setMovies(movies.map(m => m.id === editingMovie.id ? parsed : m))
           setShowModal(false)
           setEditingMovie(null)
@@ -126,11 +135,7 @@ export default function AdminMoviesPage() {
       } else {
         const response = await moviesAPI.create(movieData)
         if (response.success && response.data) {
-          const parsed = {
-            ...response.data,
-            genre: typeof response.data.genre === 'string' ? JSON.parse(response.data.genre) : response.data.genre,
-            cast: typeof response.data.cast === 'string' ? JSON.parse(response.data.cast) : response.data.cast
-          }
+          const parsed = normalizeMovie(response.data)
           setMovies([parsed, ...movies])
           setShowModal(false)
         } else {
@@ -236,13 +241,14 @@ export default function AdminMoviesPage() {
       m.director
     ])
     
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'movies.csv'
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   const avgRating = movies.length > 0 ? (movies.reduce((s, m) => s + (m.rating || 0), 0) / movies.length).toFixed(1) : '0'

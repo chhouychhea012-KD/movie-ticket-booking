@@ -209,3 +209,41 @@ export const getCities = async (req: Request, res: Response): Promise<void> => {
     });
   }
 };
+
+export const getAdminCinemas = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { city, page = 1, limit = 100 } = req.query;
+
+    const where: any = {};
+
+    if (city) {
+      where.city = city;
+    }
+
+    const offset = (Number(page) - 1) * Number(limit);
+
+    const { count, rows: cinemas } = await Cinema.findAndCountAll({
+      where,
+      limit: Number(limit),
+      offset,
+      order: [['name', 'ASC']],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        cinemas,
+        total: count,
+        page: Number(page),
+        totalPages: Math.ceil(count / Number(limit)),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin cinemas error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get cinemas',
+      error: error.message,
+    });
+  }
+};

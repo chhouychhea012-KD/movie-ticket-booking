@@ -15,6 +15,17 @@ interface ExtendedShowtime extends Showtime {
   screenName?: string
 }
 
+const safeJsonArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[]
+  if (typeof value !== 'string') return []
+  try {
+    const parsed = JSON.parse(value || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 export default function AdminShowtimesPage() {
   const [showtimes, setShowtimes] = useState<ExtendedShowtime[]>([])
   const [filteredShowtimes, setFilteredShowtimes] = useState<ExtendedShowtime[]>([])
@@ -40,6 +51,7 @@ export default function AdminShowtimesPage() {
     startTime: '',
     endTime: '',
     price: 10,
+    availableSeats: 100,
     totalSeats: 100,
     status: 'selling' as Showtime['status']
   })
@@ -50,16 +62,16 @@ export default function AdminShowtimesPage() {
       setError(null)
 
       const [showtimesRes, moviesRes, cinemasRes] = await Promise.all([
-        showtimesAPI.getAll({}),
-        moviesAPI.getAll({}),
-        cinemasAPI.getAll()
+        showtimesAPI.getAll({ limit: 200 }),
+        moviesAPI.getAll({ limit: 100 }),
+        cinemasAPI.getAdminAll({ limit: 100 })
       ])
 
       if (showtimesRes.success && showtimesRes.data?.showtimes) {
         const showtimesWithInfo: ExtendedShowtime[] = showtimesRes.data.showtimes.map((st: Showtime) => {
           const movie = moviesRes.data?.movies?.find((m: Movie) => m.id === st.movieId)
           const cinema = cinemasRes.data?.cinemas?.find((c: Cinema) => c.id === st.cinemaId)
-          const cinemaScreens = typeof cinema?.screens === 'string' ? JSON.parse(cinema.screens || '[]') : (cinema?.screens || [])
+          const cinemaScreens = safeJsonArray<any>(cinema?.screens)
           const screen = Array.isArray(cinemaScreens) ? cinemaScreens.find((s: any) => s.id === st.screenId) : null
           return {
             ...st,
@@ -107,7 +119,7 @@ export default function AdminShowtimesPage() {
 
   const getCinemaScreens = (cinema: Cinema | undefined) => {
     if (!cinema) return []
-    return typeof cinema.screens === 'string' ? JSON.parse(cinema.screens || '[]') : (cinema.screens || [])
+    return safeJsonArray<any>(cinema.screens)
   }
 
   const calculateEndTime = (startTime: string, durationMinutes: number): string => {
@@ -128,10 +140,11 @@ export default function AdminShowtimesPage() {
       const duration = movie?.duration || 120
       const endTime = calculateEndTime(formData.startTime, duration)
 
+      const availableSeats = Math.min(Number(formData.availableSeats || 0), Number(formData.totalSeats || 0))
       const showtimeData = {
         ...formData,
         endTime,
-        availableSeats: formData.totalSeats
+        availableSeats
       }
 
       if (editingShowtime) {
@@ -201,9 +214,7 @@ export default function AdminShowtimesPage() {
   const handleOpenCreate = () => {
     const firstMovie = movies[0]
     const firstCinema = cinemas[0]
-    const firstCinemaScreens = firstCinema 
-      ? (typeof firstCinema.screens === 'string' ? JSON.parse(firstCinema.screens || '[]') : (firstCinema.screens || []))
-      : []
+    const firstCinemaScreens = getCinemaScreens(firstCinema)
     const firstScreen = firstCinemaScreens[0]
     
     setEditingShowtime(null)
@@ -215,6 +226,7 @@ export default function AdminShowtimesPage() {
       startTime: '19:00',
       endTime: '',
       price: 10,
+      availableSeats: 100,
       totalSeats: 100,
       status: 'selling'
     })
@@ -231,6 +243,7 @@ export default function AdminShowtimesPage() {
       startTime: showtime.startTime,
       endTime: showtime.endTime,
       price: showtime.price,
+      availableSeats: showtime.availableSeats,
       totalSeats: showtime.totalSeats,
       status: showtime.status
     })
@@ -270,19 +283,18 @@ export default function AdminShowtimesPage() {
       s.status
     ])
     
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'showtimes.csv'
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   const currentCinema = cinemas.find(c => c.id === formData.cinemaId)
-  const currentCinemaScreens = currentCinema 
-    ? (typeof currentCinema.screens === 'string' ? JSON.parse(currentCinema.screens || '[]') : (currentCinema.screens || []))
-    : []
+  const currentCinemaScreens = getCinemaScreens(currentCinema)
   const timeSlots = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00']
 
   if (loading) {
@@ -586,7 +598,7 @@ export default function AdminShowtimesPage() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+          <Card className="w-full max-w-md bg-slate-800 border-slate-700 max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle className="text-white flex items-center justify-between">
                 {editingShowtime ? 'Edit Showtime' : 'Create New Showtime'}
@@ -701,6 +713,20 @@ export default function AdminShowtimesPage() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-slate-300 text-sm">Available Seats</label>
+                  <Input
+                    type="number"
+                    value={formData.availableSeats}
+                    onChange={(e) => setFormData({ ...formData, availableSeats: parseInt(e.target.value) })}
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                    min="0"
+                    max={formData.totalSeats}
+                    required
+                  />
+                  <p className="text-slate-500 text-xs">Keep this equal to total seats for a new showtime. Lower it only when seats are already reserved.</p>
                 </div>
                 
                 <div className="space-y-2">

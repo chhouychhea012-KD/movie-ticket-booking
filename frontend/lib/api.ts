@@ -143,6 +143,18 @@ export const cinemasAPI = {
     return handleResponse<{ cinemas: Cinema[] }>(response)
   },
 
+  getAdminAll: async (params?: { city?: string; page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.city) searchParams.set('city', params.city)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
+
+    const response = await fetch(`${API_BASE_URL}/cinemas/admin/all?${searchParams.toString()}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse<{ cinemas: Cinema[]; total: number; page: number; totalPages: number }>(response)
+  },
+
   getById: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/cinemas/${id}`)
     return handleResponse<Cinema>(response)

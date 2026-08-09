@@ -8,6 +8,7 @@ import Joi from 'joi';
 const router = express.Router();
 
 // Public routes
+router.get('/admin/all', authenticate, authorizeAdmin, validateQuery(cinemaQuerySchema), cinemaController.getAdminCinemas);
 router.get('/', validateQuery(cinemaQuerySchema), cinemaController.getCinemas);
 router.get('/cities', cinemaController.getCities);
 router.get('/city/:city', validateParams(Joi.object({ city: Joi.string().trim().max(100).required() })), cinemaController.getCinemasByCity);

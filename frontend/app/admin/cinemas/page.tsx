@@ -15,6 +15,27 @@ interface ExtendedCinema extends Cinema {
 
 const allFacilities = ['Parking', 'Food Court', 'VIP Lounge', '3D Screens', 'IMAX', '4DX', 'Dolby Atmos', 'Bar', 'Gaming Zone', 'Wheelchair Access']
 
+const safeJsonArray = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[]
+  if (typeof value !== 'string') return []
+  try {
+    const parsed = JSON.parse(value || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+const createSeatLayout = (capacity: number) => {
+  const rows = Math.max(1, Math.ceil(capacity / 12))
+  const seatsPerRow = Math.max(1, Math.ceil(capacity / rows))
+  return {
+    rows,
+    seatsPerRow,
+    aislePositions: seatsPerRow >= 8 ? [Math.ceil(seatsPerRow / 2)] : [],
+  }
+}
+
 export default function AdminCinemasPage() {
   const [cinemas, setCinemas] = useState<ExtendedCinema[]>([])
   const [filteredCinemas, setFilteredCinemas] = useState<ExtendedCinema[]>([])
@@ -41,22 +62,19 @@ export default function AdminCinemasPage() {
 
   const getCinemaScreens = (cinema: ExtendedCinema) => {
     if (!cinema) return []
-    if (typeof cinema.screens === 'string') {
-      try { return JSON.parse(cinema.screens) } catch { return [] }
-    }
-    return Array.isArray(cinema.screens) ? cinema.screens : []
+    return safeJsonArray<{ id: string; name: string; capacity: number; screenType?: string }>(cinema.screens)
   }
 
   const loadCinemas = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await cinemasAPI.getAll()
+      const response = await cinemasAPI.getAdminAll({ limit: 100 })
       if (response.success && response.data?.cinemas) {
         const parsedCinemas = response.data.cinemas.map((c: any) => ({
           ...c,
-          facilities: typeof c.facilities === 'string' ? JSON.parse(c.facilities || '[]') : c.facilities || [],
-          screens: typeof c.screens === 'string' ? JSON.parse(c.screens || '[]') : c.screens || []
+          facilities: safeJsonArray<string>(c.facilities),
+          screens: safeJsonArray(c.screens)
         }))
         setCinemas(parsedCinemas)
         setFilteredCinemas(parsedCinemas)
@@ -88,13 +106,18 @@ export default function AdminCinemasPage() {
 
     try {
       const facilitiesArray = formData.facilities
+      const existingScreens = editingCinema ? getCinemaScreens(editingCinema) : []
       const screensArray = formData.screens.split(',').map((s, i) => {
         const parts = s.trim().split(':')
+        const capacity = parseInt(parts[1]) || 100
+        const existingScreen = existingScreens[i]
         return {
-          id: Date.now().toString() + i,
+          id: existingScreen?.id || `screen-${Date.now()}-${i + 1}`,
+          cinemaId: editingCinema?.id || '',
           name: parts[0] || 'Screen',
-          capacity: parseInt(parts[1]) || 100,
-          screenType: parts[2] || 'standard'
+          capacity,
+          screenType: parts[2] || 'standard',
+          seatLayout: createSeatLayout(capacity)
         }
       }).filter(s => s.name)
 
@@ -106,7 +129,7 @@ export default function AdminCinemasPage() {
         email: formData.email,
         facilities: facilitiesArray,
         isActive: formData.isActive,
-        image: formData.image || '/placeholder-cinema.jpg',
+        image: formData.image || '',
         screens: screensArray
       }
 
@@ -115,8 +138,8 @@ export default function AdminCinemasPage() {
         if (response.success && response.data) {
           const parsed = {
             ...response.data,
-            facilities: typeof response.data.facilities === 'string' ? JSON.parse(response.data.facilities) : response.data.facilities,
-            screens: typeof response.data.screens === 'string' ? JSON.parse(response.data.screens) : response.data.screens
+            facilities: safeJsonArray<string>(response.data.facilities),
+            screens: safeJsonArray(response.data.screens)
           }
           setCinemas(cinemas.map(c => c.id === editingCinema.id ? parsed : c))
           setShowModal(false)
@@ -129,8 +152,8 @@ export default function AdminCinemasPage() {
         if (response.success && response.data) {
           const parsed = {
             ...response.data,
-            facilities: typeof response.data.facilities === 'string' ? JSON.parse(response.data.facilities) : response.data.facilities,
-            screens: typeof response.data.screens === 'string' ? JSON.parse(response.data.screens) : response.data.screens
+            facilities: safeJsonArray<string>(response.data.facilities),
+            screens: safeJsonArray(response.data.screens)
           }
           setCinemas([parsed, ...cinemas])
           setShowModal(false)
@@ -219,13 +242,14 @@ export default function AdminCinemasPage() {
       c.isActive ? 'Yes' : 'No'
     ])
     
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = 'cinemas.csv'
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   const totalScreens = cinemas.reduce((acc, c) => acc + getCinemaScreens(c).length, 0)
