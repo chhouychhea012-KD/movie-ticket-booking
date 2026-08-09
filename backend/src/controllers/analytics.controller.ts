@@ -3,40 +3,43 @@ import { Op } from 'sequelize';
 import Booking from '../models/Booking';
 import Movie from '../models/Movie';
 import User from '../models/User';
+import Cinema from '../models/Cinema';
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Total revenue
-    const totalRevenue = await Booking.sum('totalPrice', {
-      where: { 
-        paymentStatus: 'completed',
-        status: { [Op.ne]: 'cancelled' }
-      },
-    });
+    const revenueWhere = {
+      paymentStatus: 'completed',
+      status: { [Op.ne]: 'cancelled' }
+    };
+    const activeBookingWhere = { status: { [Op.ne]: 'cancelled' } };
 
-    // Total bookings
-    const totalBookings = await Booking.count({
-      where: { status: { [Op.ne]: 'cancelled' } },
-    });
+    const totalRevenue = await Booking.sum('totalPrice', { where: revenueWhere });
 
-    // Total users
+    const totalBookings = await Booking.count({ where: activeBookingWhere });
+
     const totalUsers = await User.count({ where: { role: 'customer' } });
+    const activeMovies = await Movie.count({ where: { status: 'now_showing' } });
+    const activeCinemas = await Cinema.count({ where: { isActive: true } });
 
-    // Occupancy rate (total booked seats / total available seats)
-    // This is a simplified calculation
-    const occupancyRate = 72; // This would need more complex calculation
+    const averageRatingResult = await Movie.findOne({
+      attributes: [[Movie.sequelize!.fn('AVG', Movie.sequelize!.col('rating')), 'averageRating']],
+      raw: true,
+    }) as any;
+    const averageRating = Number(averageRatingResult?.averageRating || 0);
 
-    // Revenue by date (last 7 days)
     const today = new Date();
-    const last7Days = [];
+    const last7Days: Array<{ date: string; day: string }> = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      last7Days.push(date.toISOString().split('T')[0]);
+      last7Days.push({
+        date: date.toISOString().split('T')[0],
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      });
     }
 
-    const revenueByDate = await Promise.all(
-      last7Days.map(async (date) => {
+    const weeklyRevenue = await Promise.all(
+      last7Days.map(async ({ date, day }) => {
         const revenue = await Booking.sum('totalPrice', {
           where: {
             bookingDate: {
@@ -47,6 +50,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             status: { [Op.ne]: 'cancelled' },
           },
         });
+
         const bookings = await Booking.count({
           where: {
             bookingDate: {
@@ -56,11 +60,46 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
             status: { [Op.ne]: 'cancelled' },
           },
         });
-        return { date, revenue: revenue || 0, bookings };
+
+        return { day, date, revenue: Number(revenue || 0), bookings, expenses: 0 };
       })
     );
 
-    // Top movies
+    const hourLabels = Array.from({ length: 14 }, (_, index) => index + 10);
+    const hourlyBookings = await Promise.all(
+      hourLabels.map(async (hour) => {
+        const bookings = await Booking.count({
+          where: {
+            bookingDate: {
+              [Op.gte]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour, 0, 0),
+              [Op.lt]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), hour + 1, 0, 0),
+            },
+            status: { [Op.ne]: 'cancelled' },
+          },
+        });
+
+        const labelHour = hour > 12 ? hour - 12 : hour;
+        return { hour: `${labelHour} ${hour >= 12 ? 'PM' : 'AM'}`, bookings };
+      })
+    );
+
+    const statusColors: Record<string, string> = {
+      confirmed: '#22c55e',
+      pending: '#f59e0b',
+      cancelled: '#ef4444',
+      completed: '#38bdf8',
+      used: '#8b5cf6',
+      expired: '#64748b',
+    };
+    const statusLabels = ['confirmed', 'pending', 'cancelled', 'completed', 'used', 'expired'];
+    const bookingsByStatus = await Promise.all(
+      statusLabels.map(async (status) => ({
+        name: status.charAt(0).toUpperCase() + status.slice(1),
+        value: await Booking.count({ where: { status } }),
+        color: statusColors[status],
+      }))
+    );
+
     const topMoviesData = await Booking.findAll({
       attributes: [
         'movieId',
@@ -77,32 +116,111 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       limit: 5,
     });
 
+    const topMovieIds = topMoviesData.map((m: any) => m.movieId);
+    const topMovieRows = topMovieIds.length > 0
+      ? await Movie.findAll({ where: { id: { [Op.in]: topMovieIds } }, attributes: ['id', 'rating'] })
+      : [];
+    const ratingByMovieId = new Map(topMovieRows.map((movie: any) => [movie.id, Number(movie.rating || 0)]));
+
     const topMovies = topMoviesData.map((m: any) => ({
       movieId: m.movieId,
+      title: m.movieTitle,
       movieTitle: m.movieTitle,
       revenue: parseFloat(m.dataValues.revenue) || 0,
       bookings: parseInt(m.dataValues.bookings) || 0,
-      occupancyRate: Math.floor(Math.random() * 30) + 60, // Simplified
+      rating: ratingByMovieId.get(m.movieId) || 0,
+      occupancyRate: 0,
     }));
 
-    // Peak hours
-    const peakHours = [
-      { hour: 18, bookings: 120 },
-      { hour: 19, bookings: 150 },
-      { hour: 20, bookings: 180 },
-      { hour: 21, bookings: 140 },
-    ];
+    const paidBookings = await Booking.findAll({
+      where: revenueWhere,
+      include: [{ model: Movie, as: 'movie', attributes: ['genre', 'rating'] }],
+    });
+
+    const genreRevenue = new Map<string, number>();
+    const genreBookings = new Map<string, number>();
+    paidBookings.forEach((booking: any) => {
+      const movie = booking.get('movie') as any;
+      const genres = Array.isArray(movie?.genre) && movie.genre.length > 0 ? movie.genre : ['Other'];
+      genres.forEach((genre: string) => {
+        genreRevenue.set(genre, (genreRevenue.get(genre) || 0) + Number(booking.totalPrice || 0));
+        genreBookings.set(genre, (genreBookings.get(genre) || 0) + 1);
+      });
+    });
+
+    const palette = ['#ef4444', '#38bdf8', '#f59e0b', '#8b5cf6', '#22c55e', '#f97316'];
+    const revenueByGenre = Array.from(genreRevenue.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([name, value], index) => ({ name, value, color: palette[index % palette.length] }));
+
+    const totalGenreBookings = Array.from(genreBookings.values()).reduce((sum, value) => sum + value, 0);
+    const topGenres = Array.from(genreBookings.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([genre, bookings], index) => ({
+        genre,
+        bookings,
+        percentage: totalGenreBookings > 0 ? Math.round((bookings / totalGenreBookings) * 100) : 0,
+        color: palette[index % palette.length],
+      }));
+
+    const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'short' });
+    const monthlyTrend = await Promise.all(
+      Array.from({ length: 6 }, (_, index) => {
+        const monthDate = new Date(today.getFullYear(), today.getMonth() - (5 - index), 1);
+        return monthDate;
+      }).map(async (monthDate) => {
+        const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
+
+        const revenue = await Booking.sum('totalPrice', {
+          where: {
+            ...revenueWhere,
+            bookingDate: { [Op.gte]: monthStart, [Op.lt]: monthEnd },
+          },
+        });
+        const bookings = await Booking.count({
+          where: {
+            ...activeBookingWhere,
+            bookingDate: { [Op.gte]: monthStart, [Op.lt]: monthEnd },
+          },
+        });
+
+        return { month: monthFormatter.format(monthDate), revenue: Number(revenue || 0), bookings };
+      })
+    );
+
+    const todayBookings = await Booking.count({
+      where: {
+        ...activeBookingWhere,
+        bookingDate: {
+          [Op.gte]: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0),
+          [Op.lt]: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0),
+        },
+      },
+    });
 
     res.json({
       success: true,
       data: {
-        totalRevenue: totalRevenue || 0,
+        totalRevenue: Number(totalRevenue || 0),
         totalBookings,
         totalUsers,
-        occupancyRate,
-        revenueByDate,
+        activeMovies,
+        activeCinemas,
+        averageRating: Number(averageRating.toFixed(1)),
+        todayBookings,
+        occupancyRate: 0,
+        weeklyRevenue,
+        hourlyBookings,
+        bookingsByStatus,
+        revenueByGenre,
         topMovies,
-        peakHours,
+        topGenres,
+        monthlyTrend,
+        revenueByDate: weeklyRevenue,
+        peakHours: hourlyBookings,
       },
     });
   } catch (error: any) {

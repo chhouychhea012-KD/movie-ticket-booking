@@ -1,132 +1,93 @@
 'use client'
 
-import { Ticket, DollarSign, Users, TrendingUp, Film, Star } from 'lucide-react'
+import { DollarSign, Film, Star, Ticket, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface AdminStatsProps {
   totalBookings: number
   totalRevenue: number
+  totalUsers: number
+  activeMovies: number
+  averageRating: number
+  activeCinemas?: number
 }
 
-const statsCards = [
-  {
-    title: 'Total Bookings',
-    value: 0, // Will be passed as prop
-    icon: <Ticket className="w-6 h-6" />,
-    bgGradient: 'from-blue-500 to-cyan-500',
-    bgGlow: 'bg-blue-500/20',
-    iconBg: 'bg-blue-500/20',
-    iconColor: 'text-blue-400',
-  },
-  {
-    title: 'Total Revenue',
-    value: 0, // Will be passed as prop
-    prefix: '$',
-    icon: <DollarSign className="w-6 h-6" />,
-    bgGradient: 'from-emerald-500 to-teal-500',
-    bgGlow: 'bg-emerald-500/20',
-    iconBg: 'bg-emerald-500/20',
-    iconColor: 'text-emerald-400',
-  },
-  {
-    title: 'Active Movies',
-    value: 6,
-    icon: <Film className="w-6 h-6" />,
-    bgGradient: 'from-orange-500 to-amber-500',
-    bgGlow: 'bg-orange-500/20',
-    iconBg: 'bg-orange-500/20',
-    iconColor: 'text-orange-400',
-  },
-  {
-    title: 'Average Rating',
-    value: 4.5,
-    suffix: '/5',
-    icon: <Star className="w-6 h-6" />,
-    bgGradient: 'from-violet-500 to-purple-500',
-    bgGlow: 'bg-violet-500/20',
-    iconBg: 'bg-violet-500/20',
-    iconColor: 'text-violet-400',
-  },
-]
+const formatNumber = (value: number) => new Intl.NumberFormat('en-US').format(value)
+const formatCurrency = (value: number) => new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: value >= 1000 ? 0 : 2,
+}).format(value)
 
-export default function AdminStats({ totalBookings, totalRevenue }: AdminStatsProps) {
-  const updatedStats = [
+export default function AdminStats({
+  totalBookings,
+  totalRevenue,
+  totalUsers,
+  activeMovies,
+  averageRating,
+  activeCinemas = 0,
+}: AdminStatsProps) {
+  const stats = [
     {
-      ...statsCards[0],
-      value: totalBookings,
+      title: 'Bookings',
+      value: formatNumber(totalBookings),
+      detail: 'All active tickets',
+      icon: Ticket,
+      tone: 'text-sky-300 bg-sky-500/10 border-sky-500/20',
     },
     {
-      ...statsCards[1],
-      value: totalRevenue,
+      title: 'Revenue',
+      value: formatCurrency(totalRevenue),
+      detail: 'Completed payments',
+      icon: DollarSign,
+      tone: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20',
     },
-    ...statsCards.slice(2),
+    {
+      title: 'Customers',
+      value: formatNumber(totalUsers),
+      detail: 'Registered accounts',
+      icon: Users,
+      tone: 'text-blue-300 bg-blue-500/10 border-blue-500/20',
+    },
+    {
+      title: 'Now Showing',
+      value: formatNumber(activeMovies),
+      detail: `${formatNumber(activeCinemas)} active cinemas`,
+      icon: Film,
+      tone: 'text-orange-300 bg-orange-500/10 border-orange-500/20',
+    },
+    {
+      title: 'Avg Rating',
+      value: averageRating ? averageRating.toFixed(1) : '0.0',
+      detail: 'Movie catalog score',
+      icon: Star,
+      tone: 'text-violet-300 bg-violet-500/10 border-violet-500/20',
+    },
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-      {updatedStats.map((stat, index) => (
-        <div
-          key={stat.title}
-          className="relative group"
-        >
-          {/* Glow Effect */}
-          <div className={cn(
-            "absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl",
-            stat.bgGradient
-          )} />
-          
-          {/* Card */}
-          <div className="relative bg-slate-800/80 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6 hover:border-slate-600/50 transition-all duration-300">
-            {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-24 h-24 opacity-5">
-              <div className={cn(
-                "w-full h-full rounded-full bg-gradient-to-br",
-                stat.bgGradient
-              )} />
-            </div>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      {stats.map((stat) => {
+        const Icon = stat.icon
 
-            {/* Icon */}
-            <div className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
-              stat.iconBg
-            )}>
-              <span className={stat.iconColor}>
-                {stat.icon}
-              </span>
-            </div>
-
-            {/* Content */}
-            <div>
-              <p className="text-slate-400 text-sm font-medium mb-1">{stat.title}</p>
-              <div className="flex items-baseline gap-1">
-                {stat.prefix && (
-                  <span className="text-2xl font-bold text-slate-300">{stat.prefix}</span>
-                )}
-                <span className="text-4xl font-bold text-white">
-                  {typeof stat.value === 'number' && stat.value % 1 !== 0 
-                    ? stat.value.toFixed(1) 
-                    : stat.value}
-                </span>
-                {stat.suffix && (
-                  <span className="text-lg text-slate-400">{stat.suffix}</span>
-                )}
+        return (
+          <div
+            key={stat.title}
+            className="rounded-xl border border-slate-700/60 bg-slate-800/70 p-4 shadow-sm transition hover:border-slate-600/80 hover:bg-slate-800"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{stat.title}</p>
+                <p className="mt-2 truncate text-2xl font-bold text-white">{stat.value}</p>
+              </div>
+              <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border', stat.tone)}>
+                <Icon className="h-5 w-5" />
               </div>
             </div>
-
-            {/* Trend Indicator */}
-            <div className="mt-4 flex items-center gap-2">
-              <div className={cn(
-                "flex items-center gap-1 text-xs font-medium",
-                index < 2 ? "text-emerald-400" : "text-orange-400"
-              )}>
-                <TrendingUp className="w-3 h-3" />
-                <span>+12%</span>
-              </div>
-              <span className="text-slate-500 text-xs">vs last month</span>
-            </div>
+            <p className="mt-3 truncate text-sm text-slate-400">{stat.detail}</p>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, Filter, TrendingUp, Ticket, Users, DollarSign, Activity, BarChart3, Loader2 } from 'lucide-react'
+import { Calendar, Clock, Filter, TrendingUp, Ticket, DollarSign, Activity, BarChart3 } from 'lucide-react'
 import AdminStats from '@/components/admin-stats'
 import AdminBookingsList from '@/components/admin-bookings-list'
 import { Booking } from '@/types/booking'
@@ -38,6 +38,10 @@ interface DashboardData {
   totalRevenue: number
   totalBookings: number
   totalUsers: number
+  activeMovies: number
+  activeCinemas: number
+  averageRating: number
+  todayBookings: number
 }
 
 const defaultData: DashboardData = {
@@ -86,7 +90,11 @@ const defaultData: DashboardData = {
   ],
   totalRevenue: 0,
   totalBookings: 0,
-  totalUsers: 0
+  totalUsers: 0,
+  activeMovies: 0,
+  activeCinemas: 0,
+  averageRating: 0,
+  todayBookings: 0
 }
 
 export default function AdminPage() {
@@ -101,22 +109,28 @@ export default function AdminPage() {
         
         const [analyticsRes, bookingsRes] = await Promise.all([
           analyticsAPI.getDashboard(),
-          bookingsAPI.getAll({ limit: 100 })
+          bookingsAPI.getAdminAll({ limit: 100 })
         ])
 
         if (analyticsRes.success && analyticsRes.data) {
           const data = analyticsRes.data
+          const hasItems = (items: unknown) => Array.isArray(items) && items.length > 0
+
           setDashboardData({
-            weeklyRevenue: data.weeklyRevenue || defaultData.weeklyRevenue,
-            hourlyBookings: data.hourlyBookings || defaultData.hourlyBookings,
-            bookingsByStatus: data.bookingsByStatus || defaultData.bookingsByStatus,
-            revenueByGenre: data.revenueByGenre || defaultData.revenueByGenre,
-            topMovies: data.topMovies || defaultData.topMovies,
-            topGenres: data.topGenres || defaultData.topGenres,
-            monthlyTrend: data.monthlyTrend || defaultData.monthlyTrend,
+            weeklyRevenue: hasItems(data.weeklyRevenue) ? data.weeklyRevenue : defaultData.weeklyRevenue,
+            hourlyBookings: hasItems(data.hourlyBookings) ? data.hourlyBookings : defaultData.hourlyBookings,
+            bookingsByStatus: hasItems(data.bookingsByStatus) ? data.bookingsByStatus : defaultData.bookingsByStatus,
+            revenueByGenre: hasItems(data.revenueByGenre) ? data.revenueByGenre : defaultData.revenueByGenre,
+            topMovies: hasItems(data.topMovies) ? data.topMovies : defaultData.topMovies,
+            topGenres: hasItems(data.topGenres) ? data.topGenres : defaultData.topGenres,
+            monthlyTrend: hasItems(data.monthlyTrend) ? data.monthlyTrend : defaultData.monthlyTrend,
             totalRevenue: data.totalRevenue || 0,
             totalBookings: data.totalBookings || 0,
-            totalUsers: data.totalUsers || 0
+            totalUsers: data.totalUsers || 0,
+            activeMovies: data.activeMovies || 0,
+            activeCinemas: data.activeCinemas || 0,
+            averageRating: data.averageRating || 0,
+            todayBookings: data.todayBookings || 0
           })
         }
 
@@ -143,8 +157,8 @@ export default function AdminPage() {
   }, [])
 
   const { weeklyRevenue, hourlyBookings, bookingsByStatus, revenueByGenre, topMovies, topGenres, monthlyTrend } = dashboardData
-  const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.totalPrice) || 0), 0) + dashboardData.totalRevenue
-  const totalBookings = bookings.length + dashboardData.totalBookings
+  const totalRevenue = dashboardData.totalRevenue
+  const totalBookings = dashboardData.totalBookings
 
   return (
     <div className="space-y-8">
@@ -169,7 +183,14 @@ export default function AdminPage() {
       </div>
 
       {/* Stats Cards */}
-      <AdminStats totalBookings={totalBookings} totalRevenue={totalRevenue} />
+      <AdminStats
+        totalBookings={totalBookings}
+        totalRevenue={totalRevenue}
+        totalUsers={dashboardData.totalUsers}
+        activeMovies={dashboardData.activeMovies}
+        activeCinemas={dashboardData.activeCinemas}
+        averageRating={dashboardData.averageRating}
+      />
 
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -405,7 +426,7 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {topMovies.map((movie, index) => (
+              {topMovies.length > 0 ? topMovies.map((movie, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center font-bold text-xs">
@@ -418,10 +439,15 @@ export default function AdminPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-green-500 text-sm font-medium">${movie.revenue.toLocaleString()}</p>
-                    <p className="text-yellow-500 text-xs">★ {movie.rating}</p>
+                    <p className="text-yellow-500 text-xs">Rating {movie.rating || 0}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="rounded-xl border border-dashed border-slate-700/70 p-6 text-center">
+                  <p className="text-sm font-medium text-slate-300">No paid bookings yet</p>
+                  <p className="mt-1 text-xs text-slate-500">Top movies will appear after customers book tickets.</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -238,6 +238,18 @@ export const bookingsAPI = {
     return handleResponse<{ bookings: Booking[]; total: number; page: number; totalPages: number }>(response)
   },
 
+  getAdminAll: async (params?: { status?: string; page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams()
+    if (params?.status) searchParams.set('status', params.status)
+    if (params?.page) searchParams.set('page', params.page.toString())
+    if (params?.limit) searchParams.set('limit', params.limit.toString())
+
+    const response = await fetch(`${API_BASE_URL}/bookings/all?${searchParams.toString()}`, {
+      headers: getHeaders(),
+    })
+    return handleResponse<{ bookings: Booking[]; total: number; page: number; totalPages: number }>(response)
+  },
+
   getById: async (id: string) => {
     const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
       headers: getHeaders(),
