@@ -100,7 +100,15 @@ export const cinemaSchema = Joi.object({
   city: Joi.string().trim().min(1).max(100).required(),
   phone: Joi.string().trim().max(20).required(),
   email: Joi.string().trim().email().required(),
-  image: Joi.string().uri().allow('', null).optional(),
+  image: Joi.string().trim().max(1400000).allow('', null).custom((value, helpers) => {
+    if (!value) return value;
+    const isUrl = /^https?:\/\/\S+$/i.test(value) || value.startsWith('/');
+    const isDataImage = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/i.test(value);
+
+    if (isUrl || isDataImage) return value;
+
+    return helpers.error('string.uri');
+  }, 'cinema image URL or upload data').optional(),
   facilities: Joi.array().items(Joi.string().trim().max(100)).default([]),
   screens: Joi.array().items(Joi.object({
     id: Joi.string().required(),

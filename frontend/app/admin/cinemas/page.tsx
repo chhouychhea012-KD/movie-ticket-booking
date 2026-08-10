@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { cinemasAPI } from '@/lib/api'
-import { Search, Plus, Edit2, Trash2, X, Eye, Download, MapPin, Phone, Mail, Building2, Grid, Users, Calendar, Loader2, CheckCircle, XCircle } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, X, Eye, Download, MapPin, Phone, Mail, Building2, Grid, Users, Loader2, CheckCircle, Upload, Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -37,6 +37,7 @@ const createSeatLayout = (capacity: number) => {
 }
 
 export default function AdminCinemasPage() {
+  const imageInputRef = useRef<HTMLInputElement | null>(null)
   const [cinemas, setCinemas] = useState<ExtendedCinema[]>([])
   const [filteredCinemas, setFilteredCinemas] = useState<ExtendedCinema[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -47,6 +48,7 @@ export default function AdminCinemasPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [viewCinema, setViewCinema] = useState<ExtendedCinema | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -191,8 +193,41 @@ export default function AdminCinemasPage() {
     }))
   }
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setImageError(null)
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please choose a PNG, JPG, or WebP image.')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > 1024 * 1024) {
+      setImageError('Please choose an image smaller than 1MB.')
+      event.target.value = ''
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      setFormData((current) => ({ ...current, image: String(reader.result || '') }))
+    }
+    reader.onerror = () => setImageError('Could not read this image. Please try another file.')
+    reader.readAsDataURL(file)
+  }
+
+  const clearImage = () => {
+    setFormData((current) => ({ ...current, image: '' }))
+    setImageError(null)
+    if (imageInputRef.current) imageInputRef.current.value = ''
+  }
+
   const handleOpenCreate = () => {
     setEditingCinema(null)
+    setImageError(null)
     setFormData({
       name: '',
       address: '',
@@ -210,6 +245,7 @@ export default function AdminCinemasPage() {
   const handleOpenEdit = (cinema: ExtendedCinema) => {
     const cinemaScreens = getCinemaScreens(cinema)
     setEditingCinema(cinema)
+    setImageError(null)
     setFormData({
       name: cinema.name || '',
       address: cinema.address || '',
@@ -378,8 +414,15 @@ export default function AdminCinemasPage() {
                 key={cinema.id}
                 className="group bg-slate-800/80 backdrop-blur-xl rounded-2xl overflow-hidden border border-slate-700/50 hover:border-orange-500/50 transition-all duration-300"
               >
-                <div className="relative h-36 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
-                  <Building2 className="w-14 h-14 text-slate-500" />
+                <div className="relative h-36 overflow-hidden bg-slate-900">
+                  {cinema.image ? (
+                    <img src={cinema.image} alt={cinema.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-slate-800">
+                      <Building2 className="w-14 h-14 text-slate-500" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/20" />
                   <div className="absolute top-3 right-3 flex items-center gap-2">
                     <span className="px-2 py-1 bg-slate-900/80 backdrop-blur-sm rounded-lg text-white text-xs font-medium">
                       {cinema.city}
@@ -555,15 +598,63 @@ export default function AdminCinemasPage() {
                     className="bg-slate-700/50 border-slate-600 text-white"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-slate-300 text-sm">Image URL</label>
-                  <Input
-                    type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="/placeholder-cinema.jpg"
-                    className="bg-slate-700/50 border-slate-600 text-white"
-                  />
+                <div className="space-y-3">
+                  <label className="text-slate-300 text-sm">Cinema Image</label>
+                  <div className="grid gap-4 sm:grid-cols-[180px_1fr]">
+                    <div className="relative h-32 overflow-hidden rounded-xl border border-slate-700 bg-slate-900">
+                      {formData.image ? (
+                        <img src={formData.image} alt="Cinema preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-500">
+                          <ImageIcon className="h-8 w-8" />
+                          <span className="text-xs">No image</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-3">
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700"
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload Image
+                        </Button>
+                        {formData.image && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={clearImage}
+                            className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <Input
+                        type="text"
+                        value={formData.image}
+                        onChange={(e) => {
+                          setFormData({ ...formData, image: e.target.value })
+                          setImageError(null)
+                        }}
+                        placeholder="Paste image URL or upload a file"
+                        className="bg-slate-700/50 border-slate-600 text-white"
+                      />
+                      <p className="text-xs leading-5 text-slate-500">Upload PNG, JPG, or WebP under 1MB. You can also paste an image URL.</p>
+                      {imageError && <p className="text-xs text-red-400">{imageError}</p>}
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-slate-300 text-sm">Facilities</label>
@@ -642,6 +733,17 @@ export default function AdminCinemasPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="h-44 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900">
+                {viewCinema.image ? (
+                  <img src={viewCinema.image} alt={viewCinema.name} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-500">
+                    <Building2 className="h-10 w-10" />
+                    <span className="text-sm">No cinema image</span>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-2 mb-4">
                 <Badge className={getStatusColor(viewCinema.isActive !== false)}>
                   {viewCinema.isActive !== false ? 'Active' : 'Inactive'}

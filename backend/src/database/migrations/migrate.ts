@@ -26,6 +26,14 @@ const migrateUserAvatarColumn = async (): Promise<void> => {
   }
 };
 
+const migrateCinemaImageColumn = async (): Promise<void> => {
+  const dialect = sequelize.getDialect();
+
+  if (dialect === 'mysql' || dialect === 'mariadb') {
+    await sequelize.query('ALTER TABLE cinemas MODIFY COLUMN image MEDIUMTEXT NULL');
+  }
+};
+
 export const runMigrations = async (): Promise<void> => {
   try {
     console.log('Running database migrations...');
@@ -41,6 +49,7 @@ export const runMigrations = async (): Promise<void> => {
     await sequelize.sync({ force, alter });
     await migrateUserRoleToCustomer();
     await migrateUserAvatarColumn();
+    await migrateCinemaImageColumn();
 
     console.log('Database schema synchronized successfully');
     console.log('Database migrations completed');

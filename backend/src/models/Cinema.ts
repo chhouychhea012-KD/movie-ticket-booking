@@ -74,7 +74,7 @@ Cinema.init(
       allowNull: false,
     },
     image: {
-      type: DataTypes.STRING(500),
+      type: DataTypes.TEXT('medium'),
       allowNull: true,
     },
     facilities: {
