@@ -2,7 +2,7 @@
 
 import { Booking } from '@/types/booking'
 import { Ticket, Clock, Users, DollarSign, Calendar, ChevronRight, Eye } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 interface AdminBookingsListProps {
   bookings: Booking[]
@@ -79,7 +79,7 @@ export default function AdminBookingsList({ bookings }: AdminBookingsListProps) 
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2 text-orange-400 font-semibold">
                     <DollarSign className="w-4 h-4" />
-                    <span>{booking.totalPrice.toFixed(2)}</span>
+                    <span>{formatCurrency(booking.totalPrice, '')}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">

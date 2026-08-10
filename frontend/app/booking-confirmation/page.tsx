@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { CalendarClock, CheckCircle2, Download, MapPin, Ticket, Wallet } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 interface StoredBooking {
   id: string
@@ -15,8 +16,8 @@ interface StoredBooking {
   hall?: string
   showtime: string
   seats: string[]
-  ticketPrice: number
-  totalPrice: number
+  ticketPrice: number | string
+  totalPrice: number | string
   bookingDate: string
   status: 'confirmed' | 'cancelled' | 'used' | 'expired'
 }
@@ -115,7 +116,7 @@ function BookingConfirmationPageContent() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-slate-500">Total payment</p>
-                  <p className="text-3xl font-semibold text-[#f5c451]">${booking.totalPrice.toFixed(2)}</p>
+                  <p className="text-3xl font-semibold text-[#f5c451]">{formatCurrency(booking.totalPrice)}</p>
                 </div>
 
                 <div className="flex flex-wrap gap-3">

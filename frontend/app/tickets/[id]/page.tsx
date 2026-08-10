@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
 import { QrCode, Download, Mail, Phone, Calendar, Clock, MapPin, Film, Ticket, Check, X } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export default function TicketDetailPage() {
   const params = useParams()
@@ -153,17 +154,17 @@ export default function TicketDetailPage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-slate-400 text-sm">Ticket Price</p>
-                <p className="text-white">${booking.ticketPrice.toFixed(2)} × {booking.seats.length} seats</p>
+                <p className="text-white">{formatCurrency(booking.ticketPrice)} x {booking.seats.length} seats</p>
               </div>
               <div className="text-right">
                 <p className="text-slate-400 text-sm">Total Paid</p>
-                <p className="text-orange-500 text-2xl font-bold">${booking.totalPrice.toFixed(2)}</p>
+                <p className="text-orange-500 text-2xl font-bold">{formatCurrency(booking.totalPrice)}</p>
               </div>
             </div>
             {booking.discount && (
               <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-xl flex items-center gap-2">
                 <Check className="w-5 h-5 text-green-400" />
-                <span className="text-green-400 text-sm">Discount applied: -${booking.discount.toFixed(2)}</span>
+                <span className="text-green-400 text-sm">Discount applied: -{formatCurrency(booking.discount)}</span>
               </div>
             )}
           </div>

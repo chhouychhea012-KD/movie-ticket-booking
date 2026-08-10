@@ -4,8 +4,8 @@ export interface Booking {
   movieTitle: string
   showtime: string
   seats: string[]
-  ticketPrice: number
-  totalPrice: number
+  ticketPrice: number | string
+  totalPrice: number | string
   bookingDate: string
   status: 'confirmed' | 'cancelled' | 'used' | 'expired'
 }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Booking } from '@/types/booking'
+import { formatCurrency } from '@/lib/utils'
 
 interface BookingCardProps {
   booking: Booking
@@ -47,7 +48,7 @@ export default function BookingCard({ booking, showActions = false }: BookingCar
       <div className="border-t border-slate-700 pt-4 flex justify-between items-center">
         <div>
           <p className="text-slate-400 text-sm">Total Amount</p>
-          <p className="text-orange-500 font-bold text-lg">${booking.totalPrice.toFixed(2)}</p>
+          <p className="text-orange-500 font-bold text-lg">{formatCurrency(booking.totalPrice)}</p>
         </div>
         <Link 
           href={`/tickets/${booking.id}`}

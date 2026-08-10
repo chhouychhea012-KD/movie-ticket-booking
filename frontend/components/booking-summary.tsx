@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Movie } from '@/types/movie'
 import { Booking } from '@/types/booking'
 import Link from 'next/link'
+import { formatCurrency, toSafeNumber } from '@/lib/utils'
 
 interface BookingSummaryProps {
   movie: Movie
@@ -23,6 +24,7 @@ export default function BookingSummary({
 }: BookingSummaryProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const numericTicketPrice = toSafeNumber(ticketPrice)
 
   const handlePayment = () => {
     if (selectedSeats.length === 0) {
@@ -102,11 +104,11 @@ export default function BookingSummary({
       <div className="border-t border-slate-700 pt-4 mb-6">
         <div className="flex justify-between mb-2">
           <span className="text-slate-400">Tickets ({selectedSeats.length})</span>
-          <span className="text-white font-semibold">${(selectedSeats.length * ticketPrice).toFixed(2)}</span>
+          <span className="text-white font-semibold">{formatCurrency(selectedSeats.length * numericTicketPrice)}</span>
         </div>
         <div className="flex justify-between text-orange-500 font-bold">
           <span>Total</span>
-          <span>${totalPrice.toFixed(2)}</span>
+          <span>{formatCurrency(totalPrice)}</span>
         </div>
       </div>
 

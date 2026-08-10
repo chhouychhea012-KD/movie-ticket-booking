@@ -1,10 +1,11 @@
 import { CalendarClock, MapPin, Ticket } from 'lucide-react'
+import { formatCurrency, toSafeNumber } from '@/lib/utils'
 
 interface PaymentSummaryProps {
   movieTitle: string
   showtime: string
   seats: string[]
-  totalAmount: number
+  totalAmount: number | string
   moviePoster?: string
   cinemaName?: string
   hall?: string
@@ -21,7 +22,8 @@ export default function PaymentSummary({
 }: PaymentSummaryProps) {
   const validSeats = seats && seats.length > 0 ? seats : []
   const ticketCount = validSeats.length
-  const ticketPrice = ticketCount > 0 ? totalAmount / ticketCount : totalAmount
+  const numericTotalAmount = toSafeNumber(totalAmount)
+  const ticketPrice = ticketCount > 0 ? numericTotalAmount / ticketCount : numericTotalAmount
 
   return (
     <div className="cinema-card p-5">
@@ -83,12 +85,12 @@ export default function PaymentSummary({
         </div>
         <div className="flex justify-between text-slate-400">
           <span>Price per ticket</span>
-          <span>${ticketPrice > 0 ? ticketPrice.toFixed(2) : '0.00'}</span>
+          <span>{formatCurrency(ticketPrice)}</span>
         </div>
         <div className="border-t border-[#252a32] pt-4">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-white">Total</span>
-            <span className="text-2xl font-semibold text-[#f5c451]">${totalAmount > 0 ? totalAmount.toFixed(2) : '0.00'}</span>
+            <span className="text-2xl font-semibold text-[#f5c451]">{formatCurrency(numericTotalAmount)}</span>
           </div>
         </div>
       </div>
