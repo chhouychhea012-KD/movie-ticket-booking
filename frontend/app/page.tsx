@@ -80,43 +80,55 @@ export default function Home() {
           </div>
           <Link href="/movies" className="text-sm font-semibold text-[#f23b43] hover:text-white">View all</Link>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
-          {nowShowing.slice(0, 10).map((movie) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+          {nowShowing.slice(0, 8).map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}
         </div>
       </section>
 
       <section className="cinema-container pb-16">
-        <div className="cinema-card overflow-hidden">
-          <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="relative min-h-[260px] overflow-hidden">
+        <div className="cinema-card overflow-hidden border-[#2c3139] bg-[#11141a] shadow-[0_28px_90px_rgba(0,0,0,0.42)]">
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="relative min-h-[300px] overflow-hidden sm:min-h-[340px]">
               <img
                 src={movies[0]?.backdrop || movies[0]?.poster || '/logo-nav.png'}
                 alt="CamboCine promotion"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover object-center"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,13,16,0.15)_0%,rgba(11,13,16,0.45)_40%,rgba(11,13,16,0.86)_100%)]" />
-              <div className="absolute inset-0 flex items-end p-6 sm:p-8">
-                <div className="max-w-lg">
-                  <span className="cinema-chip border-[#f5c451]/30 text-[#f5c451]">
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,13,16,0.18)_0%,rgba(11,13,16,0.44)_38%,rgba(11,13,16,0.92)_100%)]" />
+              <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,rgba(11,13,16,0.35),rgba(11,13,16,0))]" />
+              <div className="absolute inset-0 flex items-end p-6 sm:p-8 lg:p-10">
+                <div className="max-w-xl">
+                  <span className="cinema-chip border-[#f5c451]/30 bg-[#f5c451]/10 text-[#f5c451]">
                     <BadgePercent className="h-3.5 w-3.5" />
                     Special Offers
                   </span>
-                  <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+                  <h2 className="mt-4 max-w-lg text-3xl font-semibold leading-tight text-white sm:text-4xl">
                     Big screen nights, sharper deals.
                   </h2>
-                  <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
+                  <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:text-base">
                     Grab tickets, snacks, and seat upgrades with clean, simple movie offers.
                   </p>
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <Link href="/movies" className="cinema-button-primary h-11 px-5 py-0">
+                      Browse Movies
+                    </Link>
+                    <Link href="/offers" className="cinema-button-secondary h-11 px-5 py-0">
+                      View Offers
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4 p-6 sm:p-8">
+            <div className="flex flex-col justify-between gap-6 border-t border-[#252a32] p-6 sm:p-8 lg:border-l lg:border-t-0">
               <div>
-                <p className="text-sm font-semibold text-white">Quick Picks</p>
-                <p className="cinema-muted mt-1">Fast paths to your next booking.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Quick Picks</p>
+                <p className="mt-2 text-lg font-semibold text-white">Fast paths to your next booking.</p>
+                <p className="cinema-muted mt-2 max-w-md">
+                  Jump straight to the most useful parts of the site without extra clutter.
+                </p>
               </div>
               <div className="grid gap-3">
                 {[
@@ -127,13 +139,13 @@ export default function Home() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="flex items-center justify-between rounded-2xl border border-[#252a32] bg-[#101318] px-4 py-3 transition hover:border-[#e50914]/40 hover:bg-[#14171c]"
+                    className="group flex items-center justify-between rounded-2xl border border-[#252a32] bg-[#101318] px-4 py-4 transition hover:-translate-y-0.5 hover:border-[#e50914]/40 hover:bg-[#14171c]"
                   >
-                    <div>
-                      <p className="font-medium text-white">{item.label}</p>
-                      <p className="text-xs text-slate-500">{item.note}</p>
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-white">{item.label}</p>
+                      <p className="mt-1 text-xs text-slate-500">{item.note}</p>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-[#e50914]" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-[#e50914] transition group-hover:translate-x-0.5" />
                   </Link>
                 ))}
               </div>
@@ -186,10 +198,10 @@ export default function Home() {
                     <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{cinema.address}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {cinema.facilities?.slice(0, 3).map((facility) => (
+                    {normalizeStringArray(cinema.facilities).slice(0, 3).map((facility) => (
                       <span key={facility} className="cinema-chip text-[11px]">{facility}</span>
                     ))}
-                    {cinema.screens?.length ? (
+                    {Array.isArray(cinema.screens) && cinema.screens.length ? (
                       <span className="cinema-chip text-[11px]">{cinema.screens.length} screens</span>
                     ) : null}
                   </div>

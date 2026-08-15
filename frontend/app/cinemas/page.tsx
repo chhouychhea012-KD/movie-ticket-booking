@@ -60,7 +60,7 @@ export default function CinemasPage() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {['Phnom Penh', 'Siem Reap', 'Battambang', selectedCity].filter(Boolean).slice(0, 4).map((city) => (
+                {Array.from(new Set(['Phnom Penh', 'Siem Reap', 'Battambang', selectedCity].filter(Boolean))).slice(0, 4).map((city) => (
                   <span key={city} className="cinema-chip justify-center py-2 text-center">{city}</span>
                 ))}
               </div>

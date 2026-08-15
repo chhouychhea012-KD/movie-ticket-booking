@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
-import { BadgePercent, Building2, ChevronDown, Clapperboard, HelpCircle, Home, LogOut, MapPin, Menu, Search, Ticket, User, X } from 'lucide-react'
+import { BadgePercent, Building2, Clapperboard, HelpCircle, Home, LogOut, MapPin, Menu, Search, Ticket, User, X } from 'lucide-react'
 import { Movie } from '@/types'
 import { normalizeStringArray } from '@/lib/utils'
 
@@ -12,13 +12,11 @@ export default function Navigation() {
   const { user, logout, cities, selectedCity, setSelectedCity, searchMovies } = useApp()
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [cityOpen, setCityOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Movie[]>([])
   const [showResults, setShowResults] = useState(false)
-  const cityRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
 
   const navItems = [
@@ -38,7 +36,6 @@ export default function Navigation() {
 
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
-      if (cityRef.current && !cityRef.current.contains(event.target as Node)) setCityOpen(false)
       if (userRef.current && !userRef.current.contains(event.target as Node)) setUserOpen(false)
     }
     document.addEventListener('click', onClick)
@@ -108,38 +105,10 @@ export default function Navigation() {
           </div>
 
           <div className="ml-auto hidden items-center gap-2 md:flex">
-            <Link href="/movies" className="cinema-button-secondary h-10 px-4 py-0">
-              Movies
-            </Link>
             <Link href={user ? '/bookings' : '/auth/login?redirect=/bookings'} className="cinema-button-secondary h-10 px-4 py-0">
               <Ticket className="h-4 w-4" />
               Tickets
             </Link>
-
-            <div className="relative" ref={cityRef}>
-              <button onClick={(event) => { event.stopPropagation(); setCityOpen(!cityOpen) }} className="cinema-button-secondary h-10 px-4 py-0">
-                <MapPin className="h-4 w-4 text-[#e50914]" />
-                {selectedCity}
-                <ChevronDown className="h-4 w-4 text-slate-500" />
-              </button>
-              {cityOpen && (
-                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] shadow-2xl shadow-black/40">
-                  {cities.map((city) => (
-                    <button
-                      key={city.id}
-                      onClick={() => {
-                        setSelectedCity(city.name)
-                        setCityOpen(false)
-                      }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition hover:bg-[#1b1f26] ${selectedCity === city.name ? 'text-white' : 'text-slate-400'}`}
-                    >
-                      <MapPin className="h-4 w-4 text-[#e50914]" />
-                      {city.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {user ? (
               <div className="relative" ref={userRef}>
@@ -210,12 +179,6 @@ export default function Navigation() {
                 </Link>
               )
             })}
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="rounded-full border border-[#252a32] bg-[#14171c] px-3 py-1.5">
-              Browse by city or location
-            </span>
           </div>
         </div>
 
