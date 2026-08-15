@@ -6,7 +6,7 @@ import Link from 'next/link'
 import MovieCard from '@/components/movie-card'
 import MovieSlideshow from '@/components/movie-slideshow'
 import { useApp } from '@/context/AppContext'
-import { MapPin, Search, Ticket, Timer, Building2 } from 'lucide-react'
+import { ArrowRight, BadgePercent, Building2, MapPin, Search, Ticket, Timer } from 'lucide-react'
 import { normalizeStringArray } from '@/lib/utils'
 
 export default function Home() {
@@ -19,7 +19,8 @@ export default function Home() {
     setResults(trimmed ? searchMovies(trimmed).slice(0, 6) : [])
   }, [query, searchMovies])
 
-  const recommended = [...movies].sort((a, b) => Number(b.rating) - Number(a.rating)).slice(0, 4)
+  const cinemaPreview = (selectedCity ? cinemas.filter((cinema) => cinema.city === selectedCity) : cinemas).slice(0, 6)
+  const promoMovies = [...movies].slice(0, 6)
 
   return (
     <div className="cinema-page">
@@ -86,6 +87,61 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="cinema-container pb-16">
+        <div className="cinema-card overflow-hidden">
+          <div className="grid lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="relative min-h-[260px] overflow-hidden">
+              <img
+                src={movies[0]?.backdrop || movies[0]?.poster || '/logo-nav.png'}
+                alt="CamboCine promotion"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(11,13,16,0.15)_0%,rgba(11,13,16,0.45)_40%,rgba(11,13,16,0.86)_100%)]" />
+              <div className="absolute inset-0 flex items-end p-6 sm:p-8">
+                <div className="max-w-lg">
+                  <span className="cinema-chip border-[#f5c451]/30 text-[#f5c451]">
+                    <BadgePercent className="h-3.5 w-3.5" />
+                    Special Offers
+                  </span>
+                  <h2 className="mt-4 text-3xl font-semibold text-white sm:text-4xl">
+                    Big screen nights, sharper deals.
+                  </h2>
+                  <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
+                    Grab tickets, snacks, and seat upgrades with clean, simple movie offers.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 p-6 sm:p-8">
+              <div>
+                <p className="text-sm font-semibold text-white">Quick Picks</p>
+                <p className="cinema-muted mt-1">Fast paths to your next booking.</p>
+              </div>
+              <div className="grid gap-3">
+                {[
+                  { label: 'Best rated movies', href: '/movies', note: 'Find top picks in one tap.' },
+                  { label: 'Nearby cinemas', href: '/cinemas', note: 'See locations by city.' },
+                  { label: 'Active deals', href: '/offers', note: 'Open current promotions.' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center justify-between rounded-2xl border border-[#252a32] bg-[#101318] px-4 py-3 transition hover:border-[#e50914]/40 hover:bg-[#14171c]"
+                  >
+                    <div>
+                      <p className="font-medium text-white">{item.label}</p>
+                      <p className="text-xs text-slate-500">{item.note}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[#e50914]" />
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="border-y border-[#252a32] bg-[#101318] py-14">
         <div className="cinema-container grid gap-4 md:grid-cols-3">
           <InfoCard icon={<Timer className="h-5 w-5" />} title="Fast Booking" text="Choose a time, pick seats, and pay quickly." />
@@ -98,21 +154,86 @@ export default function Home() {
         <div>
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <h2 className="cinema-section-title">Recommended</h2>
-              <p className="cinema-muted mt-2">Top picks for your next movie night.</p>
+              <h2 className="cinema-section-title">Cinemas</h2>
+              <p className="cinema-muted mt-2">Clean location cards, easy to scan.</p>
             </div>
+            <Link href="/cinemas" className="text-sm font-semibold text-[#f23b43] hover:text-white">View all</Link>
           </div>
-          <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
-            {recommended.map((movie) => (
-              <MovieCard key={movie.id} movie={movie} />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {cinemaPreview.map((cinema) => (
+              <Link
+                key={cinema.id}
+                href="/cinemas"
+                className="group overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] transition hover:-translate-y-0.5 hover:border-[#e50914]/40"
+              >
+                <div className="relative h-44 overflow-hidden bg-[#101318]">
+                  <img
+                    src={cinema.image || movies[0]?.poster || '/logo-nav.png'}
+                    alt={cinema.name}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d10] via-transparent to-transparent" />
+                  <div className="absolute left-3 top-3 flex gap-2">
+                    <span className="cinema-chip border-black/20 bg-black/40 text-white backdrop-blur">{cinema.city}</span>
+                    <span className={`cinema-chip ${cinema.isActive !== false ? 'border-emerald-500/30 text-emerald-300' : 'border-slate-500/30 text-slate-300'}`}>
+                      {cinema.isActive !== false ? 'Open' : 'Closed'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-3 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 text-base font-semibold text-white">{cinema.name}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{cinema.address}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {cinema.facilities?.slice(0, 3).map((facility) => (
+                      <span key={facility} className="cinema-chip text-[11px]">{facility}</span>
+                    ))}
+                    {cinema.screens?.length ? (
+                      <span className="cinema-chip text-[11px]">{cinema.screens.length} screens</span>
+                    ) : null}
+                  </div>
+                </div>
+              </Link>
             ))}
+          </div>
+
+          <div className="mt-14">
+            <div className="mb-8 flex items-end justify-between gap-4">
+              <div>
+                <h2 className="cinema-section-title">Promotions</h2>
+                <p className="cinema-muted mt-2">Small cards, quick offers, clear actions.</p>
+              </div>
+              <Link href="/offers" className="text-sm font-semibold text-[#f23b43] hover:text-white">See offers</Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+              {promoMovies.map((movie, index) => (
+                <Link
+                  key={movie.id}
+                  href={`/movies/${movie.id}`}
+                  className="group overflow-hidden rounded-2xl border border-[#252a32] bg-[#14171c] transition hover:-translate-y-0.5 hover:border-[#e50914]/40"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <img src={movie.poster} alt={movie.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d10] via-transparent to-transparent" />
+                    <div className="absolute left-2 top-2 rounded-full bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur">
+                      {index % 2 === 0 ? 'Deal' : 'New'}
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <p className="line-clamp-1 text-sm font-semibold text-white">{movie.title}</p>
+                    <p className="mt-1 line-clamp-1 text-xs text-slate-500">{normalizeStringArray(movie.genre).slice(0, 2).join(' / ')}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {comingSoon.length > 0 && (
             <div className="mt-14">
               <div className="mb-8">
                 <h2 className="cinema-section-title">Coming Soon</h2>
-                <p className="cinema-muted mt-2">Upcoming movies to watch for.</p>
+                <p className="cinema-muted mt-2">Upcoming releases to watch for.</p>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
                 {comingSoon.slice(0, 4).map((movie) => (

@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useApp } from '@/context/AppContext'
-import { ChevronDown, Clapperboard, LogOut, MapPin, Menu, Search, Ticket, User, X } from 'lucide-react'
+import { BadgePercent, Building2, ChevronDown, Clapperboard, HelpCircle, Home, LogOut, MapPin, Menu, Search, Ticket, User, X } from 'lucide-react'
 import { Movie } from '@/types'
 import { normalizeStringArray } from '@/lib/utils'
 
 export default function Navigation() {
   const { user, logout, cities, selectedCity, setSelectedCity, searchMovies } = useApp()
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [cityOpen, setCityOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
@@ -18,6 +20,14 @@ export default function Navigation() {
   const [showResults, setShowResults] = useState(false)
   const cityRef = useRef<HTMLDivElement>(null)
   const userRef = useRef<HTMLDivElement>(null)
+
+  const navItems = [
+    { href: '/', label: 'Home', icon: Home },
+    { href: '/movies', label: 'Movies', icon: Clapperboard },
+    { href: '/cinemas', label: 'Cinemas', icon: Building2 },
+    { href: '/offers', label: 'Offers', icon: BadgePercent },
+    { href: '/faqs', label: 'FAQ', icon: HelpCircle },
+  ]
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -57,7 +67,7 @@ export default function Navigation() {
             <img
               src="/logo-nav.png"
               alt="CamboCine Movie Time"
-              className="h-16 w-32 object-contain drop-shadow-[0_0_14px_rgba(236,72,153,0.45)] sm:w-40 lg:w-44"
+              className="h-14 w-28 object-contain drop-shadow-[0_0_14px_rgba(236,72,153,0.45)] sm:w-36 lg:w-40"
             />
             <span className="sr-only">CamboCine</span>
           </Link>
@@ -180,6 +190,35 @@ export default function Navigation() {
           </button>
         </div>
 
+        <div className="hidden items-center justify-between gap-4 pb-4 md:flex">
+          <div className="flex items-center gap-2">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const active = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    active
+                      ? 'border-[#e50914] bg-[#e50914]/15 text-white'
+                      : 'border-transparent bg-transparent text-slate-400 hover:border-[#252a32] hover:bg-[#14171c] hover:text-white'
+                  }`}
+                >
+                  <Icon className={`h-4 w-4 ${active ? 'text-[#e50914]' : ''}`} />
+                  {item.label}
+                </Link>
+              )
+            })}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="rounded-full border border-[#252a32] bg-[#14171c] px-3 py-1.5">
+              Browse by city or location
+            </span>
+          </div>
+        </div>
+
         {mobileOpen && (
           <div className="space-y-3 border-t border-[#252a32] py-4 md:hidden">
             <div className="relative">
@@ -196,6 +235,13 @@ export default function Navigation() {
                 <button key={city.id} onClick={() => setSelectedCity(city.name)} className={`rounded-xl border px-3 py-2 text-left text-sm ${selectedCity === city.name ? 'border-[#e50914] text-white' : 'border-[#252a32] text-slate-400'}`}>
                   {city.name}
                 </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {navItems.slice(0, 4).map((item) => (
+                <Link key={item.href} href={item.href} onClick={closeMobile} className={`rounded-xl border px-3 py-2 text-center text-sm ${pathname === item.href || pathname?.startsWith(item.href) ? 'border-[#e50914] text-white' : 'border-[#252a32] text-slate-400'}`}>
+                  {item.label}
+                </Link>
               ))}
             </div>
             <Link href="/movies" onClick={closeMobile} className="cinema-button-secondary w-full">Movies</Link>

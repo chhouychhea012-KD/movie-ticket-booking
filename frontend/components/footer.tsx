@@ -21,8 +21,8 @@ export default function Footer() {
     movies: [
       { label: 'Now Showing', href: '/movies' },
       { label: 'Coming Soon', href: '/movies?status=coming_soon' },
-      { label: 'Top Rated', href: '/movies?sort=rating' },
-      { label: 'Showtimes', href: '/movies' },
+      { label: 'Cinemas', href: '/cinemas' },
+      { label: 'Offers', href: '/offers' },
     ],
     company: [
       { label: 'About Us', href: '/about' },
@@ -55,13 +55,13 @@ export default function Footer() {
     <footer className="bg-slate-950 border-t border-slate-800">
       {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand & Newsletter */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-3 mb-6 group">
-              <div style={{ width: '380px', height: '100px' }}>
+              <div style={{ width: '240px', height: '74px' }}>
                 <img
-                  src="/logo.png"
+                  src="/logo-nav.png"
                   alt="CamboCine Movie Time"
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                   style={{
@@ -72,12 +72,12 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-slate-400 mb-6 max-w-sm">
-              Your ultimate destination for booking movie tickets. Experience cinema like never before with exclusive deals and showtimes.
+              Book movies, choose seats, and see local cinema deals in a clean, fast flow.
             </p>
 
             {/* Newsletter Subscription */}
             <div className="mb-6">
-              <h4 className="text-white font-semibold mb-3">Subscribe to our newsletter</h4>
+              <h4 className="text-white font-semibold mb-3">Get updates</h4>
               <form onSubmit={handleSubscribe} className="flex gap-2">
                 <div className="relative flex-1">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
@@ -85,7 +85,7 @@ export default function Footer() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
+                    placeholder="Email address"
                     className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 transition"
                     required
                   />
@@ -122,7 +122,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Movies</h4>
+            <h4 className="text-white font-semibold mb-4">Browse</h4>
             <ul className="space-y-3">
               {footerLinks.movies.map((link, i) => (
                 <li key={i}>
@@ -197,7 +197,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-16 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-slate-500 text-sm">
             <p>© 2024 CamboCine. All rights reserved.</p>
-            <p>Designed with ❤️ for movie lovers</p>
+            <p>Clean cinema booking for Cambodia</p>
           </div>
         </div>
       </div>
