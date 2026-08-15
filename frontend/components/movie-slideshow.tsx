@@ -75,7 +75,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                 </span>
               </div>
 
-              <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
+              <h1 className="max-w-3xl line-clamp-2 text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl md:text-7xl">
                 {currentMovie.title}
               </h1>
 
@@ -91,7 +91,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
                 <span>{genres.join(' / ')}</span>
               </div>
 
-              <p className="mt-5 max-w-xl text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base md:text-lg">
+              <p className="mt-5 max-w-xl line-clamp-3 text-sm leading-7 text-slate-300 sm:mt-6 sm:text-base md:text-lg">
                 {currentMovie.synopsis}
               </p>
 

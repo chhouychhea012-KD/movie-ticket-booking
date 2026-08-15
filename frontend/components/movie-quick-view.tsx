@@ -7,7 +7,7 @@ import { Movie } from '@/types'
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
 import { getYouTubeThumbnailUrl } from '@/lib/video'
-import { normalizeStringArray } from '@/lib/utils'
+import { formatPreviewList, normalizeStringArray } from '@/lib/utils'
 
 interface MovieQuickViewProps {
   movie: Movie | null
@@ -152,7 +152,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
         <div className="p-6">
           {/* Title & Meta */}
           <div className="mb-4">
-            <h2 className="text-3xl font-bold text-white mb-2">{movie.title}</h2>
+            <h2 className="line-clamp-2 text-3xl font-bold text-white mb-2">{movie.title}</h2>
             <div className="flex flex-wrap items-center gap-4 text-slate-400">
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -183,17 +183,17 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
           </div>
 
           {/* Synopsis */}
-          <p className="text-slate-300 mb-6">{movie.synopsis}</p>
+          <p className="line-clamp-3 text-slate-300 mb-6">{movie.synopsis}</p>
 
           {/* Director & Cast */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-slate-800/50 rounded-xl p-4">
               <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Director</p>
-              <p className="text-white font-medium">{movie.director}</p>
+              <p className="line-clamp-1 text-white font-medium" title={movie.director}>{movie.director}</p>
             </div>
             <div className="bg-slate-800/50 rounded-xl p-4">
               <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Cast</p>
-              <p className="text-white font-medium">{cast.join(', ')}</p>
+              <p className="line-clamp-2 text-white font-medium" title={cast.join(', ')}>{formatPreviewList(cast, 3)}</p>
             </div>
           </div>
 

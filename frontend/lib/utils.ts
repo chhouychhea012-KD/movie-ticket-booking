@@ -50,3 +50,13 @@ export function normalizeStringArray(value: unknown): string[] {
     .map((item) => item.trim().replace(/^["'\[]+|["'\]]+$/g, ''))
     .filter(Boolean)
 }
+
+export function formatPreviewList(value: unknown, maxItems = 3): string {
+  const items = normalizeStringArray(value)
+  if (items.length === 0) return ''
+
+  const preview = items.slice(0, maxItems)
+  const remaining = items.length - preview.length
+
+  return remaining > 0 ? `${preview.join(', ')} +${remaining}` : preview.join(', ')
+}

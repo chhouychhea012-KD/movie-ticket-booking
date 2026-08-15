@@ -6,7 +6,7 @@ import { Calendar, Clock, Heart, Play, Star } from 'lucide-react'
 import { Movie } from '@/types'
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
-import { normalizeStringArray } from '@/lib/utils'
+import { formatPreviewList, normalizeStringArray } from '@/lib/utils'
 
 interface MovieCardProps {
   movie: Movie
@@ -63,10 +63,10 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
           <div className="flex min-w-0 flex-col justify-between p-4 sm:p-5">
             <div>
               <div className="mb-2 flex items-start justify-between gap-3">
-                <h3 className="line-clamp-2 text-lg font-semibold text-white">{movie.title}</h3>
+                <h3 className="line-clamp-1 text-lg font-semibold text-white" title={movie.title}>{movie.title}</h3>
                 <Rating value={movie.rating} />
               </div>
-              <p className="line-clamp-2 text-sm leading-6 text-slate-400">{movie.synopsis}</p>
+              <p className="line-clamp-1 text-sm leading-6 text-slate-400">{movie.synopsis}</p>
             </div>
             <CardMeta movie={movie} genres={genres} />
           </div>
@@ -114,8 +114,8 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
 
         <div className="space-y-3.5 p-3.5 sm:p-4">
           <div className="min-h-[3.6rem]">
-            <h3 className="line-clamp-2 text-base font-semibold leading-snug text-white">{movie.title}</h3>
-            <p className="mt-1 line-clamp-1 text-xs text-slate-500">{genres.slice(0, 2).join(' / ')}</p>
+            <h3 className="line-clamp-1 text-base font-semibold leading-snug text-white" title={movie.title}>{movie.title}</h3>
+            <p className="mt-1 line-clamp-1 text-xs text-slate-500">{formatPreviewList(genres, 2)}</p>
           </div>
           <CardMeta movie={movie} genres={genres} />
           <span className="cinema-button-primary h-10 w-full py-0">Book Now</span>

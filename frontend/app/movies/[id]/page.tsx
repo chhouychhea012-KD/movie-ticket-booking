@@ -7,7 +7,7 @@ import { Calendar, Clock, Heart, MapPin, Play, Share2, Star, Ticket } from 'luci
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
 import { Movie, Showtime } from '@/types'
-import { normalizeStringArray } from '@/lib/utils'
+import { formatPreviewList, normalizeStringArray } from '@/lib/utils'
 
 export default function MovieDetailPage() {
   const params = useParams()
@@ -94,7 +94,7 @@ export default function MovieDetailPage() {
               </span>
             </div>
 
-            <h1 className="text-5xl font-semibold leading-tight tracking-tight text-white md:text-7xl">{movie.title}</h1>
+            <h1 className="max-w-4xl line-clamp-2 text-4xl font-semibold leading-tight tracking-tight text-white md:text-6xl">{movie.title}</h1>
 
             <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-300">
               <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-slate-500" />{movie.duration} min</span>
@@ -102,16 +102,16 @@ export default function MovieDetailPage() {
               <span>{genres.join(' / ')}</span>
             </div>
 
-            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300">{movie.synopsis}</p>
+              <p className="mt-6 max-w-2xl line-clamp-3 text-base leading-7 text-slate-300">{movie.synopsis}</p>
 
             <div className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
               <div>
                 <p className="text-slate-500">Director</p>
-                <p className="mt-1 font-medium text-white">{movie.director}</p>
+                <p className="mt-1 line-clamp-1 font-medium text-white" title={movie.director}>{movie.director}</p>
               </div>
               <div>
                 <p className="text-slate-500">Cast</p>
-                <p className="mt-1 font-medium text-white">{cast.join(', ')}</p>
+                <p className="mt-1 line-clamp-2 font-medium text-white" title={cast.join(', ')}>{formatPreviewList(cast, 3)}</p>
               </div>
             </div>
 
@@ -155,8 +155,8 @@ export default function MovieDetailPage() {
       <section className="cinema-container pb-20">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h2 className="cinema-section-title">Choose Showtime</h2>
-            <p className="cinema-muted mt-2">Select a date, cinema, and time to continue.</p>
+            <h2 className="cinema-section-title">Showtimes</h2>
+            <p className="cinema-muted mt-2">Pick a date, cinema, and time.</p>
           </div>
         </div>
 

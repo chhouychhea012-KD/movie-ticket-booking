@@ -25,7 +25,7 @@ export default function Home() {
     <div className="cinema-page">
       <h1 className="sr-only">CamboCine movie ticket booking online in Cambodia</h1>
       <p className="sr-only">
-        CamboCine is the official Cambodia cinema booking website for movie showtimes, trailers, seat selection, secure checkout, and digital tickets.
+        CamboCine is the Cambodia movie booking site for showtimes, seats, checkout, and tickets.
       </p>
       <MovieSlideshow movies={nowShowing.slice(0, 5)} />
 
@@ -88,9 +88,9 @@ export default function Home() {
 
       <section className="border-y border-[#252a32] bg-[#101318] py-14">
         <div className="cinema-container grid gap-4 md:grid-cols-3">
-          <InfoCard icon={<Timer className="h-5 w-5" />} title="Fast Booking" text="Pick a showtime, choose seats, and pay in a few clear steps." />
-          <InfoCard icon={<Ticket className="h-5 w-5" />} title="Digital Tickets" text="Get booking details and a scannable ticket after checkout." />
-          <InfoCard icon={<Building2 className="h-5 w-5" />} title="Local Cinemas" text="Browse available locations and screenings by city." />
+          <InfoCard icon={<Timer className="h-5 w-5" />} title="Fast Booking" text="Choose a time, pick seats, and pay quickly." />
+          <InfoCard icon={<Ticket className="h-5 w-5" />} title="Digital Tickets" text="Get a ticket and booking details after checkout." />
+          <InfoCard icon={<Building2 className="h-5 w-5" />} title="Local Cinemas" text="See nearby cinemas and showtimes by city." />
         </div>
       </section>
 
@@ -99,7 +99,7 @@ export default function Home() {
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
               <h2 className="cinema-section-title">Recommended</h2>
-              <p className="cinema-muted mt-2">Top rated choices for your next cinema night.</p>
+              <p className="cinema-muted mt-2">Top picks for your next movie night.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
@@ -112,7 +112,7 @@ export default function Home() {
             <div className="mt-14">
               <div className="mb-8">
                 <h2 className="cinema-section-title">Coming Soon</h2>
-                <p className="cinema-muted mt-2">Upcoming releases to keep on your watchlist.</p>
+                <p className="cinema-muted mt-2">Upcoming movies to watch for.</p>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-4">
                 {comingSoon.slice(0, 4).map((movie) => (
@@ -127,7 +127,7 @@ export default function Home() {
           <div className="cinema-card p-5">
             <p className="text-sm font-semibold text-white">Weekend Offer</p>
             <p className="mt-2 text-3xl font-semibold text-[#f5c451]">30% off</p>
-            <p className="cinema-muted mt-2">Use code WEEKEND30 on selected screenings.</p>
+            <p className="cinema-muted mt-2">Use WEEKEND30 on selected screenings.</p>
             <Link href="/movies" className="cinema-button-primary mt-5 w-full">Find Showtimes</Link>
           </div>
 
