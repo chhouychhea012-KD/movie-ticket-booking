@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useApp } from '@/context/AppContext'
 import { User, Mail, Phone, Heart, History, Bell, CreditCard, LogOut, Camera, Save, Loader2, Ticket, Star } from 'lucide-react'
 import BookingCard from '@/components/booking-card'
+import { normalizeStringArray } from '@/lib/utils'
 
 export default function ProfilePage() {
   const { user, movies, bookings, updateProfile, removeFavoriteMovie } = useApp()
@@ -337,7 +338,7 @@ export default function ProfilePage() {
                           <div className="p-4">
                             <h3 className="text-white font-semibold">{movie.title}</h3>
                             <div className="flex items-center gap-2 mt-2">
-                              <span className="text-orange-500 text-sm">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).join(', ')}</span>
+                              <span className="text-orange-500 text-sm">{normalizeStringArray(movie.genre).join(', ')}</span>
                               <span className="text-yellow-400 text-sm flex items-center gap-1">
                                 <Star className="w-3 h-3 fill-current" />
                                 {movie.rating}

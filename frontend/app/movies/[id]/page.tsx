@@ -7,6 +7,7 @@ import { Calendar, Clock, Heart, MapPin, Play, Share2, Star, Ticket } from 'luci
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
 import { Movie, Showtime } from '@/types'
+import { normalizeStringArray } from '@/lib/utils'
 
 export default function MovieDetailPage() {
   const params = useParams()
@@ -61,8 +62,8 @@ export default function MovieDetailPage() {
     }))
     .filter((group) => group.times.length > 0)
 
-  const genres = (Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).filter(Boolean)
-  const cast = (Array.isArray(movie.cast) ? movie.cast : String(movie.cast || '').split(',')).filter(Boolean).slice(0, 5)
+  const genres = normalizeStringArray(movie.genre)
+  const cast = normalizeStringArray(movie.cast).slice(0, 5)
   const isFavorite = Boolean(user?.favoriteMovies.includes(movie.id))
 
   const book = (showtime: Showtime) => {

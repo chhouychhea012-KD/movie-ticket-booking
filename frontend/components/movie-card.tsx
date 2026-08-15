@@ -6,6 +6,7 @@ import { Calendar, Clock, Heart, Play, Star } from 'lucide-react'
 import { Movie } from '@/types'
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
+import { normalizeStringArray } from '@/lib/utils'
 
 interface MovieCardProps {
   movie: Movie
@@ -22,7 +23,7 @@ export default function MovieCard({ movie, viewMode = 'grid' }: MovieCardProps) 
     setIsFavorite(Boolean(user?.favoriteMovies.includes(movie.id)))
   }, [movie.id, user])
 
-  const genres = (Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).filter(Boolean)
+  const genres = normalizeStringArray(movie.genre)
 
   const toggleFavorite = (event: React.MouseEvent) => {
     event.preventDefault()

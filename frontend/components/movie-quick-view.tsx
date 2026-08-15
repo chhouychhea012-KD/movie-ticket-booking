@@ -7,6 +7,7 @@ import { Movie } from '@/types'
 import TrailerModal from '@/components/trailer-modal'
 import { useApp } from '@/context/AppContext'
 import { getYouTubeThumbnailUrl } from '@/lib/video'
+import { normalizeStringArray } from '@/lib/utils'
 
 interface MovieQuickViewProps {
   movie: Movie | null
@@ -91,6 +92,8 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
   }
 
   const thumbnailUrl = getYouTubeThumbnailUrl(movie.trailerUrl)
+  const genres = normalizeStringArray(movie.genre)
+  const cast = normalizeStringArray(movie.cast)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -172,7 +175,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
 
           {/* Genres */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).map((g, i) => (
+            {genres.map((g, i) => (
               <span key={i} className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-medium">
                 {g}
               </span>
@@ -190,7 +193,7 @@ export default function MovieQuickView({ movie, isOpen, onClose }: MovieQuickVie
             </div>
             <div className="bg-slate-800/50 rounded-xl p-4">
               <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Cast</p>
-              <p className="text-white font-medium">{(Array.isArray(movie.cast) ? movie.cast : String(movie.cast || '').split(',')).join(', ')}</p>
+              <p className="text-white font-medium">{cast.join(', ')}</p>
             </div>
           </div>
 

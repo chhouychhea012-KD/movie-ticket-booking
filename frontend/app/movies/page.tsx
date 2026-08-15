@@ -5,6 +5,7 @@ import { useApp } from '@/context/AppContext'
 import { Check, Grid, Languages, List, Search, SlidersHorizontal, Star, Calendar, TrendingUp, X } from 'lucide-react'
 import MovieCard from '@/components/movie-card'
 import { Movie } from '@/types'
+import { normalizeStringArray } from '@/lib/utils'
 
 export default function MoviesPage() {
   const { movies, nowShowing, comingSoon, searchMovies, selectedCity } = useApp()
@@ -33,7 +34,7 @@ export default function MoviesPage() {
     
     // Apply genre filter
     if (selectedGenres.length > 0) {
-      results = results.filter(m => (Array.isArray(m.genre) ? m.genre : String(m.genre || '').split(',')).some(g => selectedGenres.includes(g)))
+      results = results.filter(m => normalizeStringArray(m.genre).some(g => selectedGenres.includes(g)))
     }
     
     // Apply language filter
@@ -68,7 +69,7 @@ export default function MoviesPage() {
   const activeFiltersCount = selectedGenres.length + selectedLanguages.length + (selectedRating > 0 ? 1 : 0)
   const genreCounts = genres.reduce<Record<string, number>>((counts, genre) => {
     counts[genre] = movies.filter((movie) =>
-      (Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).includes(genre)
+      normalizeStringArray(movie.genre).includes(genre)
     ).length
     return counts
   }, {})

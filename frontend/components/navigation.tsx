@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { ChevronDown, Clapperboard, LogOut, MapPin, Menu, Search, Ticket, User, X } from 'lucide-react'
 import { Movie } from '@/types'
+import { normalizeStringArray } from '@/lib/utils'
 
 export default function Navigation() {
   const { user, logout, cities, selectedCity, setSelectedCity, searchMovies } = useApp()
@@ -87,7 +88,7 @@ export default function Navigation() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-white">{movie.title}</p>
                       <p className="truncate text-xs text-slate-400">
-                        {(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).slice(0, 2).join(', ')}
+                        {normalizeStringArray(movie.genre).slice(0, 2).join(', ')}
                       </p>
                     </div>
                   </Link>

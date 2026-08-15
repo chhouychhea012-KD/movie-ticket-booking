@@ -7,6 +7,7 @@ import MovieCard from '@/components/movie-card'
 import MovieSlideshow from '@/components/movie-slideshow'
 import { useApp } from '@/context/AppContext'
 import { MapPin, Search, Ticket, Timer, Building2 } from 'lucide-react'
+import { normalizeStringArray } from '@/lib/utils'
 
 export default function Home() {
   const { nowShowing, comingSoon, movies, cinemas, searchMovies, selectedCity, setSelectedCity, cities } = useApp()
@@ -45,7 +46,7 @@ export default function Home() {
                     <img src={movie.poster} alt={movie.title} className="h-14 w-10 rounded-md object-cover" />
                     <div className="min-w-0">
                       <p className="truncate font-medium text-white">{movie.title}</p>
-                      <p className="text-xs text-slate-500">{(Array.isArray(movie.genre) ? movie.genre : String(movie.genre || '').split(',')).slice(0, 2).join(' / ')}</p>
+                      <p className="text-xs text-slate-500">{normalizeStringArray(movie.genre).slice(0, 2).join(' / ')}</p>
                     </div>
                   </Link>
                 ))}

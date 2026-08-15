@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { Movie, Cinema, Seat, Showtime, Booking, User, Analytics } from '@/types'
+import { normalizeStringArray } from '@/lib/utils'
 
 // API Base URL - change to your backend URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'
@@ -30,6 +31,8 @@ const posterReplacements: Record<string, string> = {
 
 const normalizeMovie = (movie: Movie): Movie => ({
   ...movie,
+  genre: normalizeStringArray(movie.genre),
+  cast: normalizeStringArray(movie.cast),
   poster: posterReplacements[movie.poster] || movie.poster,
   backdrop: movie.backdrop ? posterReplacements[movie.backdrop] || movie.backdrop : movie.backdrop,
 })
@@ -645,7 +648,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Search
   const searchMovies = (query: string, filters?: Partial<Movie>): Movie[] => {
     return movies.filter(m => {
-      const genreArray = Array.isArray(m.genre) ? m.genre : String(m.genre || '').split(',')
+      const genreArray = normalizeStringArray(m.genre)
       const matchesQuery = !query || 
         m.title.toLowerCase().includes(query.toLowerCase()) ||
         m.synopsis?.toLowerCase().includes(query.toLowerCase()) ||

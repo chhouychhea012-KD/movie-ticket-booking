@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Calendar, ChevronLeft, ChevronRight, Clock, Play, Star } from 'lucide-react'
 import { Movie } from '@/types'
 import TrailerModal from '@/components/trailer-modal'
+import { normalizeStringArray } from '@/lib/utils'
 
 interface MovieSlideshowProps {
   movies: Movie[]
@@ -47,7 +48,7 @@ export default function MovieSlideshow({ movies, autoPlayInterval = 6000 }: Movi
     )
   }
 
-  const genres = (Array.isArray(currentMovie.genre) ? currentMovie.genre : String(currentMovie.genre || '').split(',')).slice(0, 3)
+  const genres = normalizeStringArray(currentMovie.genre).slice(0, 3)
 
   return (
     <>
